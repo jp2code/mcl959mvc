@@ -1,0 +1,75 @@
+﻿@model mcl959mvc.Models.Message
+@{
+    ViewData["Title"] = "Create";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    bool isRegistered = ViewBag.IsRegistered ?? false;
+}
+
+<h1>Create</h1>
+
+<h4>Message</h4>
+<hr />
+<div class="row">
+    <div class="col-md-12">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Field</th>
+                        <th scope="col" colspan="3">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row">Name</th>
+                        <td><input asp-for="Name" class="form-control" /></td>
+                        <td><span asp-validation-for="Name" class="text-danger"></span></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Email</th>
+                        <td><input asp-for="Email" class="form-control" /></td>
+                        <td><span asp-validation-for="Email" class="text-danger"></span></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Send To</th>
+                        <td>
+                            Web Sergeant
+                        </td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Message</th>
+                        <td colspan="3"><textarea asp-for="Comments" class="form-control" rows="6" style="width: 100%"></textarea></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">&nbsp;</th>
+                        <td colspan="3"><span asp-validation-for="Comments" class="text-danger"></span></td>
+                    </tr>
+                    @if (!isRegistered)
+                    {
+                        <tr>
+                            <th scope="row">Send</th>
+                            @if (!isRegistered)
+                            {
+                                <td>You must <a asp-area="Identity" asp-page="/Account/Login">log in</a> or <a asp-area="Identity" asp-page="/Account/Register">register</a> to submit a message.</td>
+                            } else
+                            {
+                                <td><input type="submit" value="Submit" class="btn btn-primary" /></td>
+                            }
+                            <td><a asp-action="Index">Home</a></td>
+                            <td></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

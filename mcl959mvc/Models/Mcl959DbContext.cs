@@ -1,0 +1,62 @@
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+
+namespace mcl959mvc.Models;
+
+public partial class Mcl959DbContext : DbContext
+{
+
+    public Mcl959DbContext(DbContextOptions<Mcl959DbContext> options)
+        : base(options)
+    {
+    }
+
+    public virtual DbSet<Event> Events { get; set; }
+
+    public virtual DbSet<Item> Items { get; set; }
+
+    public virtual DbSet<MailgunLog> MailgunLogs { get; set; }
+
+    public virtual DbSet<Member> Members { get; set; }
+
+    public virtual DbSet<MemberRank> MemberRanks { get; set; }
+
+    public virtual DbSet<Message> Messages { get; set; }
+
+    public virtual DbSet<Post> Posts { get; set; }
+
+    public virtual DbSet<Roster> Roster { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Member>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_Member");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+        });
+
+        modelBuilder.Entity<Message>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_Message");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+        });
+
+        modelBuilder.Entity<Roster>(entity =>
+        {
+            entity.Property(e => e.Authenticated).HasComment("True if Member has completed TwoStepAuthentication");
+            entity.Property(e => e.DefaultInfo).HasComment("0=Not Set; 1=Default is Personal Info; 2=Default is Work Info;");
+            entity.Property(e => e.DisplayName).HasComment("Use this if a member doesn't want to go by their full legal name.");
+            entity.Property(e => e.HashPwd).HasComment("Encrypted Password");
+            entity.Property(e => e.WebsiteDisplay).HasComment("0=Display Nothing on Website (Default); 1=Display Personal; 2=Display Work;");
+        });
+
+        OnModelCreatingPartial(modelBuilder);
+    }
+
+    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+}

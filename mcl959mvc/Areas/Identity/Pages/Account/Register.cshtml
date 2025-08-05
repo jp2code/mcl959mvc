@@ -1,0 +1,116 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div class="row">
+    <div class="col-md-12">
+        <section>
+            <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                <h2>Create a new account</h2>
+                <hr />
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Field</th>
+                            <th scope="col">Value</th>
+                            <th scope="col">Option</th>
+                            <th scope="col">Error</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row"><label asp-for="Input.Email" class="form-label">Email</label></th>
+                            <td><input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" /></td>
+                            <td></td>
+                            <td><span asp-validation-for="Input.Email" class="text-danger"></span></td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label asp-for="Input.Password" class="form-label">Password</label></th>
+                            <td><input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" id="passwordBox1" /></td>
+                            <td><input type="checkbox" id="showPassword1" /><label for="showPassword">Show password</label></td>
+                            <td><span asp-validation-for="Input.Password" class="text-danger"></span></td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label asp-for="Input.Password" class="form-label">Confirm Password</label></th>
+                            <td><input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" id="passwordBox2" /></td>
+                            <td><input type="checkbox" id="showPassword2" /><label for="showPassword">Show password</label></td>
+                            <td><span asp-validation-for="Input.Password" class="text-danger"></span></td>
+                        </tr>
+                        <tr>
+                            <th scope="row"></th>
+                            <td><button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button></td>
+                            <td>
+                                <p>
+                                    <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" id="login-link">Login with existing account.</a>
+                                </p>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">External Logins</th>
+                            <td colspan="3">
+                                @if (Model.ExternalLogins?.Count > 0)
+                                {
+                                    <p>
+                                        @foreach (var provider in Model.ExternalLogins!)
+                                        {
+                                            <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Register using your @provider.DisplayName account">@provider.DisplayName</button>
+                                        }
+                                    </p>
+                                }
+                                else
+                                {
+                                    <p>
+                                        There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">
+                                            article about setting up this ASP.NET application to support logging in via external services
+                                        </a>.
+                                    </p>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Login Help</th>
+                            <td colspan="3">
+                                <p>
+                                    <a id="forgot-password" asp-page="./ForgotPassword">Forgot your password?</a>
+                                </p>
+                                <p>
+                                    <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
+                                </p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </form>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Show/hide password for both password and confirm password fields
+        document.getElementById('showPassword1').addEventListener('change', function () {
+            var pwd = document.getElementById('passwordBox1');
+            pwd.type = this.checked ? 'text' : 'password';
+        });
+        document.getElementById('showPassword2').addEventListener('change', function () {
+            var pwd = document.getElementById('passwordBox2');
+            pwd.type = this.checked ? 'text' : 'password';
+        });
+        // Add email to login link
+        document.getElementById('login-link').addEventListener('click', function (e) {
+            var email = document.querySelector('input[name="Input.Email"]').value;
+            if (email) {
+                var url = new URL(this.href, window.location.origin);
+                url.searchParams.set('email', email);
+                this.href = url.pathname + url.search;
+            }
+        });
+    </script>
+}

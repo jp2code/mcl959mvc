@@ -1,0 +1,115 @@
+﻿@page
+@model LoginModel
+
+@{
+    ViewData["Title"] = "Log in";
+}
+
+<h1>@ViewData["Title"]</h1>
+<div class="row">
+    <div class="col-md-12">
+        <section>
+            <form id="account" method="post">
+                <h2>Use a local account to log in</h2>
+                <hr />
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Field</th>
+                            <th scope="col">Value</th>
+                            <th scope="col">Option</th>
+                            <th scope="col">Error</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row"><label asp-for="Input.Email" class="form-label">Email</label></th>
+                            <td><input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" /></td>
+                            <td></td>
+                            <td><span asp-validation-for="Input.Email" class="text-danger"></span></td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label asp-for="Input.Password" class="form-label">Password</label></th>
+                            <td><input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" id="passwordBox" /></td>
+                            <td><input type="checkbox" id="showPassword" /><label for="showPassword">Show password</label></td>
+                            <td><span asp-validation-for="Input.Password" class="text-danger"></span></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Optional</th>
+                            <td>
+                                <label asp-for="Input.RememberMe" class="form-label">
+                                    <input class="form-check-input" asp-for="Input.RememberMe" />
+                                    @Html.DisplayNameFor(m => m.Input.RememberMe)
+                                </label>
+                            </td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row"></th>
+                            <td><button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary">Log in</button></td>
+                            <td>
+                                <p>
+                                    <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" id="register-link">Register as a new user</a>
+                                </p>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">External Logins</th>
+                            <td colspan="3">
+                                @if (Model.ExternalLogins?.Count > 0)
+                                {
+                                    <p>
+                                        @foreach (var provider in Model.ExternalLogins!)
+                                        {
+                                            <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
+                                        }
+                                    </p>
+                                }
+                                else
+                                {
+                                    <p>
+                                        There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">
+                                        article about setting up this ASP.NET application to support logging in via external services</a>.
+                                    </p>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Login Help</th>
+                            <td colspan="3">
+                                <p>
+                                    <a id="forgot-password" asp-page="./ForgotPassword">Forgot your password?</a>
+                                </p>
+                                <p>
+                                    <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
+                                </p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </form>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('showPassword').addEventListener('change', function () {
+            var pwd = document.getElementById('passwordBox');
+            pwd.type = this.checked ? 'text' : 'password';
+        });
+        // Add email to register link
+        document.getElementById('register-link').addEventListener('click', function (e) {
+            var email = document.querySelector('input[name="Input.Email"]').value;
+            if (email) {
+                var url = new URL(this.href, window.location.origin);
+                url.searchParams.set('email', email);
+                this.href = url.pathname + url.search;
+            }
+        });
+    </script>
+}
