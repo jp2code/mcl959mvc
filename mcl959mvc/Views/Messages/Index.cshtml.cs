@@ -11,9 +11,9 @@ namespace mcl959mvc.Views.Messages
 {
     public class IndexModel : PageModel
     {
-        private readonly mcl959mvc.Models.Mcl959DbContext _context;
+        private readonly Mcl959DbContext _context;
 
-        public IndexModel(mcl959mvc.Models.Mcl959DbContext context)
+        public IndexModel(Mcl959DbContext context)
         {
             _context = context;
         }

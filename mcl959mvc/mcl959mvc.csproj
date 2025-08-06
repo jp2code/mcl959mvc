@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNet.Mvc" Version="5.3.0" />
+    <PackageReference Include="jQuery" Version="3.7.1" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.18" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.18" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.18" />
@@ -16,12 +16,14 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.18" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.3" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="wwwroot\images\" />
     <Folder Include="wwwroot\logs\" />
     <Folder Include="wwwroot\media\" />
+    <Folder Include="wwwroot\info\" />
     <Folder Include="wwwroot\photos\" />
     <Folder Include="wwwroot\uploads\" />
   </ItemGroup>

@@ -1,11 +1,11 @@
 ﻿@model IEnumerable<mcl959mvc.Models.Event>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Events";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Index</h1>
+<h1>Detachment 959 Events</h1>
 
 <p>
     <a asp-action="Create">Create New</a>
@@ -13,26 +13,17 @@
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.EventName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.EventDescription)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.EventDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.EventCreated)
-            </th>
-            <th></th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Date</th>
+            <th>Created</th>
         </tr>
     </thead>
     <tbody>
 @foreach (var item in Model) {
         <tr>
             <td>
-                @Html.DisplayFor(modelItem => item.EventName)
+                <a asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.EventName)</a>
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.EventDescription)
@@ -42,11 +33,6 @@
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.EventCreated)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
             </td>
         </tr>
 }

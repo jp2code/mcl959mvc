@@ -18,11 +18,41 @@ public class RosterController : Controller
     }
 
     // GET: Roster
-    public async Task<IActionResult> Index()
+    //public async Task<IActionResult> Index()
+    //{
+    //    return View(await _context.Roster.ToListAsync());
+    //}
+    public async Task<IActionResult> Index(string sortOrder, int page = 1)
     {
-        return View(await _context.Roster.ToListAsync());
-    }
+        int pageSize = 20;
+        var query = _context.Roster.AsQueryable();
 
+        // Sorting
+        ViewData["NameSortParm"] = String.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+        switch (sortOrder)
+        {
+            case "name_desc":
+                query = query.OrderByDescending(r => r.Name);
+                break;
+            default:
+                query = query.OrderBy(r => r.Name);
+                break;
+        }
+
+        // Paging
+        int totalCount = await query.CountAsync();
+        var pagedList = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        // Pass admin status to view
+        var user = await _userManager.GetUserAsync(User);
+        ViewBag.IsAdmin = user?.IsAdmin == true;
+
+        ViewData["CurrentSort"] = sortOrder;
+        ViewData["CurrentPage"] = page;
+        ViewData["TotalPages"] = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        return View(pagedList);
+    }
     // GET: Roster/Details/5
     public async Task<IActionResult> Details(int? id)
     {

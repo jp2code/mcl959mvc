@@ -1,168 +1,167 @@
-﻿@model IEnumerable<mcl959mvc.Models.Roster>
-
+﻿@using mcl959mvc.Classes
+@model List<mcl959mvc.Models.Roster>
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Members";
+    var currentSort = ViewData["CurrentSort"] as string;
+    var isAdmin = ViewBag.IsAdmin as bool? ?? false;
+    var nameSortParm = ViewData["NameSortParm"] as string;
+    var currentPage = ViewData["CurrentPage"].ToInt32();
+    var totalPages = ViewData["TotalPages"].ToInt32();
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Index</h1>
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DisplayName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.MemberNumber)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LifeMemberNumber)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.MemberStartDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.MemberExpireDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LifeMemberDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PersonalAddress)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PersonalPhone)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.PersonalEmail)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.WorkAddress)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.WorkPhone)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.WorkEmail)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DefaultInfo)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.WebsiteDisplay)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TwoStepKey)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Authenticated)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.HashPwd)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DiedOn)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FirstName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.MiddleName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LastName)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
+<div id="divMembership">
+    <h1>Member Info</h1>
+    <table style="width: 90%">
+        <tr><th>We are currently accepting new members!</th></tr>
         <tr>
             <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DisplayName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.MemberNumber)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LifeMemberNumber)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.MemberStartDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.MemberExpireDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LifeMemberDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.PersonalAddress)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.PersonalPhone)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.PersonalEmail)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.WorkAddress)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.WorkPhone)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.WorkEmail)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DefaultInfo)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.WebsiteDisplay)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TwoStepKey)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Authenticated)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.HashPwd)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DiedOn)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FirstName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.MiddleName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LastName)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                <ul>
+                    <li>The Marine Corps League is an organization of Active Duty and Honorably Discharged Marines. We are the voice of all Marines, and we help our fellow Marine Corps Veterans.</li>
+                    <li>We call out to local Marine Veterans to step forward and help us ensure the future of the Marine Corps League. If you own the title of <em>The Few</em> and <em>The Proud</em>, we would like for you to join our organization. You are still needed.</li>
+                    <li>Membership includes a subscription to <em>Semper Fi</em>, the official magazine of the Marine Corps League, which is sent out quarterly.</li>
+                    <li>Applications can be downloaded using this link: <a href="/info/MclApplication.pdf">Membership Applications</a></li>
+                    <li>
+                        Annual dues are currently $40.<br />
+                        <div>Note: All new members must be accepted, voted on, and approved by the organization.</div>
+                        <div>Existing members needing to renew can send payments to:</div>
+                        <div style="text-align:center;">Marine Corps League<br />P.O. Box 9395<br />Longview, TX 75608</div>
+                    </li>
+                    <li><a href="Contact.aspx">Contact Us</a> if you wish to apply or need additional information.</li>
+                </ul>
             </td>
         </tr>
+    </table>
+    <asp:Label ID="lbl2Months" runat="server" />
+</div>
+<div id="divMembers">
+    <h1>Memberships</h1>
+    <table style="width: 90%">
+        <tr>
+            <th>Current Members</th>
+        </tr>
+        <tr>
+            <td style="width: 50%">
+                Our current membership is comprised of roughly <asp:Label ID="lblMemberCount" runat="server" /> Marines.<br />
+                <br />
+                Our meetings are held the 4th Tuesday of each month, except December. We're busy conducting the "Toys for Tots" program in December.<br />
+            </td>
+            <td style="width: 50%">
+                <img src="/photos/officerPlaqueSM.jpg" style="width: 95%" />
+            </td>
+        </tr>
+    </table>
+</div>
+@if (isAdmin)
+{
+<div id="divRoster">
+    <h1>Roster</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Display Name</th>
+                <th>Member Number</th>
+                <th>Phone Number</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <a
+                            asp-action="Index"
+                            asp-route-sortOrder="@nameSortParm"
+                            asp-route-page="1"
+                            asp-page="./Edit" asp-route-id="@item.Id">@item.DisplayName</a>
+                    </td>
+                    <td>@item.MemberNumber</td>
+                    <td>
+                        @if (!string.IsNullOrWhiteSpace(item.PersonalPhone))
+                        {
+                            <a href="tel:@item.PersonalPhone">@item.PersonalPhone</a>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(item.WorkEmail))
+                        {
+                            <a href="tel:@item.WorkEmail">@item.WorkEmail</a>
+                        }
+                        else
+                        {
+                            <span>No Phone</span>
+                        }
+                    </td>
+                    <td>
+                        @if (!string.IsNullOrWhiteSpace(item.PersonalEmail))
+                        {
+                            <a href="mailto:@item.PersonalEmail">@item.PersonalEmail</a>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(item.WorkEmail))
+                        {
+                            <a href="mailto:@item.WorkEmail">@item.WorkEmail</a>
+                        }
+                        else
+                        {
+                            <span>No Email</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <nav>
+        <ul class="pagination">
+            @if (1 < currentPage)
+            {
+                <li class="page-item">
+                    <a class="page-link" asp-action="Index"
+                        asp-route-sortOrder="@currentSort"
+                        asp-route-page="@(currentPage - 1)">Previous</a>
+                </li>
+            }
+            @if (currentPage < totalPages)
+            {
+                <li class="page-item">
+                    <a class="page-link" asp-action="Index"
+                       asp-route-sortOrder="@currentSort"
+                       asp-route-page="@(currentPage + 1)">Next</a>
+                </li>
+            }
+        </ul>
+    </nav>
+</div>
 }
-    </tbody>
-</table>
+<div id="divOath">
+    <asp:Label id="mclOath" runat="server"></asp:Label>
+</div>
+<div id="divMemorial">
+    <h1>Memorials</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Member</th>
+                <th>Died</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var member in Model
+            .Where(x => x.DiedOn != null)
+            .OrderBy(x => x.DiedOn))
+            {
+                <tr>
+                    <td>@member.DisplayName</td>
+                    <td>@member.DiedOn</td>
+                    <td>
+                        @if (member.LifeMemberNumber == null)
+                        {
+                            <p>&nbsp;</p>
+                        } else { 
+                            <p>Life Member</p>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

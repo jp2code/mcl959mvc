@@ -13,8 +13,11 @@ namespace mcl959mvc.Controllers
 
         public IActionResult Index()
         {
-            string logoPath = Path.Combine(_webHostEnvironment.WebRootPath, "images", "logo.png");
-            Console.WriteLine(logoPath);
+            return View();
+        }
+
+        public IActionResult About()
+        {
             return View();
         }
     }

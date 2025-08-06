@@ -3,6 +3,7 @@
     ViewData["Title"] = "Create";
     Layout = "~/Views/Shared/_Layout.cshtml";
     bool isRegistered = ViewBag.IsRegistered ?? false;
+    bool isAdmin = ViewBag.IsAdmin ?? false;
 }
 
 <h1>Create</h1>
@@ -36,7 +37,14 @@
                     <tr>
                         <th scope="row">Send To</th>
                         <td>
-                            Web Sergeant
+                            @if (!isRegistered)
+                            {
+                                <p>Web Sergeant</p>
+                            }
+                            else
+                            {
+                                <select asp-for="SendTo" class="form-control" asp-items="ViewBag.Recipients"></select>
+                            }
                         </td>
                         <td></td>
                         <td></td>

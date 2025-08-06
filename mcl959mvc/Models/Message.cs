@@ -20,6 +20,8 @@ public partial class Message
     [Unicode(false)]
     [EmailAddress]
     public required string? Email { get; set; }
+    // optional
+    public string SendTo { get; set; } = "";
 
     [StringLength(50)]
     [Unicode(false)]

@@ -5,13 +5,12 @@ using mcl959mvc.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using System.Net.Mail;
 using System.Security.Cryptography;
-//using System.Web.Mvc;
-//using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
 
 namespace mcl959mvc.Controllers;
 
@@ -56,12 +55,53 @@ public class MessagesController : Controller
     public async Task<IActionResult> Create()
     {
         bool isRegistered = false;
+        bool isAdmin = false;
         if (User.Identity?.IsAuthenticated == true)
         {
             var user = await _userManager.GetUserAsync(User);
             isRegistered = user?.IsRegistered ?? false;
+            if (isRegistered)
+            {
+                isAdmin = user?.IsAdmin ?? false;
+            }
+        }
+        var list = new List<SelectListItem>();
+        list.Add(new SelectListItem
+        {
+            Value = string.Empty,
+            Text = "Select a member"
+        });
+        if (!isAdmin)
+        {
+            foreach (var item in from rank in _context.MemberRanks
+                                 join member in _context.Roster on rank.MemberNumber equals member.MemberNumber
+                                 orderby rank.DisplayRank
+                                 select new
+                                 {
+                                    member.PersonalEmail,
+                                    member.DisplayName
+                                 })
+            {
+                list.Add(new SelectListItem
+                {
+                    Value = item.PersonalEmail,
+                    Text = item.DisplayName
+                });
+            }
+        } else
+        {
+            foreach (var item in _context.Roster)
+            {
+                list.Add(new SelectListItem
+                {
+                    Value = item.PersonalEmail,
+                    Text = item.DisplayName
+                });
+            }
         }
         ViewBag.IsRegistered = isRegistered;
+        ViewBag.IsAdmin = isAdmin;
+        ViewBag.Recipients = list.ToArray();
         return View(new Message
         {
             Name = string.Empty,
@@ -97,7 +137,7 @@ public class MessagesController : Controller
                 // Generate and send code
                 var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
                 _cache.Set($"ContactCode_{item.Email}", code, TimeSpan.FromMinutes(10));
-                await SendEmailAsync(_smtpSettings.Username, _smtpSettings.FromEmail, "Your verification code", $"Your code is: {code}");
+                await SendEmailAsync(_smtpSettings.Username, _smtpSettings.FromEmail, $"{User.Identity?.Name}", "Your verification code", $"Your code is: {code}");
                 item.CodeSent = true;
                 ModelState.Clear();
                 TempData["Info"] = "Verification code sent to your email.";
@@ -136,8 +176,14 @@ public class MessagesController : Controller
             var fromName = $"{item.Name}";
             var fromEmail = $"{item.Email}";
             var subject = "New Contact Message";
+            var attnTo = item.SendTo;
+            var roster = _context.Roster.FirstOrDefault(x => x.DisplayName == attnTo);
+            if (roster != null)
+            {
+                attnTo = $"{roster.DisplayName} <{roster.PersonalEmail}>";
+            }
             var body = $"From: {fromName} <{fromEmail}>\n\n{item.Comments}";
-            await SendEmailAsync(fromName, fromEmail, subject, body);
+            await SendEmailAsync(fromName, fromEmail, attnTo, subject, body);
 
             TempData["Success"] = "Message sent!";
             return RedirectToAction(nameof(Details), new { id = item.Id });
@@ -223,15 +269,16 @@ public class MessagesController : Controller
         return user?.IsAdmin == true;
     }
 
-    private async Task SendEmailAsync(string fromName, string fromEmail, string subject, string body)
+    private async Task SendEmailAsync(string fromName, string fromEmail, string attnTo, string subject, string body)
     {
         // Implement your email sending logic here
         // For example, use SMTP, SendGrid, or any other provider
         System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
         var mailgunMsg = "<a href=\"http://api.mailgun.net\">Mailgun Requests API</a>";
-        var htmlBody = EmailHtmlBody(fromName, fromEmail, body, mailgunMsg);
+        var textBody = EmailTextBody(fromName, fromEmail, attnTo, body, mailgunMsg);
+        var htmlBody = EmailHtmlBody(fromName, fromEmail, attnTo, body, mailgunMsg);
         var mimeType = new System.Net.Mime.ContentType("text/html");
-        var alternate = new AlternateView(new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(htmlBody)), mimeType);
+        var alternate = new AlternateView(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(textBody)), mimeType);
         using (var email = new MailMessage()
         {
             Body = htmlBody,
@@ -266,10 +313,10 @@ public class MessagesController : Controller
     /// <param name="message">String - email message</param>
     /// <param name="mailgunOpt">String - mailgun parameter</param>
     /// <returns>String email body</returns>
-    private String EmailTextBody(String from, String email, String message, String mailgunOpt)
+    private String EmailTextBody(String from, String email, String attnTo, String message, String mailgunOpt)
     {
         return @$"
-On {DateTime.Now:s}, {from} [{email}] sent the following message:
+On {DateTime.Now:s}, {from} [{email}] sent the following message to {attnTo}:
 
     {message}
 
@@ -286,7 +333,7 @@ End of Message
     /// <param name="message">String - email message</param>
     /// <param name="mailgunOpt">String - mailgun parameter</param>
     /// <returns>String HTML email body</returns>
-    private String EmailHtmlBody(String from, String email, String message, String mailgunOpt)
+    private String EmailHtmlBody(String from, String email, String attnTo, String message, String mailgunOpt)
     {
         String nameAndEmail = @$"{from} <a href='{email}'>{1}</a>";
         String htmlEmail = $@"
@@ -314,7 +361,7 @@ End of Message
             <table>
                 <tr>
                     <td>
-                        <font>On <i>{DateTime.Now:s}</i>, <b>{nameAndEmail}</b> sent the following message:</font><br /><br />
+                        <font>On <i>{DateTime.Now:s}</i>, <b>{nameAndEmail}</b> sent the following message to <b>{attnTo}</b>:</font><br /><br />
                         <table>
                             <tr><td><font color='Green'>{message}</font></td></tr>
                             <tr><td>&nbsp;</td></tr>

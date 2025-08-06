@@ -115,6 +115,8 @@ namespace mcl959mvc.Areas.Identity.Pages.Account
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            Input.Password = Input.Password?.Trim();
+            Input.ConfirmPassword = Input.ConfirmPassword?.Trim();
             if (ModelState.IsValid)
             {
                 var user = CreateUser();

@@ -1,8 +1,56 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div>
+    <div>
+        <h2>The Marine Corps League</h2>
+        <p>The Marine Corps League is the only Congressionally chartered United States Marine Corps-related veterans organization in the United States.</p>
+        <p>Its Congressional Charter was approved by the 75th U.S. Congress and signed by President Franklin D. Roosevelt on August 4, 1937.</p>
+    </div>
+    <div>
+        <h2>Our Facility</h2>
+        <table style="width:90%">
+            <tr>
+                <td style="width:50%">
+                    We are proud to be one of the few Detachments with our own facility.<br />
+                    <br />
+                    Our Detachment Building has become a part of our life, with everyone helping with the building needs. Definitely a "Band of Brothers". We have a new 5000 sq. ft. Detachment Headquarters, located at <a href="https://maps.google.com/maps?q=1512+Alpine+Rd.,+Longview,+TX&amp;hl=en&amp;sll=32.506576,-94.755313&amp;sspn=0.19862,0.285988&amp;hnear=1512+Alpine+Rd,+Longview,+Gregg,+Texas+75601&amp;t=m&amp;z=16" target="_blank">1512 Alpine Rd., Longview, TX</a>.
+                </td>
+                <td style="width:50%">
+                    <a href="/photos/building.jpg" target="_blank"><img src="/photos/buildingSM.jpg" style="width:95%" /></a>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div>
+        <h2>Wall of Honor</h2>
+        <table style="width: 90%">
+            <tr>
+                <td style="width: 50%">We are especially proud of our Marine Wall of Honor, complimenting the front wall of the Detachment Headquarters. A great way to honor your special Marine. Proceeds from this project are used for League activities and the Building Fund. Space is still available for your engraved tile.
+                </td>
+                <td style="width: 50%">
+                    <a href="/photos/wallOfHonor.jpg" target="_blank">
+                        <img src="/photos/wallOfHonorSM.jpg" style="width: 95%" /></a>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div>
+        <h2>Patriot Wall of Honor</h2>
+        <table style="width: 90%">
+            <tr>
+                <td style="width: 50%">The Patriot Wall of Honor is also available for all Patriots, especially interested have been area Businesses showing their support for our troops and also a good way to advertise their business.
+                </td>
+                <td style="width: 50%">
+                    <a href="/photos/patriotWall.jpg" target="_blank"><img src="/photos/patriotWallSM.jpg" style="width: 95%" /></a>
+                </td>
+            </tr>
+        </table>
+    </div>
 </div>
+<script>
+    $(document).ready(function () {
+        $('#miHome').addClass('selected');
+    });
+</script>

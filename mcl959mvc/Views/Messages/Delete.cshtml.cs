@@ -11,9 +11,9 @@ namespace mcl959mvc.Views.Messages
 {
     public class DeleteModel : PageModel
     {
-        private readonly mcl959mvc.Models.Mcl959DbContext _context;
+        private readonly Mcl959DbContext _context;
 
-        public DeleteModel(mcl959mvc.Models.Mcl959DbContext context)
+        public DeleteModel(Mcl959DbContext context)
         {
             _context = context;
         }
