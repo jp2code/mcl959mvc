@@ -1,14 +1,11 @@
 ﻿@model mcl959mvc.Models.Message
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Contact";
     Layout = "~/Views/Shared/_Layout.cshtml";
     bool isRegistered = ViewBag.IsRegistered ?? false;
     bool isAdmin = ViewBag.IsAdmin ?? false;
 }
-
-<h1>Create</h1>
-
-<h4>Message</h4>
+<h1>Send us a message</h1>
 <hr />
 <div class="row">
     <div class="col-md-12">
@@ -56,6 +53,16 @@
                     <tr>
                         <th scope="row">&nbsp;</th>
                         <td colspan="3"><span asp-validation-for="Comments" class="text-danger"></span></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Attachment</th>
+                        <td>
+                            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                                <!-- your existing fields -->
+                                <input type="file" name="Attachment" accept=".jpg,.jpeg,.gif,.png,.pdf,.doc,.docx,.zip" />
+                                <button type="submit" name="action" value="SubmitMessage">Send</button>
+                            </form>
+                        </td>
                     </tr>
                     @if (!isRegistered)
                     {

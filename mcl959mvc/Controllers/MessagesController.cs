@@ -16,6 +16,7 @@ namespace mcl959mvc.Controllers;
 
 public class MessagesController : Controller
 {
+    private const int MAX4MB = 4 * 1024 * 1024; // 4 MB
     private readonly Mcl959DbContext _context;
     private readonly IMemoryCache _cache;
     private readonly IHttpClientFactory _httpClientFactory; // For sending email (or use your own service)
@@ -117,7 +118,7 @@ public class MessagesController : Controller
     // POST: Messages/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Message item, string? action)
+    public async Task<IActionResult> Create(Message item, string? action, IFormFile? Attachment)
     {
         // Check if user is registered
         bool isRegistered = false;
@@ -165,6 +166,35 @@ public class MessagesController : Controller
         // If model is valid, save the message
         if (ModelState.IsValid)
         {
+            string? uploadLink = null;
+            if (Attachment != null && (0 < Attachment.Length))
+            {
+                // Validate file size
+                if (MAX4MB < Attachment.Length)
+                {
+                    ModelState.AddModelError("Attachment", "File size exceeds the maximum limit.");
+                    return View(item);
+                }
+                // Validate file type
+                var allowedTypes = new[] { ".jpg", ".jpeg", ".gif", ".png", ".pdf", ".doc", ".docx", ".zip" };
+                var ext = Path.GetExtension(Attachment.FileName).ToLowerInvariant();
+                if (!allowedTypes.Contains(ext))
+                {
+                    ModelState.AddModelError("Attachment", "Invalid file type.");
+                    return View(item);
+                }
+                // Save file
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                Directory.CreateDirectory(uploadsFolder);
+                var fileName = $"{Attachment.FileName}.{Guid.NewGuid()}{ext}";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await Attachment.CopyToAsync(stream);
+                }
+                uploadLink = $"/uploads/{fileName}";
+                item.Comments += $"\n\n<b>Attachment:</b> <a href=\"{uploadLink}\">{Attachment.FileName}</a>";
+            }
             if (isRegistered && user != null)
             {
                 item.Name = user.UserName;

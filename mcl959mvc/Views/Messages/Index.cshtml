@@ -1,10 +1,10 @@
 ﻿@model IEnumerable<mcl959mvc.Models.Message>
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Emails";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Index</h1>
+<h1>Email History</h1>
 
 <p>
     <a asp-action="Create">New Message</a>
@@ -21,7 +21,6 @@
             <th>
                 @Html.DisplayNameFor(model => model.First().Date)
             </th>
-            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -35,10 +34,6 @@
             </td>
             <td>
                     <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Date)</a>
-            </td>
-            <td>
-                    <a asp-action="./Edit" asp-route-id="@item.Id">Edit</a> |
-                    <a asp-action="./Delete" asp-route-id="@item.Id">Delete</a>
             </td>
         </tr>
 }

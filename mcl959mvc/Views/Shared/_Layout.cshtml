@@ -69,5 +69,30 @@
         </div>
     </footer>
     @await RenderSectionAsync("Scripts", required: false)
-</body>
+    <div id="errorPopup" class="popup_box" style="display:none; position:fixed; left:50%; top:20%; transform:translate(-50%,0); z-index:9999; background:#fff; border:2px solid #cc0000; padding:20px; min-width:300px;">
+        <div id="errorPopupContent"></div>
+        <button onclick="document.getElementById('errorPopup').style.display='none';">Close</button>
+    </div>
+    @section Scripts {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                var errorMessages = [];
+                @if (ViewData.ModelState != null && !ViewData.ModelState.IsValid)
+                {
+                    foreach (var entry in ViewData.ModelState)
+                    {
+                        foreach (var error in entry.Value.Errors)
+                        {
+                            @:errorMessages.push("@error.ErrorMessage");
+                        }
+                    }
+                }
+                if (errorMessages.length > 0) {
+                    document.getElementById('errorPopupContent').innerHTML = errorMessages.join("<br>");
+                    document.getElementById('errorPopup').style.display = 'block';
+                }
+            });
+        </script>
+    }   
+    </body>
 </html>
