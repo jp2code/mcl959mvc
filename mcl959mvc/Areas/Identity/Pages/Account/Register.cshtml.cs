@@ -103,7 +103,7 @@ namespace mcl959mvc.Areas.Identity.Pages.Account
 
         public async Task OnGetAsync(string email = null, string returnUrl = null)
         {
-            ReturnUrl = returnUrl;
+            ReturnUrl = string.IsNullOrEmpty(returnUrl) ? Url.Content("/~") : returnUrl;
             Input = new InputModel
             {
                 Email = email
