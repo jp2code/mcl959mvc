@@ -19,6 +19,7 @@ var siteDomain = builder.Configuration["Smtp:SiteDomain"];
 var siteLogo = builder.Configuration["Smtp:SiteLogo"];
 // Add services to the container.
 builder.Services.AddHttpClient();
+builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, SmtpEmailSender>();
 builder.Services.Configure<SmtpSettings>(options =>
 {
     options.Server = smtpServer ?? throw new ArgumentNullException("Smtp:Server");

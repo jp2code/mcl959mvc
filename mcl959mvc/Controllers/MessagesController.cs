@@ -11,21 +11,17 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using System.Net.Mail;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 namespace mcl959mvc.Controllers;
 
-public class MessagesController : Controller
+public class MessagesController : Mcl959MemberController
 {
     private const int MAX4MB = 4 * 1024 * 1024; // 4 MB
     private readonly Mcl959DbContext _context;
     private readonly IMemoryCache _cache;
     private readonly IHttpClientFactory _httpClientFactory; // For sending email (or use your own service)
-    private readonly UserManager<ApplicationUser> _userManager;
     private readonly SmtpSettings _smtpSettings;
-
-    // These are used to determine if the user is an admin or registered
-    private bool _isAdmin = false;
-    private bool _isRegistered = false;
 
     public MessagesController(
          IMemoryCache cache,
@@ -33,19 +29,18 @@ public class MessagesController : Controller
          Mcl959DbContext context,
          UserManager<ApplicationUser> userManager,
          IOptions<SmtpSettings> smptOptions)
+         : base(userManager)
     {
         _cache = cache;
         _httpClientFactory = httpClientFactory;
         _context = context;
         _smtpSettings = smptOptions.Value ?? throw new ArgumentNullException(nameof(smptOptions));
-        _userManager = userManager;
-        _isRegistered = User.HasClaim("isRegistered", "true");
-        _isAdmin = User.HasClaim("isAdmin", "true");
     }
 
     public async Task<IActionResult> Index()
     {
-        if (_isAdmin)
+        await CheckUserIdentity();
+        if (IsAdmin)
         {
             return View(await _context.Messages.ToListAsync());
         }
@@ -54,15 +49,16 @@ public class MessagesController : Controller
     }
 
     // GET: Messages/Create
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
+        await CheckUserIdentity();
         var list = new List<SelectListItem>();
         list.Add(new SelectListItem
         {
             Value = string.Empty,
             Text = "Select a member"
         });
-        if (!_isAdmin)
+        if (!IsAdmin)
         {
             foreach (var item in from rank in _context.MemberRanks
                                  join member in _context.Roster on rank.MemberNumber equals member.MemberNumber
@@ -91,8 +87,6 @@ public class MessagesController : Controller
                 });
             }
         }
-        ViewBag.IsRegistered = _isRegistered;
-        ViewBag.IsAdmin = _isAdmin;
         ViewBag.Recipients = list.ToArray();
         return View(new Message
         {
@@ -111,8 +105,8 @@ public class MessagesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Message item, string? action, IFormFile? Attachment)
     {
-        // If not registered, handle code verification
-        if (!_isRegistered)
+        await CheckUserIdentity();
+        if (!IsRegistered)
         {
             if (action == "SendCode")
             {
@@ -176,8 +170,9 @@ public class MessagesController : Controller
                 uploadLink = $"/uploads/{fileName}";
                 item.Comments += $"\n\n<b>Attachment:</b> <a href=\"{uploadLink}\">{Attachment.FileName}</a>";
             }
+            await CheckUserIdentity();
             ApplicationUser? user = await _userManager.GetUserAsync(User);
-            if (_isRegistered && user != null)
+            if (IsRegistered && user != null)
             {
                 item.Name = user.UserName;
                 item.Email = user.Email ?? string.Empty;
@@ -215,7 +210,8 @@ public class MessagesController : Controller
     // GET: Messages/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
-        if (!_isAdmin) return Forbid();
+        await CheckUserIdentity();
+        if (!IsAdmin) return Forbid();
         if (id == null) return NotFound();
         var message = await _context.Messages.FindAsync(id);
         if (message == null) return NotFound();
@@ -227,7 +223,8 @@ public class MessagesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, Message message)
     {
-        if (!_isAdmin) return Forbid();
+        await CheckUserIdentity();
+        if (!IsAdmin) return Forbid();
         if (id != message.Id) return NotFound();
         if (ModelState.IsValid)
         {
@@ -251,7 +248,8 @@ public class MessagesController : Controller
     // GET: Messages/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
-        if (!_isAdmin) return Forbid();
+        await CheckUserIdentity();
+        if (!IsAdmin) return Forbid();
         if (id == null) return NotFound();
         var message = await _context.Messages.FindAsync(id);
         if (message == null) return NotFound();
@@ -263,7 +261,8 @@ public class MessagesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        if (!_isAdmin) return Forbid();
+        await CheckUserIdentity();
+        if (!IsAdmin) return Forbid();
         var message = await _context.Messages.FindAsync(id);
         if (message != null)
         {

@@ -120,8 +120,9 @@ namespace mcl959mvc.Areas.Identity.Pages.Account
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
                 var user = await _signInManager.UserManager.FindByEmailAsync(Input.Email);
                 // remove old claims first (in case of re-logging in)
-                await _signInManager.UserManager.RemoveClaimsAsync(user, await _signInManager.UserManager.GetClaimsAsync(user)
-                    .Where(c => c.Type == "isAdmin" || c.Type == "isRegistered").ToList());
+                var userClaims = await _signInManager.UserManager.GetClaimsAsync(user);
+                var claimsToRemove = userClaims.Where(c => c.Type == "isAdmin" || c.Type == "isRegistered").ToList();
+                await _signInManager.UserManager.RemoveClaimsAsync(user, claimsToRemove);
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {

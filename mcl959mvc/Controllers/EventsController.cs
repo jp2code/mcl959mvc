@@ -8,37 +8,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace mcl959mvc.Controllers;
 
-public class EventsController : Controller
+public class EventsController : Mcl959MemberController
 {
     private readonly Mcl959DbContext _context;
-    private readonly UserManager<ApplicationUser> _userManager;
-
-    // these are used to determine if the user is an admin or registered user
-    private bool _isAdmin = false;
-    private bool _isRegistered = false;
 
     public EventsController(Mcl959DbContext context, UserManager<ApplicationUser> userManager)
+        : base(userManager)
     {
         _context = context;
-        _userManager = userManager;
-        _isRegistered = User.HasClaim("isRegistered", "true");
-        _isAdmin = User.HasClaim("isAdmin", "true");
     }
 
     // GET: Events
     public async Task<IActionResult> Index()
     {
-        if (User.Identity?.IsAuthenticated == true)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            _isRegistered = user?.IsRegistered ?? false;
-            if (_isRegistered)
-            {
-                _isAdmin = user?.IsAdmin ?? false;
-            }
-        }
-        ViewBag.IsRegistered = _isRegistered;
-        ViewBag.IsAdmin = _isAdmin;
+        await CheckUserIdentity();
         return View(await _context.Events.ToListAsync());
     }
 
@@ -54,7 +37,8 @@ public class EventsController : Controller
     // GET: Events/Create
     public async Task<IActionResult> Create()
     {
-        if (!_isAdmin) return Forbid();
+        await CheckUserIdentity();
+        if (!IsAdmin) return Forbid();
         return View();
     }
 
@@ -63,7 +47,8 @@ public class EventsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Event evt)
     {
-        if (!_isAdmin) return Forbid();
+        await CheckUserIdentity();
+        if (!IsAdmin) return Forbid();
         if (ModelState.IsValid)
         {
             _context.Add(evt);
@@ -76,7 +61,8 @@ public class EventsController : Controller
     // GET: Events/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
-        if (!_isAdmin) return Forbid();
+        await CheckUserIdentity();
+        if (!IsAdmin) return Forbid();
         if (id == null) return NotFound();
         var evt = await _context.Events.FindAsync(id);
         if (evt == null) return NotFound();
@@ -88,7 +74,8 @@ public class EventsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, Event evt)
     {
-        if (!_isAdmin) return Forbid();
+        await CheckUserIdentity();
+        if (!IsAdmin) return Forbid();
         if (id != evt.Id) return NotFound();
         if (ModelState.IsValid)
         {
@@ -102,7 +89,8 @@ public class EventsController : Controller
     // GET: Events/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
-        if (!_isAdmin) return Forbid();
+        await CheckUserIdentity();
+        if (!IsAdmin) return Forbid();
         if (id == null) return NotFound();
         var evt = await _context.Events.FindAsync(id);
         if (evt == null) return NotFound();
@@ -114,7 +102,8 @@ public class EventsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        if (!_isAdmin) return Forbid();
+        await CheckUserIdentity();
+        if (!IsAdmin) return Forbid();
         var evt = await _context.Events.FindAsync(id);
         if (evt != null)
         {
