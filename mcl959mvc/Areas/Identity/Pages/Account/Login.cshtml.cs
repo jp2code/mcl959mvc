@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace mcl959mvc.Areas.Identity.Pages.Account
@@ -117,9 +118,22 @@ namespace mcl959mvc.Areas.Identity.Pages.Account
             {
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
+                var user = await _signInManager.UserManager.FindByEmailAsync(Input.Email);
+                // remove old claims first (in case of re-logging in)
+                await _signInManager.UserManager.RemoveClaimsAsync(user, await _signInManager.UserManager.GetClaimsAsync(user)
+                    .Where(c => c.Type == "isAdmin" || c.Type == "isRegistered").ToList());
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
+                    var claims = new List<Claim>
+                    {
+                        new Claim("isAdmin", user.IsAdmin ? "true" : "false"),
+                        new Claim("isRegistered", user.IsRegistered ? "true" : "false")
+                    };
+                    // Add new claims
+                    await _signInManager.UserManager.AddClaimsAsync(user, claims);
+                    // Sign in the user with the new claims (this will include the new claims in the cookie)
+                    await _signInManager.SignInWithClaimsAsync(user, Input.RememberMe, claims);
                     _logger.LogInformation("User logged in.");
                     return LocalRedirect(returnUrl);
                 }

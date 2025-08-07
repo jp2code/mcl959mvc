@@ -23,6 +23,10 @@ public class MessagesController : Controller
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SmtpSettings _smtpSettings;
 
+    // These are used to determine if the user is an admin or registered
+    private bool _isAdmin = false;
+    private bool _isRegistered = false;
+
     public MessagesController(
          IMemoryCache cache,
          IHttpClientFactory httpClientFactory,
@@ -35,52 +39,38 @@ public class MessagesController : Controller
         _context = context;
         _smtpSettings = smptOptions.Value ?? throw new ArgumentNullException(nameof(smptOptions));
         _userManager = userManager;
+        _isRegistered = User.HasClaim("isRegistered", "true");
+        _isAdmin = User.HasClaim("isAdmin", "true");
     }
 
     public async Task<IActionResult> Index()
     {
-        if (User.Identity?.IsAuthenticated == true)
+        if (_isAdmin)
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user?.IsAdmin == true)
-            {
-                // Show the list of messages to admins
-                return View(await _context.Messages.ToListAsync());
-            }
+            return View(await _context.Messages.ToListAsync());
         }
         // Not admin: redirect to Create
         return RedirectToAction(nameof(Create));
     }
 
     // GET: Messages/Create
-    public async Task<IActionResult> Create()
+    public IActionResult Create()
     {
-        bool isRegistered = false;
-        bool isAdmin = false;
-        if (User.Identity?.IsAuthenticated == true)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            isRegistered = user?.IsRegistered ?? false;
-            if (isRegistered)
-            {
-                isAdmin = user?.IsAdmin ?? false;
-            }
-        }
         var list = new List<SelectListItem>();
         list.Add(new SelectListItem
         {
             Value = string.Empty,
             Text = "Select a member"
         });
-        if (!isAdmin)
+        if (!_isAdmin)
         {
             foreach (var item in from rank in _context.MemberRanks
                                  join member in _context.Roster on rank.MemberNumber equals member.MemberNumber
                                  orderby rank.DisplayRank
                                  select new
                                  {
-                                    member.PersonalEmail,
-                                    member.DisplayName
+                                     member.PersonalEmail,
+                                     member.DisplayName
                                  })
             {
                 list.Add(new SelectListItem
@@ -89,7 +79,8 @@ public class MessagesController : Controller
                     Text = item.DisplayName
                 });
             }
-        } else
+        }
+        else
         {
             foreach (var item in _context.Roster)
             {
@@ -100,8 +91,8 @@ public class MessagesController : Controller
                 });
             }
         }
-        ViewBag.IsRegistered = isRegistered;
-        ViewBag.IsAdmin = isAdmin;
+        ViewBag.IsRegistered = _isRegistered;
+        ViewBag.IsAdmin = _isAdmin;
         ViewBag.Recipients = list.ToArray();
         return View(new Message
         {
@@ -120,18 +111,8 @@ public class MessagesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Message item, string? action, IFormFile? Attachment)
     {
-        // Check if user is registered
-        bool isRegistered = false;
-        ApplicationUser? user = null;
-        if (User.Identity?.IsAuthenticated == true)
-        {
-            user = await _userManager.GetUserAsync(User);
-            isRegistered = user?.IsRegistered ?? false;
-        }
-        ViewBag.IsRegistered = isRegistered;
-
         // If not registered, handle code verification
-        if (!isRegistered)
+        if (!_isRegistered)
         {
             if (action == "SendCode")
             {
@@ -141,7 +122,7 @@ public class MessagesController : Controller
                 await SendEmailAsync(_smtpSettings.Username, _smtpSettings.FromEmail, $"{User.Identity?.Name}", "Your verification code", $"Your code is: {code}");
                 item.CodeSent = true;
                 ModelState.Clear();
-                TempData["Info"] = "Verification code sent to your email.";
+                ModelState.AddModelError("Info", "Verification code sent to your email.");
                 return View(item);
             }
             else if (action == "SubmitMessage")
@@ -195,7 +176,8 @@ public class MessagesController : Controller
                 uploadLink = $"/uploads/{fileName}";
                 item.Comments += $"\n\n<b>Attachment:</b> <a href=\"{uploadLink}\">{Attachment.FileName}</a>";
             }
-            if (isRegistered && user != null)
+            ApplicationUser? user = await _userManager.GetUserAsync(User);
+            if (_isRegistered && user != null)
             {
                 item.Name = user.UserName;
                 item.Email = user.Email ?? string.Empty;
@@ -215,7 +197,7 @@ public class MessagesController : Controller
             var body = $"From: {fromName} <{fromEmail}>\n\n{item.Comments}";
             await SendEmailAsync(fromName, fromEmail, attnTo, subject, body);
 
-            TempData["Success"] = "Message sent!";
+            ModelState.AddModelError("Success", "Your message has been sent.");
             return RedirectToAction(nameof(Details), new { id = item.Id });
         }
         return View(item);
@@ -233,7 +215,7 @@ public class MessagesController : Controller
     // GET: Messages/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
-        if (!await IsCurrentUserAdmin()) return Forbid();
+        if (!_isAdmin) return Forbid();
         if (id == null) return NotFound();
         var message = await _context.Messages.FindAsync(id);
         if (message == null) return NotFound();
@@ -245,7 +227,7 @@ public class MessagesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, Message message)
     {
-        if (!await IsCurrentUserAdmin()) return Forbid();
+        if (!_isAdmin) return Forbid();
         if (id != message.Id) return NotFound();
         if (ModelState.IsValid)
         {
@@ -269,7 +251,7 @@ public class MessagesController : Controller
     // GET: Messages/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
-        if (!await IsCurrentUserAdmin()) return Forbid();
+        if (!_isAdmin) return Forbid();
         if (id == null) return NotFound();
         var message = await _context.Messages.FindAsync(id);
         if (message == null) return NotFound();
@@ -281,7 +263,7 @@ public class MessagesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        if (!await IsCurrentUserAdmin()) return Forbid();
+        if (!_isAdmin) return Forbid();
         var message = await _context.Messages.FindAsync(id);
         if (message != null)
         {
@@ -289,14 +271,6 @@ public class MessagesController : Controller
             await _context.SaveChangesAsync();
         }
         return RedirectToAction(nameof(Index));
-    }
-
-    // Helper method to check admin status
-    private async Task<bool> IsCurrentUserAdmin()
-    {
-        if (User.Identity?.IsAuthenticated != true) return false;
-        var user = await _userManager.GetUserAsync(User);
-        return user?.IsAdmin == true;
     }
 
     private async Task SendEmailAsync(string fromName, string fromEmail, string attnTo, string subject, string body)

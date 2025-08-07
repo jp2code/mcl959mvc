@@ -3,38 +3,39 @@
 @{
     ViewData["Title"] = "Events";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    bool isAdmin = ViewBag.IsAdmin ?? false;
 }
 
 <h1>Detachment 959 Events</h1>
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Date</th>
-            <th>Created</th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                <a asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.EventName)</a>
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.EventDescription)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.EventDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.EventCreated)
-            </td>
-        </tr>
+@if (isAdmin)
+{
+    <p>
+        <a asp-action="Create">Add New Event</a>
+    </p>
 }
-    </tbody>
-</table>
+<div class="container">
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="col-2" scope="col">Name</th>
+                <th class="col-8" scope="col">Description</th>
+                <th class="col-2" scope="col">Event Date</th>
+            </tr>
+        </thead>
+        <tbody>
+    @foreach (var item in Model) {
+            <tr>
+                <th class="col-2" scope="row">
+                    <a asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.EventName)</a>
+                </th>
+                <td class="col-8">
+                    @Html.DisplayFor(modelItem => item.EventDescription)
+                </td>
+                <td class="col-2">
+                    @Html.DisplayFor(modelItem => item.EventDate)
+                </td>
+            </tr>
+    }
+        </tbody>
+    </table>
+</div>

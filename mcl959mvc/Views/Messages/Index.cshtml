@@ -13,13 +13,13 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.First().Name)
+                Sender
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.First().Email)
+                Email
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.First().Date)
+                Date
             </th>
         </tr>
     </thead>
@@ -27,13 +27,13 @@
 @foreach (var item in Model) {
         <tr>
             <td>
-                    <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Name)</a>
+                <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Name)</a>
             </td>
             <td>
-                    <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Email)</a>
+                <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Email)</a>
             </td>
             <td>
-                    <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Date)</a>
+                <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Date)</a>
             </td>
         </tr>
 }

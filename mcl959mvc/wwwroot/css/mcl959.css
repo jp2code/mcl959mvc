@@ -64,7 +64,7 @@ body {
     left: 150px;
     margin: 8px 22px 8px 22px;
     overflow: hidden;
-    position: absolute;
+    position: fixed;
     top: 150px; /* or 200px if you want it below both logo and head */
     width: 80%;
     z-index: 3;
