@@ -4,7 +4,8 @@ using mcl959mvc.Models;
 using Microsoft.EntityFrameworkCore; // Ensure this is included
 using Microsoft.Extensions.DependencyInjection; // Ensure this is included
 using Microsoft.AspNetCore.Identity;
-using Microsoft.OpenApi.Models; // Add this using directive
+using Microsoft.OpenApi.Models;
+using mcl959mvc.Services; // Add this using directive
 
 var builder = WebApplication.CreateBuilder(args);
 // Explicitly load appsettings.Secrets.json
@@ -51,6 +52,10 @@ builder.Services.AddControllersWithViews();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+// Register the logger provider
+builder.Logging.AddProvider(new DatabaseLoggerProvider(
+     builder.Services.BuildServiceProvider().GetRequiredService<Mcl959DbContext>()));
+builder.Services.AddScoped<MembershipService>();
 
 // Ensure the following line is present in your .csproj file to include the Swashbuckle.AspNetCore package
 // <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />

@@ -1,17 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using mcl959mvc.Classes;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
 
 namespace mcl959mvc.Models;
 
 public partial class Mcl959DbContext : DbContext
 {
 
+    public DbContextOptions<Mcl959DbContext> Options { get; }
+
     public Mcl959DbContext(DbContextOptions<Mcl959DbContext> options)
         : base(options)
     {
+        Options = options;  
     }
 
     public virtual DbSet<Event> Events { get; set; }
@@ -29,6 +33,8 @@ public partial class Mcl959DbContext : DbContext
     public virtual DbSet<Post> Posts { get; set; }
 
     public virtual DbSet<Roster> Roster { get; set; }
+
+    public DbSet<WebsiteLog> WebsiteLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

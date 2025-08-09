@@ -1,7 +1,11 @@
 ﻿@model mcl959mvc.Models.Roster
+@{
+    ViewData["Title"] = "Roster";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    bool isAdmin = User.HasClaim("isAdmin", "true");
+}
 
-<h4>Roster</h4>
-<hr />
+<h4>Edit Roster Member</h4>
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Edit">
@@ -123,7 +127,10 @@
                 <span asp-validation-for="LastName" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+                @if (isAdmin)
+                {
+                    <input type="submit" value="Save" class="btn btn-primary" />
+                }
             </div>
         </form>
     </div>

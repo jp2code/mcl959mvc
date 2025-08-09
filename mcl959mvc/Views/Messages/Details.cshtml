@@ -2,53 +2,46 @@
 @{
     ViewData["Title"] = "Details";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    bool isAdmin = User.HasClaim("isAdmin", "true");
 }
 
-<h1>Details</h1>
+<h3>Message Details</h3>
 
-<div>
-    <h4>Message</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Email)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Email)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Subject)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Subject)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Comments)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Comments)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Date)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Date)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.ResetToken)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.ResetToken)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="./Edit" asp-route-id="@Model.Id">Edit</a> |
-    <a asp-action="./Index">Back to List</a>
+<div class="row">
+    <div class="col-md-12">
+        <table class="table">
+            <tbody>
+                <tr>
+                    <th scope="row">Name</th>
+                    <td><input asp-for="Name" class="form-control w-100" readonly="true" /></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th scope="row">Email</th>
+                    <td><input asp-for="Email" class="form-control w-100" readonly="true" /></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th scope="row">Message</th>
+                    <td><textarea asp-for="Comments" class="form-control w-100" rows="4" readonly="true"></textarea></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th scope="row">Date</th>
+                    <td><input asp-for="Date" class="form-control w-100" readonly="true" /></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th scope="row"></th>
+                    <td>
+                        @if (isAdmin)
+                        {
+                            <a asp-action="./Edit" asp-route-id="@Model.Id">Edit</a>
+                        }
+                    </td>
+                    <td><a asp-action="./Index">Back to List</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>

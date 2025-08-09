@@ -283,6 +283,13 @@ div, li, p, div > li {
     color: #FFD700; /*=Gold, #C0C0C0;=silver */
 }
 
+.table td input.form-control,
+.table td select.form-control,
+.table td textarea.form-control {
+    width: 100%;
+    min-width: 200px;
+}
+
 th {
     color: #FFD700; /* #775b26;  Gold */
     font-family: mcl959_font, Stencil, sans-serif, monospace;

@@ -15,7 +15,6 @@
     <header>
         @{
             string currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
-            string currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
         }
         <div class="logo"></div>
         <div class="head">
@@ -34,19 +33,19 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
-                        <li id="miHome" class="nav-item @(currentController == "Home" && currentAction == "Index" ? "active" : "")">
+                        <li id="miHome" class="nav-item @(currentController == "Home" ? "active" : "")">
                             <a class="nav-link" asp-controller="Home" asp-action="Index">MCL959</a>
                         </li>
-                        <li id="miEvent" class="nav-item @(currentController == "Events" && currentAction == "Index" ? "active" : "")">
+                        <li id="miEvent" class="nav-item @(currentController == "Events" ? "active" : "")">
                             <a class="nav-link" asp-controller="Events" asp-action="Index">Events</a>
                         </li>
-                        <li id="miMember" class="nav-item @(currentController == "Roster" && currentAction == "Index" ? "active" : "")">
+                        <li id="miMember" class="nav-item @(currentController == "Roster" ? "active" : "")">
                             <a class="nav-link" asp-controller="Roster" asp-action="Index">Members</a>
                         </li>
-                        <li id="miAbout" class="nav-item @(currentController == "Home" && currentAction == "About" ? "active" : "")">
+                        <li id="miAbout" class="nav-item @(currentController == "Home" ? "active" : "")">
                             <a class="nav-link" asp-controller="Home" asp-action="About">About</a>
                         </li>
-                        <li id="miContact" class="nav-item @(currentController == "Messages" && currentAction == "Index" ? "active" : "")">
+                        <li id="miContact" class="nav-item @(currentController == "Messages" ? "active" : "")">
                             <a class="nav-link" asp-controller="Messages" asp-action="Index">Contact</a>
                         </li>
                         <!-- Add more controllers/actions as needed -->

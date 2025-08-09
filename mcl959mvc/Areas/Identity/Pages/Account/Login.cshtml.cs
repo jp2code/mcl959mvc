@@ -3,6 +3,7 @@
 #nullable disable
 
 using mcl959mvc.Data;
+using mcl959mvc.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -24,11 +25,20 @@ namespace mcl959mvc.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly MembershipService _membershipService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger)
+        public LoginModel(
+            SignInManager<ApplicationUser> signInManager,
+            UserManager<ApplicationUser> userManager,
+            ILogger<LoginModel> logger,
+            MembershipService membershipService
+            )
         {
             _signInManager = signInManager;
             _logger = logger;
+            _membershipService = membershipService;
+            _userManager = userManager;
         }
 
         /// <summary>
@@ -118,24 +128,31 @@ namespace mcl959mvc.Areas.Identity.Pages.Account
             {
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-                var user = await _signInManager.UserManager.FindByEmailAsync(Input.Email);
-                // remove old claims first (in case of re-logging in)
-                var userClaims = await _signInManager.UserManager.GetClaimsAsync(user);
-                var claimsToRemove = userClaims.Where(c => c.Type == "isAdmin" || c.Type == "isRegistered").ToList();
-                await _signInManager.UserManager.RemoveClaimsAsync(user, claimsToRemove);
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+
                 if (result.Succeeded)
                 {
-                    var claims = new List<Claim>
+                    var user = await _userManager.FindByEmailAsync(Input.Email);
+                    if (user != null)
                     {
-                        new Claim("isAdmin", user.IsAdmin ? "true" : "false"),
-                        new Claim("isRegistered", user.IsRegistered ? "true" : "false")
-                    };
-                    // Add new claims
-                    await _signInManager.UserManager.AddClaimsAsync(user, claims);
-                    // Sign in the user with the new claims (this will include the new claims in the cookie)
-                    await _signInManager.SignInWithClaimsAsync(user, Input.RememberMe, claims);
-                    _logger.LogInformation("User logged in.");
+                        await _membershipService.FindRosterMember(user);
+
+                        var claims = new List<Claim>
+                        {
+                            new Claim("isRegistered", "true"),
+                            new Claim("isMember", user.IsMember ? "true" : "false"),
+                            new Claim("isAdmin", user.IsAdmin ? "true" : "false")
+                        };
+
+                        // Remove old claims if they exist
+                        var oldClaims = (await _userManager.GetClaimsAsync(user))
+                            .Where(c => c.Type == "isMember" || c.Type == "isRegistered" || c.Type == "isAdmin").ToList();
+                        if (oldClaims.Any())
+                            await _userManager.RemoveClaimsAsync(user, oldClaims);
+
+                        await _userManager.AddClaimsAsync(user, claims);
+                    }
+                    _logger.LogInformation($"User '{Input.Email}' logged in.");
                     return LocalRedirect(returnUrl);
                 }
                 if (result.RequiresTwoFactor)
@@ -144,7 +161,7 @@ namespace mcl959mvc.Areas.Identity.Pages.Account
                 }
                 if (result.IsLockedOut)
                 {
-                    _logger.LogWarning("User account locked out.");
+                    _logger.LogWarning($"User '{Input.Email}' account locked out.");
                     return RedirectToPage("./Lockout");
                 }
                 else

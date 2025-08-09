@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = "Events";
     Layout = "~/Views/Shared/_Layout.cshtml";
-    bool isAdmin = ViewBag.IsAdmin ?? false;
+    bool isAdmin = User.HasClaim("isAdmin", "true");
 }
 
 <h1>Detachment 959 Events</h1>

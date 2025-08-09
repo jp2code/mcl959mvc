@@ -4,54 +4,48 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Edit</h1>
+<h3>Message Details [EDIT]</h3>
 
-<h4>Message</h4>
-<hr />
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-12">
         <form method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Subject" class="control-label"></label>
-                <input asp-for="Subject" class="form-control" />
-                <span asp-validation-for="Subject" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Comments" class="control-label"></label>
-                <input asp-for="Comments" class="form-control" />
-                <span asp-validation-for="Comments" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Date" class="control-label"></label>
-                <input asp-for="Date" class="form-control" />
-                <span asp-validation-for="Date" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ResetToken" class="control-label"></label>
-                <input asp-for="ResetToken" class="form-control" />
-                <span asp-validation-for="ResetToken" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <th scope="row">Name</th>
+                        <td><input asp-for="Name" class="form-control w-100" /></td>
+                        <td><span asp-validation-for="Name" class="text-danger"></span></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Email</th>
+                        <td><input asp-for="Email" class="form-control w-100" /></td>
+                        <td><span asp-validation-for="Email" class="text-danger"></span></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Message</th>
+                        <td><textarea asp-for="Comments" class="form-control w-100" rows="4"></textarea></td>
+                        <td><span asp-validation-for="Comments" class="text-danger"></span></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Date</th>
+                        <td><input asp-for="Date" class="form-control w-100" readonly="true" /></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Save</th>
+                        <td>
+                            <div class="form-group">
+                                <input type="submit" value="Save" class="btn btn-primary" />
+                            </div>
+                        </td>
+                        <td><a asp-page="./Index">Back to List</a></td>
+                    </tr>
+                </tbody>
+            </table>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-page="./Index">Back to List</a>
 </div>
 
 @section Scripts {

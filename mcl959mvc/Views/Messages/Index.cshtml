@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Emails";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    bool isAdmin = User.HasClaim("isAdmin", "true");
 }
 
 <h1>Email History</h1>
@@ -9,33 +10,37 @@
 <p>
     <a asp-action="Create">New Message</a>
 </p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                Sender
-            </th>
-            <th>
-                Email
-            </th>
-            <th>
-                Date
-            </th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Name)</a>
-            </td>
-            <td>
-                <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Email)</a>
-            </td>
-            <td>
-                <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Date)</a>
-            </td>
-        </tr>
+@if (isAdmin)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    Sender
+                </th>
+                <th>
+                    Email
+                </th>
+                <th>
+                    Date
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Name)</a>
+                    </td>
+                    <td>
+                        <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Email)</a>
+                    </td>
+                    <td>
+                        <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Date)</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 }
-    </tbody>
-</table>

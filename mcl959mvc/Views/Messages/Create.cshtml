@@ -3,82 +3,67 @@
     ViewData["Title"] = "Contact";
     Layout = "~/Views/Shared/_Layout.cshtml";
     var isAdmin = User.HasClaim("isAdmin", "true");
+    var isMember = User.HasClaim("isMember", "true");
     var isRegistered = User.HasClaim("isRegistered", "true");
 }
-<h1>Send us a message</h1>
-<hr />
+<h3>Send us a message</h3>
+
 <div class="row">
     <div class="col-md-12">
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <table class="table">
-                <thead>
-                    <tr>
-                        <th scope="col">Field</th>
-                        <th scope="col" colspan="3">Value</th>
-                    </tr>
-                </thead>
                 <tbody>
                     <tr>
                         <th scope="row">Name</th>
-                        <td><input asp-for="Name" class="form-control" /></td>
+                        <td><input asp-for="Name" class="form-control w-100" /></td>
                         <td><span asp-validation-for="Name" class="text-danger"></span></td>
-                        <td></td>
                     </tr>
                     <tr>
                         <th scope="row">Email</th>
-                        <td><input asp-for="Email" class="form-control" /></td>
+                        <td><input asp-for="Email" class="form-control w-100" /></td>
                         <td><span asp-validation-for="Email" class="text-danger"></span></td>
-                        <td></td>
                     </tr>
                     <tr>
                         <th scope="row">Send To</th>
                         <td>
-                            @if (!isRegistered)
+                            @if (!isMember)
                             {
                                 <p>Web Sergeant</p>
                             }
                             else
                             {
-                                <select asp-for="SendTo" class="form-control" asp-items="ViewBag.Recipients"></select>
+                                <select asp-for="SendTo" class="form-control w-100" asp-items="ViewBag.Recipients"></select>
                             }
                         </td>
-                        <td></td>
                         <td></td>
                     </tr>
                     <tr>
                         <th scope="row">Message</th>
-                        <td colspan="3"><textarea asp-for="Comments" class="form-control" rows="6" style="width: 100%"></textarea></td>
+                        <td><textarea asp-for="Comments" class="form-control w-100" rows="6" style="width: 100%"></textarea></td>
+                        <td><span asp-validation-for="Comments" class="text-danger"></span></td>
                     </tr>
-                    <tr>
-                        <th scope="row">&nbsp;</th>
-                        <td colspan="3"><span asp-validation-for="Comments" class="text-danger"></span></td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Attachment</th>
-                        <td>
-                            <form asp-action="Create" method="post" enctype="multipart/form-data">
-                                <!-- your existing fields -->
-                                <input type="file" name="Attachment" accept=".jpg,.jpeg,.gif,.png,.pdf,.doc,.docx,.zip" />
-                                <button type="submit" name="action" value="SubmitMessage">Send</button>
-                            </form>
-                        </td>
-                    </tr>
-                    @if (!isRegistered)
+                    @if (isRegistered)
                     {
                         <tr>
-                            <th scope="row">Send</th>
-                            @if (!isRegistered)
-                            {
-                                <td>You must <a asp-area="Identity" asp-page="/Account/Login">log in</a> or <a asp-area="Identity" asp-page="/Account/Register">register</a> to submit a message.</td>
-                            } else
-                            {
-                                <td><input type="submit" value="Submit" class="btn btn-primary" /></td>
-                            }
-                            <td><a asp-action="Index">Home</a></td>
+                            <th scope="row">Attachment</th>
+                            <td>
+                                <button type="submit" name="action" value="SubmitMessage">Send</button>
+                            </td>
                             <td></td>
                         </tr>
                     }
+                    <tr>
+                        <th scope="row">Send</th>
+                        @if (!isRegistered)
+                        {
+                            <td>You must <a asp-area="Identity" asp-page="/Account/Login">log in</a> or <a asp-area="Identity" asp-page="/Account/Register">register</a> to submit a message.</td>
+                        } else
+                        {
+                            <td><input type="submit" value="Submit" class="btn btn-primary" /></td>
+                        }
+                        <td><a asp-action="Index">Home</a></td>
+                    </tr>
                 </tbody>
             </table>
         </form>

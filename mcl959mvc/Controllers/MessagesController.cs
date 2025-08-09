@@ -66,19 +66,19 @@ public class MessagesController : Mcl959MemberController
                                  select new
                                  {
                                      member.PersonalEmail,
-                                     member.DisplayName
+                                     NameAndRank = $"{member.DisplayName} ({rank.DisplayRank})"
                                  })
             {
                 list.Add(new SelectListItem
                 {
                     Value = item.PersonalEmail,
-                    Text = item.DisplayName
+                    Text = item.NameAndRank
                 });
             }
         }
         else
         {
-            foreach (var item in _context.Roster)
+            foreach (var item in _context.Roster.OrderBy(x => x.LastName).ThenBy(x => x.FirstName))
             {
                 list.Add(new SelectListItem
                 {
@@ -91,7 +91,7 @@ public class MessagesController : Mcl959MemberController
         return View(new Message
         {
             Name = string.Empty,
-            Email = string.Empty,
+            Email = UserEmail,
             Subject = "MCL959 Contact Message",
             Date = DateTime.UtcNow,
             CodeSent = false,
