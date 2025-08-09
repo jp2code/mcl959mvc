@@ -42,14 +42,14 @@ public partial class Mcl959DbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK_Member");
 
-            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
         });
 
         modelBuilder.Entity<Message>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK_Message");
 
-            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
         });
 
         modelBuilder.Entity<Roster>(entity =>
@@ -60,6 +60,8 @@ public partial class Mcl959DbContext : DbContext
             entity.Property(e => e.HashPwd).HasComment("Encrypted Password");
             entity.Property(e => e.WebsiteDisplay).HasComment("0=Display Nothing on Website (Default); 1=Display Personal; 2=Display Work;");
         });
+
+        modelBuilder.Entity<WebsiteLog>().ToTable("WebsiteLog");
 
         OnModelCreatingPartial(modelBuilder);
     }

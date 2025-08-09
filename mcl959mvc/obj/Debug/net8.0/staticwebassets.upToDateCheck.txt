@@ -108,3 +108,4 @@ wwwroot\photos\patriotWallSM.jpg
 wwwroot\photos\wallOfHonor.jpg
 wwwroot\photos\wallOfHonorSM.jpg
 wwwroot\photos\WayneDolive.jpg
+wwwroot\uploads\MaximosReportCard.f1281c48-0cdf-4496-ad02-ae4ccbb26241.pdf

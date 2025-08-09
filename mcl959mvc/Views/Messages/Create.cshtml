@@ -12,12 +12,14 @@
     <div class="col-md-12">
         <form method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Subject" />
+            <input type="hidden" asp-for="Date" />
             <table class="table">
                 <tbody>
                     <tr>
-                        <th scope="row">Name</th>
-                        <td><input asp-for="Name" class="form-control w-100" /></td>
-                        <td><span asp-validation-for="Name" class="text-danger"></span></td>
+                        <th scope="row" width="25%">Name</th>
+                        <td width="50%"><input asp-for="Name" class="form-control w-100" /></td>
+                        <td width="25%"><span asp-validation-for="Name" class="text-danger"></span></td>
                     </tr>
                     <tr>
                         <th scope="row">Email</th>
@@ -48,7 +50,7 @@
                         <tr>
                             <th scope="row">Attachment</th>
                             <td>
-                                <button type="submit" name="action" value="SubmitMessage">Send</button>
+                                <input type="file" name="Attachment" accept=".jpg,.jpeg,.gif,.png,.pdf,.doc,.docx,.zip" />
                             </td>
                             <td></td>
                         </tr>
@@ -73,3 +75,8 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
+<script>
+    $(document).ready(function () {
+        $('#miContact').addClass('selected');
+    });
+</script>

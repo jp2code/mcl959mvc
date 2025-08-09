@@ -108,4 +108,7 @@ public partial class Roster
     [StringLength(200)]
     [Unicode(false)]
     public string? LastName { get; set; }
+
+    [NotMapped]
+    public string? Oath { get; set; }
 }

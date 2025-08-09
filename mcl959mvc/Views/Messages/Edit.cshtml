@@ -14,9 +14,9 @@
             <table class="table">
                 <tbody>
                     <tr>
-                        <th scope="row">Name</th>
-                        <td><input asp-for="Name" class="form-control w-100" /></td>
-                        <td><span asp-validation-for="Name" class="text-danger"></span></td>
+                        <th scope="row" width="25%">Name</th>
+                        <td width="50%"><input asp-for="Name" class="form-control w-100" /></td>
+                        <td width="25%"><span asp-validation-for="Name" class="text-danger"></span></td>
                     </tr>
                     <tr>
                         <th scope="row">Email</th>
@@ -51,3 +51,8 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
+<script>
+    $(document).ready(function () {
+        $('#miContact').addClass('selected');
+    });
+</script>

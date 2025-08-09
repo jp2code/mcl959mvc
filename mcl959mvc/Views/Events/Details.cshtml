@@ -33,3 +33,8 @@
     <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>
+<script>
+    $(document).ready(function () {
+        $('#miEvent').addClass('selected');
+    });
+</script>

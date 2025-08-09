@@ -5,7 +5,7 @@
     ViewData["Title"] = "About";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<div class="text-center">
+<div>
     <div>
         <h2>The Foundation</h2>
         <p>The Marine Corps League was founded by Major General Commandant, John A. Lejeune, in 1923 and chartered by an Act of Congress on August 4, 1937. Its membership of 60,000 is comprised of honorably discharged, active duty and Reserve Marines with 90 days of service or more, and retired Marines. It includes officer, enlisted, male and female members.</p>
@@ -38,3 +38,8 @@
         <p>The Marine Corps League is an organization of Active Duty and Honorably Discharged Marines. We are the voice of all Marines, and we help our fellow Marine Corps Veterans.</p>
     </div>
 </div>
+<script>
+    $(document).ready(function () {
+        $('#miAbout').addClass('selected');
+    });
+</script>

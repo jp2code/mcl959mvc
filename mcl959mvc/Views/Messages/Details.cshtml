@@ -12,9 +12,9 @@
         <table class="table">
             <tbody>
                 <tr>
-                    <th scope="row">Name</th>
-                    <td><input asp-for="Name" class="form-control w-100" readonly="true" /></td>
-                    <td></td>
+                    <th scope="row" width="25%">Name</th>
+                    <td width="50%"><input asp-for="Name" class="form-control w-100" readonly="true" /></td>
+                    <td width="25%"></td>
                 </tr>
                 <tr>
                     <th scope="row">Email</th>
@@ -45,3 +45,8 @@
         </table>
     </div>
 </div>
+<script>
+    $(document).ready(function () {
+        $('#miContact').addClass('selected');
+    });
+</script>

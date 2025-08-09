@@ -3,15 +3,16 @@
 @{
     ViewData["Title"] = "Members";
     var currentSort = ViewData["CurrentSort"] as string;
-    var isAdmin = ViewBag.IsAdmin as bool? ?? false;
+    bool isAdmin = User.HasClaim("isAdmin", "true");
     var nameSortParm = ViewData["NameSortParm"] as string;
     var currentPage = ViewData["CurrentPage"].ToInt32();
     var totalPages = ViewData["TotalPages"].ToInt32();
+    var oath = ViewData["Oath"];
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <div id="divMembership">
-    <h1>Member Info</h1>
+    <h2>Member Info</h2>
     <table style="width: 90%">
         <tr><th>We are currently accepting new members!</th></tr>
         <tr>
@@ -35,7 +36,7 @@
     <asp:Label ID="lbl2Months" runat="server" />
 </div>
 <div id="divMembers">
-    <h1>Memberships</h1>
+    <h2>Memberships</h2>
     <table style="width: 90%">
         <tr>
             <th>Current Members</th>
@@ -55,7 +56,7 @@
 @if (isAdmin)
 {
 <div id="divRoster">
-    <h1>Roster</h1>
+    <h2>Roster</h2>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -73,8 +74,7 @@
                         <a
                             asp-action="Index"
                             asp-route-sortOrder="@nameSortParm"
-                            asp-route-page="1"
-                            asp-page="./Edit" asp-route-id="@item.Id">@item.DisplayName</a>
+                            asp-route-page="1">@item.DisplayName</a>
                     </td>
                     <td>@item.MemberNumber</td>
                     <td>
@@ -132,10 +132,11 @@
 </div>
 }
 <div id="divOath">
-    <asp:Label id="mclOath" runat="server"></asp:Label>
+    <h2>Marine Corps League Oath of Membership</h2>
+    <div>@oath</div>
 </div>
 <div id="divMemorial">
-    <h1>Memorials</h1>
+    <h2>Memorials</h2>
     <table class="table">
         <thead>
             <tr>
@@ -165,3 +166,8 @@
         </tbody>
     </table>
 </div>
+<script>
+    $(document).ready(function () {
+        $('#miMember').addClass('selected');
+    });
+</script>

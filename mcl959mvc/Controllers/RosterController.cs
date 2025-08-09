@@ -46,6 +46,20 @@ public class RosterController : Mcl959MemberController
         ViewData["CurrentSort"] = sortOrder;
         ViewData["CurrentPage"] = page;
         ViewData["TotalPages"] = (int)Math.Ceiling(totalCount / (double)pageSize);
+        ViewData["Oath"] = @"
+I, <i>[insert your name]</i>, in the presence of Almighty God, and the members of the Marine Corps League here assembled,<br/>
+being fully aware of the symbols, motto, principles and purposes of the Marine Corps League,<br/>
+do solemnly swear or affirm that I will uphold and defend the Constitution and Laws of the United States of America and of the Marine Corps League.<br/>
+<br/>
+I will never knowingly wrong, deceive or defraud the League to the value of anything.<br/>
+<br/>
+I will never knowingly wrong or injure or permit any member or any member's family to be wronged or injured if to prevent the same is within my power.<br/>
+<br/>
+I will never propose for membership one known to me to be unqualified or unworthy to become a member of the League.<br/>
+<br/>
+I further promise to govern my conduct in the League's affairs and in my personal life in a manner becoming a decent and honorable person<br/>
+and will never knowingly bring discredit to the League, so help me God.<br/>
+<br/>";
 
         return View(pagedList);
     }

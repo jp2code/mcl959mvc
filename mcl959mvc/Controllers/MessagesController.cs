@@ -56,12 +56,14 @@ public class MessagesController : Mcl959MemberController
         list.Add(new SelectListItem
         {
             Value = string.Empty,
-            Text = "Select a member"
+            Text = "Select a member",
+            Selected = true
         });
         if (!IsAdmin)
         {
             foreach (var item in from rank in _context.MemberRanks
                                  join member in _context.Roster on rank.MemberNumber equals member.MemberNumber
+                                 where member.DiedOn == null
                                  orderby rank.DisplayRank
                                  select new
                                  {
@@ -78,11 +80,19 @@ public class MessagesController : Mcl959MemberController
         }
         else
         {
-            foreach (var item in _context.Roster.OrderBy(x => x.LastName).ThenBy(x => x.FirstName))
+            foreach (var item in _context.Roster
+                .Where(x => x.DiedOn == null)
+                .OrderBy(x => x.LastName)
+                .ThenBy(x => x.FirstName))
             {
+                var email = !string.IsNullOrEmpty(item.PersonalEmail) ? item.PersonalEmail :
+                    !string.IsNullOrEmpty(item.WorkEmail) ? item.WorkEmail :
+                    !string.IsNullOrEmpty(item.PersonalPhone) ? item.PersonalPhone :
+                    !string.IsNullOrEmpty(item.WorkPhone) ? item.WorkPhone :
+                    $"[NO Info For '{item.DisplayName}']";
                 list.Add(new SelectListItem
                 {
-                    Value = item.PersonalEmail,
+                    Value = email,
                     Text = item.DisplayName
                 });
             }
@@ -93,6 +103,7 @@ public class MessagesController : Mcl959MemberController
             Name = string.Empty,
             Email = UserEmail,
             Subject = "MCL959 Contact Message",
+            SendTo = string.Empty,
             Date = DateTime.UtcNow,
             CodeSent = false,
             ResetToken = null,
@@ -137,7 +148,6 @@ public class MessagesController : Mcl959MemberController
                 return View(item);
             }
         }
-
         // If model is valid, save the message
         if (ModelState.IsValid)
         {
@@ -161,21 +171,18 @@ public class MessagesController : Mcl959MemberController
                 // Save file
                 var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
                 Directory.CreateDirectory(uploadsFolder);
-                var fileName = $"{Attachment.FileName}.{Guid.NewGuid()}{ext}";
+                var fileName = $"{Path.GetFileNameWithoutExtension(Attachment.FileName)}.{Guid.NewGuid()}{ext}";
                 var filePath = Path.Combine(uploadsFolder, fileName);
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await Attachment.CopyToAsync(stream);
                 }
-                uploadLink = $"/uploads/{fileName}";
-                item.Comments += $"\n\n<b>Attachment:</b> <a href=\"{uploadLink}\">{Attachment.FileName}</a>";
+                item.Comments += $"\n\n<b>Attachment:</b> <a href=\"{filePath}\">{Attachment.FileName}</a>";
             }
             await CheckUserIdentity();
-            ApplicationUser? user = await _userManager.GetUserAsync(User);
-            if (IsRegistered && user != null)
+            if (string.IsNullOrEmpty(item.Name))
             {
-                item.Name = user.UserName;
-                item.Email = user.Email ?? string.Empty;
+                item.Name = "John Doe";
             }
             item.Date = DateTime.UtcNow;
             _context.Messages.Add(item);
@@ -280,30 +287,28 @@ public class MessagesController : Mcl959MemberController
         var mailgunMsg = "<a href=\"http://api.mailgun.net\">Mailgun Requests API</a>";
         var textBody = EmailTextBody(fromName, fromEmail, attnTo, body, mailgunMsg);
         var htmlBody = EmailHtmlBody(fromName, fromEmail, attnTo, body, mailgunMsg);
-        var mimeType = new System.Net.Mime.ContentType("text/html");
-        var alternate = new AlternateView(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(textBody)), mimeType);
+        var textView = AlternateView.CreateAlternateViewFromString(textBody, null, "text/plain");
+        var htmlView = AlternateView.CreateAlternateViewFromString(htmlBody, null, "text/html");
         using (var email = new MailMessage()
         {
-            Body = htmlBody,
-            BodyEncoding = System.Text.Encoding.UTF8,
-            BodyTransferEncoding = System.Net.Mime.TransferEncoding.Base64,
-            DeliveryNotificationOptions = DeliveryNotificationOptions.OnFailure,
-            IsBodyHtml = true,
+            Body = textBody,
+            From = new MailAddress(_smtpSettings.FromEmail, "MCL959 Contact Page"),
+            IsBodyHtml = false,
             Subject = subject,
         })
         {
-            email.From = new MailAddress(_smtpSettings.FromEmail); // IMPORTANT: This must be the same as your SMTP authentication address
             email.To.Add(new MailAddress(_smtpSettings.FromEmail, "MCL959 Contact Page"));
-            email.AlternateViews.Add(alternate);
+            email.AlternateViews.Add(textView);
+            email.AlternateViews.Add(htmlView);
             using (var smtp = new SmtpClient(_smtpSettings.Server, 587)
             {
+                Credentials = new System.Net.NetworkCredential(_smtpSettings.Username, _smtpSettings.Password),
                 DeliveryFormat = SmtpDeliveryFormat.International,
                 DeliveryMethod = SmtpDeliveryMethod.Network,
                 EnableSsl = true,
                 UseDefaultCredentials = false,
             })
             {
-                smtp.Credentials = new System.Net.NetworkCredential(_smtpSettings.Username, _smtpSettings.Password);
                 await smtp.SendMailAsync(email);
             }
         }
