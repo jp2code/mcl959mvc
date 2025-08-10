@@ -16,7 +16,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("mcl959mvc")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+30a3b9321da25128f336aa15a0ca59b55f7dc5d6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e1f9cc1b1626df21495b3373159ad4659cddd993")]
 [assembly: System.Reflection.AssemblyProductAttribute("mcl959mvc")]
 [assembly: System.Reflection.AssemblyTitleAttribute("mcl959mvc")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

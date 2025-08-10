@@ -1,13 +1,9 @@
 ﻿@using mcl959mvc.Classes
-@model List<mcl959mvc.Models.Roster>
+@model RosterIndexViewModel
 @{
     ViewData["Title"] = "Members";
-    var currentSort = ViewData["CurrentSort"] as string;
     bool isAdmin = User.HasClaim("isAdmin", "true");
-    var nameSortParm = ViewData["NameSortParm"] as string;
-    var currentPage = ViewData["CurrentPage"].ToInt32();
-    var totalPages = ViewData["TotalPages"].ToInt32();
-    var oath = ViewData["Oath"];
+    int nRoster = 1;
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -43,7 +39,7 @@
         </tr>
         <tr>
             <td style="width: 50%">
-                Our current membership is comprised of roughly @Model.Count Marines.<br />
+                Our current membership is comprised of approximately @Model.LivingMembers.Count Marines.<br />
                 <br />
                 Our meetings are held the 4th Tuesday of each month, except December. We're busy conducting the "Toys for Tots" program in December.<br />
             </td>
@@ -55,28 +51,34 @@
 </div>
 @if (isAdmin)
 {
-<div id="divRoster">
-    <h2>Roster</h2>
+    <div id="divRoster" class="admin">
+    <h2>Admin Roster</h2>
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Display Name</th>
-                <th>Member Number</th>
-                <th>Phone Number</th>
+                <th>Row</th>
+                <th>Name</th>
+                <th>Number</th>
+                <th>Phone</th>
                 <th>Email</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in Model)
+            @foreach (var item in Model.AllMembers
+                .OrderBy(x => x.LastName)
+                .ThenBy(x => x.FirstName)
+                .ThenBy(x => x.MemberNumber))
             {
                 <tr>
+                    <td>@(nRoster++)</td>
                     <td>
-                        <a
-                            asp-action="Index"
-                            asp-route-sortOrder="@nameSortParm"
-                            asp-route-page="1">@item.DisplayName</a>
+                        @item.DisplayName
                     </td>
-                    <td>@item.MemberNumber</td>
+                    <td>
+                        <a asp-action="Details" asp-controller="Roster"
+                            asp-route-memberNumber="@item.MemberNumber"
+                            asp-route-page="1">@item.MemberNumber</a>
+                    </td>
                     <td>
                         @if (!string.IsNullOrWhiteSpace(item.PersonalPhone))
                         {
@@ -109,31 +111,13 @@
             }
         </tbody>
     </table>
-    <nav>
-        <ul class="pagination">
-            @if (1 < currentPage)
-            {
-                <li class="page-item">
-                    <a class="page-link" asp-action="Index"
-                        asp-route-sortOrder="@currentSort"
-                        asp-route-page="@(currentPage - 1)">Previous</a>
-                </li>
-            }
-            @if (currentPage < totalPages)
-            {
-                <li class="page-item">
-                    <a class="page-link" asp-action="Index"
-                       asp-route-sortOrder="@currentSort"
-                       asp-route-page="@(currentPage + 1)">Next</a>
-                </li>
-            }
-        </ul>
-    </nav>
 </div>
 }
 <div id="divOath">
     <h2>Marine Corps League Oath of Membership</h2>
-    <div>@oath</div>
+    <div>
+        <blockquote>@Html.Raw(Model.Oath)</blockquote>
+    </div>
 </div>
 <div id="divMemorial">
     <h2>Memorials</h2>
@@ -146,9 +130,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var member in Model
-            .Where(x => x.DiedOn != null)
-            .OrderBy(x => x.DiedOn))
+            @foreach (var member in Model.DeceasedMembers)
             {
                 <tr>
                     <td>@member.DisplayName</td>

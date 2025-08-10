@@ -1,152 +1,225 @@
 ﻿@model mcl959mvc.Models.Roster
+@{
+    ViewData["Title"] = "Roster";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    bool isAdmin = User.HasClaim("isAdmin", "true");
+}
 
+<h3>Roster Member Details</h3>
 <div>
-    <h4>Roster</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DisplayName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DisplayName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.MemberNumber)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.MemberNumber)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.LifeMemberNumber)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.LifeMemberNumber)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.MemberStartDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.MemberStartDate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.MemberExpireDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.MemberExpireDate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.LifeMemberDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.LifeMemberDate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.PersonalAddress)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.PersonalAddress)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.PersonalPhone)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.PersonalPhone)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.PersonalEmail)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.PersonalEmail)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.WorkAddress)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.WorkAddress)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.WorkPhone)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.WorkPhone)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.WorkEmail)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.WorkEmail)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DefaultInfo)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DefaultInfo)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.WebsiteDisplay)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.WebsiteDisplay)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedDate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TwoStepKey)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TwoStepKey)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Authenticated)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Authenticated)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.HashPwd)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.HashPwd)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DiedOn)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DiedOn)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.FirstName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.FirstName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.MiddleName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.MiddleName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.LastName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.LastName)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.FirstName)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.FirstName)
+                    </dt>
+                </dl>
+            </div>
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.MiddleName)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.MiddleName)
+                    </dt>
+                </dl>
+            </div>
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.LastName)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.LastName)
+                    </dt>
+                </dl>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.DisplayName)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.DisplayName)
+                    </dt>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.MemberNumber)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.MemberNumber)
+                    </dt>
+                </dl>
+            </div>
+            <div class="col-md-4">
+                <dl>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.MemberStartDate)
+                    </dt>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.MemberStartDate)
+                    </dd>
+                </dl>
+            </div>
+            <div class="col-md-4">
+                <dl>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.MemberExpireDate)
+                    </dt>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.MemberExpireDate)
+                    </dd>
+                </dl>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.LifeMemberNumber)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.LifeMemberNumber)
+                    </dt>
+                </dl>
+            </div>
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.LifeMemberDate)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.LifeMemberDate)
+                    </dt>
+                </dl>
+            </div>
+            <div class="col-md-4"></div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.PersonalAddress)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.PersonalAddress)
+                    </dt>
+                </dl>
+            </div>
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.PersonalPhone)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.PersonalPhone)
+                    </dt>
+                </dl>
+            </div>
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.PersonalEmail)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.PersonalEmail)
+                    </dt>
+                </dl>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.WorkAddress)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.WorkAddress)
+                    </dt>
+                </dl>
+            </div>
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.WorkPhone)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.WorkPhone)
+                    </dt>
+                </dl>
+            </div>
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.WorkEmail)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.WorkEmail)
+                    </dt>
+                </dl>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.CreatedDate)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.CreatedDate)
+                    </dt>
+                </dl>
+            </div>
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.DiedOn)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.DiedOn)
+                    </dt>
+                </dl>
+            </div>
+            <div class="col-md-4">
+                <dl>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.Authenticated)
+                    </dd>
+                    <dt class="col-sm-2">
+                        @Html.DisplayNameFor(model => model.Authenticated)
+                    </dt>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <form asp-action="Edit">
+                    <input type="hidden" asp-for="Id" />
+                    <input type="submit" value="Edit" class="btn" /> |
+                </form>
+            </div>
+            <div class="col-md-4"></div>
+            <div class="col-md-4"><a asp-action="Index">Back to List</a></div>
+        </div>
+    </div>
 </div>
 <script>
     $(document).ready(function () {

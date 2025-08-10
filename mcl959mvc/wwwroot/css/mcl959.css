@@ -33,6 +33,15 @@ html, body {
     text-shadow: 1px 1px 1px rgba(0,43,92,80);
 }
 
+blockquote {
+    background-color: #999999; /* silver */
+    color: #004392; /* dress blues blue */
+    border-left: 5px solid #cc0000; /* red */
+    font-family: sans-serif, monospace;
+    margin: 20px 0;
+    padding: 10px 20px;
+}
+
 body {
     color: #999999; /* silver */
     background-color: #004392; /* dress blues blue */
@@ -183,6 +192,15 @@ input[readonly], textarea[readonly] {
     color: #6c757d !important;
     border: 1px solid #ced4da;
     cursor: not-allowed;
+}
+
+div.admin {
+    background-color: rgb( 189, 189, 189 ); /* lighter silver */
+    border: 1px solid #999999; /* silver */
+    color: red; /*=Gold, #C0C0C0;=silver */
+    font-family: mcl959_font, Stencil, sans-serif, monospace;
+    margin: 10px 10px 10px 10px;
+    padding: 10px 10px 10px 10px;
 }
 
 div.alert {
