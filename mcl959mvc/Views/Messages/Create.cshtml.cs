@@ -24,7 +24,7 @@ namespace mcl959mvc.Views.Messages
         }
 
         [BindProperty]
-        public Message Message { get; set; } = default!;
+        public MessagesModel Message { get; set; } = default!;
 
         // For more information, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()

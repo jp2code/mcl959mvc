@@ -89,7 +89,11 @@
             @foreach (var member in Model.DeceasedMembers)
             {
                 <tr>
-                    <td>@member.DisplayName</td>
+                    <td>
+                        <a asp-controller="Roster" asp-action="Memorial" asp-route-id="@member.Id">
+                            @member.DisplayName
+                        </a>
+                    </td>
                     <td>@member.DiedOn</td>
                     <td>
                         @if (member.LifeMemberNumber == null)

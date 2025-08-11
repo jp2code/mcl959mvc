@@ -31,7 +31,18 @@ public class EventsController : Mcl959MemberController
         if (id == null) return NotFound();
         var evt = await _context.Events.FindAsync(id);
         if (evt == null) return NotFound();
-        return View(evt);
+
+        var comments = await _context.Comments
+            .Where(c => c.TableSource == "Events" && c.ParentId == id)
+            .OrderByDescending(c => c.TimeStamp)
+            .ToListAsync();
+
+        var model = new EventsAndCommentsModel()
+        {
+            Event = evt,
+            Comments = comments,
+        };
+        return View(model);
     }
 
     // GET: Events/Create
@@ -45,7 +56,7 @@ public class EventsController : Mcl959MemberController
     // POST: Events/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Event evt)
+    public async Task<IActionResult> Create(EventsModel evt)
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
@@ -72,7 +83,7 @@ public class EventsController : Mcl959MemberController
     // POST: Events/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Event evt)
+    public async Task<IActionResult> Edit(int id, EventsModel evt)
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
@@ -111,6 +122,19 @@ public class EventsController : Mcl959MemberController
             await _context.SaveChangesAsync();
         }
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddComment(CommentsModel item)
+    {
+        await CheckUserIdentity();
+        if (!User.Identity.IsAuthenticated) return Forbid();
+        item.TimeStamp = DateTime.UtcNow;
+        item.TableSource = "Events";
+        _context.Comments.Add(item);
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Details), new { id = item.Id });
     }
 
 }

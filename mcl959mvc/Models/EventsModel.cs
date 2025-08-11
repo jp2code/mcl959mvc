@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace mcl959mvc.Models;
 
-public partial class Event
+public partial class EventsModel
 {
     [Key]
     [Column("ID")]

@@ -18,7 +18,7 @@ namespace mcl959mvc.Views.Messages
             _context = context;
         }
 
-        public Message Message { get; set; } = default!;
+        public MessagesModel Message { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(int? id)
         {

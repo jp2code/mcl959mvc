@@ -1,0 +1,52 @@
+﻿@model mcl959mvc.Models.MemorialViewModel
+@{
+    ViewData["Title"] = "Roster";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isAdmin = User.HasClaim("isAdmin", "true");
+    var isMember = User.HasClaim("isMember", "true");
+    var isRegistered = User.HasClaim("isRegistered", "true");
+}
+
+<h2>@Model.DisplayName</h2>
+<p>@Model.Memorial.Description</p>
+<p>Date of Birth: @Model.Memorial.Dob?.ToShortDateString()</p>
+
+<h3>Comments</h3>
+<ul>
+@foreach (var comment in Model.Comments)
+{
+    <li>
+        <strong>@comment.UserId</strong>: @comment.Message <em>(@comment.TimeStamp)</em>
+    </li>
+}
+</ul>
+@if (isRegistered)
+{
+    <h4>Add a Comment</h4>
+    <form asp-action="AddComment" asp-controller="Roster" method="post">
+        <input type="hidden" name="TableSource" value="Memorial" />
+        <input type="hidden" name="ParentId" value="@Model.Memorial.Id" />
+        <div class="form-group">
+            <label for="UserId">Comment As</label>
+            <input type="text" name="UserId" class="form-control" value="@User.Identity.Name" />
+            <label for="Message">Comment</label>
+            <textarea name="Message" class="form-control" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Post Comment</button>
+    </form>
+}
+else
+{
+    <p><em>You must be registered and logged in to add a comment.</em></p>
+}
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+<script>
+    $(document).ready(function () {
+        $('#miMember').addClass('selected');
+    });
+</script>

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace mcl959mvc.Models;
 
-public partial class Message
+public partial class MessagesModel
 {
     [Key]
     [Column("ID")]

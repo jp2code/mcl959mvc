@@ -18,34 +18,25 @@ public partial class Mcl959DbContext : DbContext
         Options = options;  
     }
 
-    public virtual DbSet<Event> Events { get; set; }
+    public virtual DbSet<CommentsModel> Comments { get; set; }
 
-    public virtual DbSet<Item> Items { get; set; }
+    public virtual DbSet<EventsModel> Events { get; set; }
 
     public virtual DbSet<MailgunLog> MailgunLogs { get; set; }
 
-    public virtual DbSet<Member> Members { get; set; }
-
     public virtual DbSet<MemberRank> MemberRanks { get; set; }
 
-    public virtual DbSet<Message> Messages { get; set; }
+    public virtual DbSet<MessagesModel> Messages { get; set; }
 
-    public virtual DbSet<Post> Posts { get; set; }
+    public virtual DbSet<MemorialModel> Memorial { get; set; }
 
     public virtual DbSet<Roster> Roster { get; set; }
 
-    public DbSet<WebsiteLog> WebsiteLogs { get; set; }
+    public virtual DbSet<WebsiteLog> WebsiteLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Member>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_Member");
-
-            entity.Property(e => e.Id).ValueGeneratedOnAdd();
-        });
-
-        modelBuilder.Entity<Message>(entity =>
+        modelBuilder.Entity<MessagesModel>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK_Message");
 

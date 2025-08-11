@@ -162,4 +162,49 @@ public class RosterController : Mcl959MemberController
         return RedirectToAction(nameof(Index));
     }
 
+    public async Task<IActionResult> Memorial(int? id)
+    {
+        if (id == null) return NotFound();
+
+        var member = await _context.Roster.FindAsync(id);
+        if (member == null || member.DiedOn == null) return NotFound();
+
+        // Find or create the memorial record
+        var memorial = await _context.Memorial
+            .FirstOrDefaultAsync(m => m.MemberNumber == member.MemberNumber);
+
+        if (memorial == null)
+        {
+            memorial = new MemorialModel { MemberNumber = member.MemberNumber, TimeStamp = DateTime.UtcNow };
+            _context.Memorial.Add(memorial);
+            await _context.SaveChangesAsync();
+        }
+
+        // Get comments for this memorial
+        var comments = await _context.Comments
+            .Where(c => c.TableSource == "Memorial" && c.ParentId == memorial.Id)
+            .ToListAsync();
+
+        var viewModel = new MemorialViewModel
+        {
+            Memorial = memorial,
+            Comments = comments,
+            DisplayName = $"{member.FirstName} {member.LastName} ({member.MemberNumber})"
+        };
+
+        return View(viewModel);
+    }
+    [HttpPost]
+    public async Task<IActionResult> AddComment(CommentsModel comment)
+    {
+        if (!User.Identity.IsAuthenticated) return Forbid();
+
+        comment.TimeStamp = DateTime.UtcNow;
+        _context.Comments.Add(comment);
+        await _context.SaveChangesAsync();
+
+        // Redirect back to the memorial page
+        return RedirectToAction("Memorial", new { id = comment.ParentId });
+    }
+
 }

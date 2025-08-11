@@ -98,7 +98,7 @@ public class MessagesController : Mcl959MemberController
             }
         }
         ViewBag.Recipients = list.ToArray();
-        return View(new Message
+        return View(new MessagesModel
         {
             Name = string.Empty,
             Email = UserEmail,
@@ -114,7 +114,7 @@ public class MessagesController : Mcl959MemberController
     // POST: Messages/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Message item, string? action, IFormFile? Attachment)
+    public async Task<IActionResult> Create(MessagesModel item, string? action, IFormFile? Attachment)
     {
         await CheckUserIdentity();
         if (!IsRegistered)
@@ -228,7 +228,7 @@ public class MessagesController : Mcl959MemberController
     // POST: Messages/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Message message)
+    public async Task<IActionResult> Edit(int id, MessagesModel message)
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
