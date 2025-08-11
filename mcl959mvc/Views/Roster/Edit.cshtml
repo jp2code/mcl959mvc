@@ -5,135 +5,153 @@
     bool isAdmin = User.HasClaim("isAdmin", "true");
 }
 
-<h4>Edit Roster Member</h4>
+<h2>Edit Roster Member</h2>
 <form asp-action="Edit">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
     <input type="hidden" asp-for="Id" />
-</form>
-<div>
-    <div class="container">
-        <div class="row">
-            <div class="col-md-4 form-group">
-                <label asp-for="FirstName" class="control-label"></label>
-                <input asp-for="FirstName" class="form-control" />
-                <span asp-validation-for="FirstName" class="text-danger"></span>
-            </div>
-            <div class="col-md-4 form-group">
-                <label asp-for="MiddleName" class="control-label"></label>
-                <input asp-for="MiddleName" class="form-control" />
-                <span asp-validation-for="MiddleName" class="text-danger"></span>
-            </div>
-            <div class="col-md-4 form-group">
-                <label asp-for="LastName" class="control-label"></label>
-                <input asp-for="LastName" class="form-control" />
-                <span asp-validation-for="LastName" class="text-danger"></span>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-12 form-group">
-                <label asp-for="DisplayName" class="control-label"></label>
-                <input asp-for="DisplayName" class="form-control" />
-                <span asp-validation-for="DisplayName" class="text-danger"></span>
-            </div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="row">
-            <div class="col-md-4 form-group">
-                <label asp-for="MemberNumber" class="control-label"></label>
-                <input asp-for="MemberNumber" class="form-control" />
-                <span asp-validation-for="MemberNumber" class="text-danger"></span>
-            </div>
-            <div class="col-md-4 form-group">
-                <label asp-for="MemberStartDate" class="control-label"></label>
-                <input asp-for="MemberStartDate" class="form-control" />
-                <span asp-validation-for="MemberStartDate" class="text-danger"></span>
-            </div>
-            <div class="col-md-4 form-group">
-                <label asp-for="MemberExpireDate" class="control-label"></label>
-                <input asp-for="MemberExpireDate" class="form-control" />
-                <span asp-validation-for="MemberExpireDate" class="text-danger"></span>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-4 form-group">
-                <label asp-for="LifeMemberNumber" class="control-label"></label>
-                <input asp-for="LifeMemberNumber" class="form-control" />
-                <span asp-validation-for="LifeMemberNumber" class="text-danger"></span>
-            </div>
-            <div class="col-md-4 form-group">
-                <label asp-for="LifeMemberDate" class="control-label"></label>
-                <input asp-for="LifeMemberDate" class="form-control" />
-                <span asp-validation-for="LifeMemberDate" class="text-danger"></span>
-            </div>
-            <div class="col-md-4 form-group"></div>
-        </div>
-    </div>
-    <div class="container">
-        <div class="row">
-            <div class="col-md-4 form-group">
-                <label asp-for="PersonalAddress" class="control-label"></label>
-                <input asp-for="PersonalAddress" class="form-control" />
-                <span asp-validation-for="PersonalAddress" class="text-danger"></span>
-            </div>
-            <div class="col-md-4 form-group">
-                <label asp-for="PersonalPhone" class="control-label"></label>
-                <input asp-for="PersonalPhone" class="form-control" />
-                <span asp-validation-for="PersonalPhone" class="text-danger"></span>
-            </div>
-            <div class="col-md-4 form-group">
-                <label asp-for="PersonalEmail" class="control-label"></label>
-                <input asp-for="PersonalEmail" class="form-control" />
-                <span asp-validation-for="PersonalEmail" class="text-danger"></span>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-4 form-group">
-                <label asp-for="WorkAddress" class="control-label"></label>
-                <input asp-for="WorkAddress" class="form-control" />
-                <span asp-validation-for="WorkAddress" class="text-danger"></span>
-            </div>
-            <div class="col-md-4 form-group">
-                <label asp-for="WorkPhone" class="control-label"></label>
-                <input asp-for="WorkPhone" class="form-control" />
-                <span asp-validation-for="WorkPhone" class="text-danger"></span>
-            </div>
-            <div class="col-md-4 form-group">
-                <label asp-for="WorkEmail" class="control-label"></label>
-                <input asp-for="WorkEmail" class="form-control" />
-                <span asp-validation-for="WorkEmail" class="text-danger"></span>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-4 form-group"></div>
-            <div class="col-md-4 form-group"></div>
-            <div class="col-md-4 form-group">
-                <label asp-for="DiedOn" class="control-label"></label>
-                <input asp-for="DiedOn" class="form-control" />
-                <span asp-validation-for="DiedOn" class="text-danger"></span>
-            </div>
-        </div>
-    </div>
     <div class="container">
         <div class="row">
             <div class="col-md-4">
-                <form asp-action="Edit">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                    <input type="hidden" asp-for="Id" />
-                    <div class="form-group">
-                        @if (isAdmin)
-                        {
-                            <input type="submit" value="Save" class="btn btn-primary" />
-                        }
-                    </div>
-                </form>
+                <div class="roster-field form-group">
+                    <label asp-for="FirstName" class="roster-label control-label"></label>
+                    <input asp-for="FirstName" class="roster-value form-control" />
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="roster-field form-group">
+                    <label asp-for="MiddleName" class="roster-label control-label"></label>
+                    <input asp-for="MiddleName" class="roster-value form-control" />
+                    <span asp-validation-for="MiddleName" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="roster-field form-group">
+                    <label asp-for="LastName" class="roster-label control-label"></label>
+                    <input asp-for="LastName" class="roster-value form-control" />
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="roster-field form-group">
+                    <label asp-for="DisplayName" class="roster-label control-label"></label>
+                    <input asp-for="DisplayName" class="roster-value form-control" />
+                    <span asp-validation-for="DisplayName" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="roster-field form-group">
+                    <label asp-for="MemberNumber" class="roster-label control-label"></label>
+                    <input asp-for="MemberNumber" class="roster-value form-control" />
+                    <span asp-validation-for="MemberNumber" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="roster-field form-group">
+                    <label asp-for="MemberStartDate" class="roster-label control-label"></label>
+                    <input asp-for="MemberStartDate" class="roster-value form-control" />
+                    <span asp-validation-for="MemberStartDate" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="roster-field form-group">
+                    <label asp-for="MemberExpireDate" class="roster-label control-label"></label>
+                    <input asp-for="MemberExpireDate" class="roster-value form-control" />
+                    <span asp-validation-for="MemberExpireDate" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="roster-field form-group">
+                    <label asp-for="LifeMemberNumber" class="roster-label control-label"></label>
+                    <input asp-for="LifeMemberNumber" class="roster-value form-control" />
+                    <span asp-validation-for="LifeMemberNumber" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="roster-field form-group">
+                    <label asp-for="LifeMemberDate" class="roster-label control-label"></label>
+                    <input asp-for="LifeMemberDate" class="roster-value form-control" />
+                    <span asp-validation-for="LifeMemberDate" class="text-danger"></span>
+                </div>
             </div>
             <div class="col-md-4"></div>
-            <div class="col-md-4"><a asp-action="Index">Back to List</a></div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="roster-field form-group">
+                    <label asp-for="PersonalAddress" class="roster-label control-label"></label>
+                    <input asp-for="PersonalAddress" class="roster-value form-control" />
+                    <span asp-validation-for="PersonalAddress" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="roster-field form-group">
+                    <label asp-for="PersonalPhone" class="roster-label control-label"></label>
+                    <input asp-for="PersonalPhone" class="roster-value form-control" />
+                    <span asp-validation-for="PersonalPhone" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="roster-field form-group">
+                    <label asp-for="PersonalEmail" class="roster-label control-label"></label>
+                    <input asp-for="PersonalEmail" class="roster-value form-control" />
+                    <span asp-validation-for="PersonalEmail" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="roster-field form-group">
+                    <label asp-for="WorkAddress" class="roster-label control-label"></label>
+                    <input asp-for="WorkAddress" class="roster-value form-control" />
+                    <span asp-validation-for="WorkAddress" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="roster-field form-group">
+                    <label asp-for="WorkPhone" class="roster-label control-label"></label>
+                    <input asp-for="WorkPhone" class="roster-value form-control" />
+                    <span asp-validation-for="WorkPhone" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="roster-field form-group">
+                    <label asp-for="WorkEmail" class="roster-label control-label"></label>
+                    <input asp-for="WorkEmail" class="roster-value form-control" />
+                    <span asp-validation-for="WorkEmail" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4"></div>
+            <div class="col-md-4"></div>
+            <div class="col-md-4">
+                <div class="roster-field form-group">
+                    <label asp-for="DiedOn" class="roster-label control-label"></label>
+                    <input asp-for="DiedOn" class="roster-value form-control" />
+                    <span asp-validation-for="DiedOn" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+            <div class="col-md-4">
+                <a asp-action="Details" asp-route-memberNumber="@Model.MemberNumber">Cancel</a>
+            </div>
+            <div class="col-md-4">
+                <a asp-action="Index">Back to List</a>
+            </div>
         </div>
     </div>
-</div>
-<div class="row">
+</form>
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

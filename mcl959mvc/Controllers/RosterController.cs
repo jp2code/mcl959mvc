@@ -25,10 +25,52 @@ public class RosterController : Mcl959MemberController
             .ThenBy(m => m.FirstName)
             .ThenBy(m => m.MemberNumber)
             .ToList();
+        var officePositions = await _context.MemberRanks.OrderByDescending(r => r.NumericRank).ToListAsync();
+        var officers = new List<OfficerModel>();
+
+        foreach (var rank in officePositions)
+        {
+            var member = allMembers.FirstOrDefault(m => m.MemberNumber == rank.MemberNumber);
+            if (member != null)
+            {
+                var phone = "private";
+                var email = "private";
+                if (member.WebsiteDisplay == 1)
+                {
+                    if (!string.IsNullOrEmpty(member.PersonalPhone)) {
+                        phone = member.PersonalPhone;
+                    }
+                    if (!string.IsNullOrEmpty(member.PersonalEmail))
+                    {
+                        email = member.PersonalEmail;
+                    }
+                }
+                else if (member.WebsiteDisplay == 2)
+                {
+                    if (!string.IsNullOrEmpty(member.WorkPhone))
+                    {
+                        phone = member.WorkPhone;
+                    }
+                    if (!string.IsNullOrEmpty(member.WorkEmail))
+                    {
+                        email = member.WorkEmail;
+                    }
+                }
+                officers.Add(new OfficerModel
+                {
+                    Position = rank.DisplayRank,
+                    DisplayName = $"{member.FirstName} {member.LastName}",
+                    MemberNumber = member.MemberNumber,
+                    Phone = phone,
+                    Email = email
+                });
+            }
+        }
         var viewModel = new RosterIndexViewModel
         {
             AllMembers = allMembers,
             PagedRoster = pagedRoster,
+            Officers = officers,
         };
         return View(viewModel);
     }

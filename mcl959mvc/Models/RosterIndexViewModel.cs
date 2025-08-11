@@ -7,6 +7,7 @@ public class RosterIndexViewModel
     {
         AllMembers = new List<Roster>();
         PagedRoster = new List<Roster>();
+        Officers = new List<OfficerModel>();
     }
     public List<Roster> AllMembers
     {
@@ -28,6 +29,7 @@ public class RosterIndexViewModel
     public List<Roster> LivingMembers { get; private set; } // Sorted list for display
     public List<Roster> DeceasedMembers { get; private set; } // Sorted list for display
     public List<Roster> PagedRoster { get; set; } // Only paged for admin table
+    public List<OfficerModel> Officers { get; set; }
     public string Oath { get; private set; } = @"
 I, <i>[insert your name]</i>, in the presence of Almighty God, and the members of the Marine Corps League here assembled,
 being fully aware of the symbols, motto, principles and purposes of the Marine Corps League,

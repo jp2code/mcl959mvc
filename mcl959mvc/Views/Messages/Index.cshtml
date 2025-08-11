@@ -5,7 +5,7 @@
     bool isAdmin = User.HasClaim("isAdmin", "true");
 }
 
-<h1>Email History</h1>
+<h2>Email History</h2>
 
 <p>
     <a asp-action="Create">New Message</a>
@@ -31,13 +31,13 @@
             {
                 <tr>
                     <td>
-                        <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Name)</a>
+                        <a asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Name)</a>
                     </td>
                     <td>
-                        <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Email)</a>
+                        <a asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Email)</a>
                     </td>
                     <td>
-                        <a asp-action="./Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Date)</a>
+                        <a asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Date)</a>
                     </td>
                 </tr>
             }

@@ -194,7 +194,7 @@ public class MessagesController : Mcl959MemberController
             var roster = _context.Roster.FirstOrDefault(x => x.DisplayName == attnTo);
             if (roster != null)
             {
-                attnTo = $"{roster.DisplayName} <{roster.PersonalEmail}>";
+                attnTo = $" to {roster.DisplayName} <{roster.PersonalEmail}>";
             }
             var body = $"From: {fromName} <{fromEmail}>\n\n{item.Comments}";
             await SendEmailAsync(fromName, fromEmail, attnTo, subject, body);
@@ -369,7 +369,7 @@ End of Message
             <table>
                 <tr>
                     <td>
-                        <font>On <i>{DateTime.Now:s}</i>, <b>{nameAndEmail}</b> sent the following message to <b>{attnTo}</b>:</font><br /><br />
+                        <font>On <i>{DateTime.Now:s}</i>, <b>{nameAndEmail}</b> sent the following message<b>{attnTo}</b>:</font><br /><br />
                         <table>
                             <tr><td><font color='Green'>{message}</font></td></tr>
                             <tr><td>&nbsp;</td></tr>

@@ -24,7 +24,7 @@
                         <div>Existing members needing to renew can send payments to:</div>
                         <div style="text-align:center;">Marine Corps League<br />P.O. Box 9395<br />Longview, TX 75608</div>
                     </li>
-                    <li><a href="Contact.aspx">Contact Us</a> if you wish to apply or need additional information.</li>
+                    <li><a asp-controller="Messages" asp-action="Index">Contact Us</a> if you wish to apply or need additional information.</li>
                 </ul>
             </td>
         </tr>
@@ -48,6 +48,69 @@
             </td>
         </tr>
     </table>
+</div>
+<div id="divOfficers">
+    <h2>Current Officers</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Position</th>
+                <th>Name</th>
+                <th>Member Number</th>
+                <th>Phone</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var officer in Model.Officers)
+            {
+                <tr>
+                    <td>@officer.Position</td>
+                    <td>@officer.DisplayName</td>
+                    <td>@officer.MemberNumber</td>
+                    <td>@officer.Phone</td>
+                    <td>@officer.Email</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<div id="divMemorial">
+    <h2>Memorials</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Member</th>
+                <th>Died</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var member in Model.DeceasedMembers)
+            {
+                <tr>
+                    <td>@member.DisplayName</td>
+                    <td>@member.DiedOn</td>
+                    <td>
+                        @if (member.LifeMemberNumber == null)
+                        {
+                            <p>&nbsp;</p>
+                        }
+                        else
+                        {
+                            <p>Life Member</p>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<div id="divOath">
+    <h2>Marine Corps League Oath of Membership</h2>
+    <div>
+        <blockquote>@Html.Raw(Model.Oath)</blockquote>
+    </div>
 </div>
 @if (isAdmin)
 {
@@ -96,11 +159,11 @@
                     <td>
                         @if (!string.IsNullOrWhiteSpace(item.PersonalEmail))
                         {
-                            <a href="mailto:@item.PersonalEmail">@item.PersonalEmail</a>
+                            <a href="mailto:@item.PersonalEmail">@Html.Raw(item.PersonalEmail)</a>
                         }
                         else if (!string.IsNullOrWhiteSpace(item.WorkEmail))
                         {
-                            <a href="mailto:@item.WorkEmail">@item.WorkEmail</a>
+                            <a href="mailto:@item.WorkEmail">@Html.Raw(item.WorkEmail)</a>
                         }
                         else
                         {
@@ -113,41 +176,7 @@
     </table>
 </div>
 }
-<div id="divOath">
-    <h2>Marine Corps League Oath of Membership</h2>
-    <div>
-        <blockquote>@Html.Raw(Model.Oath)</blockquote>
-    </div>
-</div>
-<div id="divMemorial">
-    <h2>Memorials</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Member</th>
-                <th>Died</th>
-                <th>Message</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var member in Model.DeceasedMembers)
-            {
-                <tr>
-                    <td>@member.DisplayName</td>
-                    <td>@member.DiedOn</td>
-                    <td>
-                        @if (member.LifeMemberNumber == null)
-                        {
-                            <p>&nbsp;</p>
-                        } else { 
-                            <p>Life Member</p>
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
+
 <script>
     $(document).ready(function () {
         $('#miMember').addClass('selected');
