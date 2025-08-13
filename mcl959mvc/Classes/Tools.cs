@@ -5,7 +5,9 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.AccessControl;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Web;
 
 namespace mcl959mvc.Classes;
@@ -15,6 +17,19 @@ public class Tools
 
     public static DateTime NODATE { get { return DateTime.MinValue; } }
 
+    /// <summary>
+    /// Allows only basic HTML tags for inline formatting and line breaks.
+    /// </summary>
+    private static string AllowBasicHtml(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return string.Empty;
+        // Allow <b>, <strong>, <i>, <em>, <a>, <br>, <ul>, <ol>, <li>, <img>
+        // Remove all other tags for safety
+        var allowedTags = new[] { "b", "strong", "i", "em", "a", "br", "ul", "ol", "li", "img" };
+        // Use Regex to remove disallowed tags (simple approach)
+        string pattern = $@"</?(?!({string.Join("|", allowedTags)})\b)[^>]*>";
+        return System.Text.RegularExpressions.Regex.Replace(input, pattern, string.Empty, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    }
     public static string CreateDirectoryWithPermission(string relativePath)
     {
         if (string.IsNullOrWhiteSpace(relativePath))
@@ -168,6 +183,79 @@ public class Tools
         return true;
     }
     /// <summary>
+    /// Converts the most common Editor.js blocks (paragraph, header, list, image) from the Editor.js JSON output to HTML. This is a basic converter and can be extended to support more block types as needed.
+    /// </summary>
+    /// <param name="description">actual text from Editor.js</param>
+    /// <returns>HTML representation of the Editor.js content</returns>
+    public static string JsonToHtml(string description)
+    {
+        var sb = new StringBuilder();
+        if (!string.IsNullOrWhiteSpace(description))
+        {
+            var doc = JsonNode.Parse(description);
+            var blocks = doc?["blocks"]?.AsArray();
+            if (blocks != null)
+            {
+                try
+                {
+                    foreach (var block in blocks)
+                    {
+                        var type = block?["type"]?.ToString();
+                        var data = block?["data"];
+                        switch (type)
+                        {
+                            case "paragraph":
+                                sb.Append("<p>");
+                                sb.Append(AllowBasicHtml(data?["text"]?.ToString() ?? ""));
+                                sb.AppendLine("</p>");
+                                break;
+                            case "header":
+                                var level = data?["level"]?.GetValue<int>() ?? 2;
+                                sb.Append($"<h{level}>");
+                                sb.Append(AllowBasicHtml(data?["text"]?.ToString() ?? ""));
+                                sb.AppendLine($"</h{level}>");
+                                break;
+                            case "list":
+                                var style = data?["style"]?.ToString() == "ordered" ? "ol" : "ul";
+                                sb.Append($"<{style}>");
+                                foreach (var item in data?["items"]?.AsArray() ?? new JsonArray())
+                                {
+                                    sb.Append("<li>");
+                                    sb.Append(AllowBasicHtml(item?.ToString() ?? ""));
+                                    sb.Append("</li>");
+                                }
+                                sb.AppendLine($"</{style}>");
+                                break;
+                            case "image":
+                                var url = data?["file"]?["url"]?.ToString();
+                                var caption = data?["caption"]?.ToString() ?? "";
+                                if (!string.IsNullOrEmpty(url))
+                                {
+                                    sb.Append($"<figure><img src=\"{System.Net.WebUtility.HtmlEncode(url)}\" alt=\"{System.Net.WebUtility.HtmlEncode(caption)}\" style=\"max-width:100%\" />");
+                                    if (!string.IsNullOrEmpty(caption))
+                                        sb.Append($"<figcaption>{System.Net.WebUtility.HtmlEncode(caption)}</figcaption>");
+                                    sb.AppendLine("</figure>");
+                                }
+                                break;
+                            // Add more block types as needed
+                            default:
+                                Console.WriteLine($"Unknown block type: {type}");
+                                // Optionally handle unknown block types
+                                break;
+                        }
+                    }
+                }
+                catch (JsonException err)
+                {
+                    Console.WriteLine(err);
+                    // Handle JSON parsing errors
+                }
+            }
+        }
+        return sb.ToString();
+    }
+
+    /// <summary>
     /// Extracts the DateTime value from a string that includes a Julian Date (i.e. LT2009127B)
     /// </summary>
     /// <param name="value">string that includes the Julain Date</param>
@@ -227,7 +315,6 @@ public class Tools
         string julianString = string.Format("{0:0000}{1:000}", year, days);
         return julianString;
     }
-
     public static async Task SerializeToJsonFileAsync<T>(T obj, string path)
     {
         if (obj == null) throw new ArgumentNullException(nameof(obj));

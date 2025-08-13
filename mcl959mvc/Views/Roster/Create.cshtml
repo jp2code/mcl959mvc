@@ -140,7 +140,10 @@
         </div>
         <div class="row mt-3">
             <div class="col-md-4">
-                <button type="submit" class="btn btn-primary">Create</button>
+                @if (isAdmin)
+                {
+                    <input type="submit" value="Create" class="btn btn-primary" />
+                }
             </div>
             <div class="col-md-4">
                 <a asp-action="Index">Back to List</a>

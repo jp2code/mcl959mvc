@@ -52,13 +52,31 @@ public class MessagesController : Mcl959MemberController
     public async Task<IActionResult> Create()
     {
         await CheckUserIdentity();
-        var list = new List<SelectListItem>();
-        list.Add(new SelectListItem
+        ViewBag.Recipients = GetRecipients();
+        return View(new MessagesModel
         {
-            Value = string.Empty,
-            Text = "Select a member",
-            Selected = true
+            Name = string.Empty,
+            Email = UserEmail,
+            Subject = "MCL959 Contact Message",
+            SendTo = string.Empty,
+            Date = DateTime.UtcNow,
+            CodeSent = false,
+            ResetToken = null,
+            Code = string.Empty
         });
+    }
+
+    private List<SelectListItem> GetRecipients()
+    {
+        var list = new List<SelectListItem>
+        {
+            new SelectListItem
+            {
+                Value = string.Empty,
+                Text = "Select a member",
+                Selected = true
+            }
+        };
         if (!IsAdmin)
         {
             foreach (var item in from rank in _context.MemberRanks
@@ -97,18 +115,7 @@ public class MessagesController : Mcl959MemberController
                 });
             }
         }
-        ViewBag.Recipients = list.ToArray();
-        return View(new MessagesModel
-        {
-            Name = string.Empty,
-            Email = UserEmail,
-            Subject = "MCL959 Contact Message",
-            SendTo = string.Empty,
-            Date = DateTime.UtcNow,
-            CodeSent = false,
-            ResetToken = null,
-            Code = string.Empty
-        });
+        return list;
     }
 
     // POST: Messages/Create
@@ -124,7 +131,9 @@ public class MessagesController : Mcl959MemberController
                 // Generate and send code
                 var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
                 _cache.Set($"ContactCode_{item.Email}", code, TimeSpan.FromMinutes(10));
-                await SendEmailAsync(_smtpSettings.Username, _smtpSettings.FromEmail, $"{User.Identity?.Name}", "Your verification code", $"Your code is: {code}");
+                await EmailTool.SendEmailAsync(
+                    _smtpSettings,
+                    _smtpSettings.Username, _smtpSettings.FromEmail, $" to {User.Identity?.Name}", "Your verification code", $"Your code is: {code}");
                 item.CodeSent = true;
                 ModelState.Clear();
                 ModelState.AddModelError("Info", "Verification code sent to your email.");
@@ -151,7 +160,6 @@ public class MessagesController : Mcl959MemberController
         // If model is valid, save the message
         if (ModelState.IsValid)
         {
-            string? uploadLink = null;
             if (Attachment != null && (0 < Attachment.Length))
             {
                 // Validate file size
@@ -177,7 +185,12 @@ public class MessagesController : Mcl959MemberController
                 {
                     await Attachment.CopyToAsync(stream);
                 }
-                item.Comments += $"\n\n<b>Attachment:</b> <a href=\"{filePath}\">{Attachment.FileName}</a>";
+                var request = HttpContext.Request;
+                var baseUrl = $"{request.Scheme}://{request.Host}";
+                var fileUrl = $"{baseUrl}/uploads/{fileName.Replace("\\", "/")}";
+
+                // Use fileUrl in your comments
+                item.Comments += $"\n\n<b>Attachment:</b> <a href=\"{fileUrl}\">{Attachment.FileName}</a>";
             }
             await CheckUserIdentity();
             if (string.IsNullOrEmpty(item.Name))
@@ -191,17 +204,29 @@ public class MessagesController : Mcl959MemberController
             var fromEmail = $"{item.Email}";
             var subject = "New Contact Message";
             var attnTo = item.SendTo;
-            var roster = _context.Roster.FirstOrDefault(x => x.DisplayName == attnTo);
+            var roster = _context.Roster.FirstOrDefault(x => x.PersonalEmail == attnTo);
+            if (roster == null)
+            {
+                roster = _context.Roster.FirstOrDefault(x => x.WorkEmail == attnTo);
+            }
             if (roster != null)
             {
-                attnTo = $" to {roster.DisplayName} <{roster.PersonalEmail}>";
+                attnTo = $" with attention to {roster.DisplayName} <a href='mailto:{roster.PersonalEmail}'>{roster.PersonalEmail}</a>";
+            } else if (!string.IsNullOrEmpty(attnTo))
+            {
+                attnTo = $" with attention to {attnTo}";
+            } else
+            {
+                attnTo = "";
             }
             var body = $"From: {fromName} <{fromEmail}>\n\n{item.Comments}";
-            await SendEmailAsync(fromName, fromEmail, attnTo, subject, body);
+            await EmailTool.SendEmailAsync(_smtpSettings, fromName, fromEmail, attnTo, subject, body);
 
             ModelState.AddModelError("Success", "Your message has been sent.");
             return RedirectToAction(nameof(Details), new { id = item.Id });
         }
+        // Repopulate ViewBag for recipients
+        ViewBag.Recipients = GetRecipients();
         return View(item);
     }
 
@@ -239,7 +264,8 @@ public class MessagesController : Mcl959MemberController
             {
                 _context.Update(message);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                // Redirect to Details with the same id after saving
+                return RedirectToAction(nameof(Details), new { id = message.Id });
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -249,6 +275,8 @@ public class MessagesController : Mcl959MemberController
                     throw;
             }
         }
+        // Repopulate ViewBag for recipients
+        ViewBag.Recipients = GetRecipients();
         return View(message);
     }
 
@@ -277,115 +305,6 @@ public class MessagesController : Mcl959MemberController
             await _context.SaveChangesAsync();
         }
         return RedirectToAction(nameof(Index));
-    }
-
-    private async Task SendEmailAsync(string fromName, string fromEmail, string attnTo, string subject, string body)
-    {
-        // Implement your email sending logic here
-        // For example, use SMTP, SendGrid, or any other provider
-        System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
-        var mailgunMsg = "<a href=\"http://api.mailgun.net\">Mailgun Requests API</a>";
-        var textBody = EmailTextBody(fromName, fromEmail, attnTo, body, mailgunMsg);
-        var htmlBody = EmailHtmlBody(fromName, fromEmail, attnTo, body, mailgunMsg);
-        var textView = AlternateView.CreateAlternateViewFromString(textBody, null, "text/plain");
-        var htmlView = AlternateView.CreateAlternateViewFromString(htmlBody, null, "text/html");
-        using (var email = new MailMessage()
-        {
-            Body = textBody,
-            From = new MailAddress(_smtpSettings.FromEmail, "MCL959 Contact Page"),
-            IsBodyHtml = false,
-            Subject = subject,
-        })
-        {
-            email.To.Add(new MailAddress(_smtpSettings.FromEmail, "MCL959 Contact Page"));
-            email.AlternateViews.Add(textView);
-            email.AlternateViews.Add(htmlView);
-            using (var smtp = new SmtpClient(_smtpSettings.Server, 587)
-            {
-                Credentials = new System.Net.NetworkCredential(_smtpSettings.Username, _smtpSettings.Password),
-                DeliveryFormat = SmtpDeliveryFormat.International,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                EnableSsl = true,
-                UseDefaultCredentials = false,
-            })
-            {
-                await smtp.SendMailAsync(email);
-            }
-        }
-    }
-    /// <summary>
-    /// Creates the email body
-    /// </summary>
-    /// <param name="from">String - name of sender</param>
-    /// <param name="email">String - email of sender</param>
-    /// <param name="message">String - email message</param>
-    /// <param name="mailgunOpt">String - mailgun parameter</param>
-    /// <returns>String email body</returns>
-    private String EmailTextBody(String from, String email, String attnTo, String message, String mailgunOpt)
-    {
-        return @$"
-On {DateTime.Now:s}, {from} [{email}] sent the following message to {attnTo}:
-
-    {message}
-
-End of Message
-
-{mailgunOpt}
-(Text View)";
-    }
-    /// <summary>
-    /// Creates the HTML email body
-    /// </summary>
-    /// <param name="from">String - name of sender</param>
-    /// <param name="email">String - email of sender</param>
-    /// <param name="message">String - email message</param>
-    /// <param name="mailgunOpt">String - mailgun parameter</param>
-    /// <returns>String HTML email body</returns>
-    private String EmailHtmlBody(String from, String email, String attnTo, String message, String mailgunOpt)
-    {
-        String nameAndEmail = @$"{from} <a href='{email}'>{1}</a>";
-        String htmlEmail = $@"
-<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.0 Transitional//EN\'>
-<html>
-    <head>
-        <meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>
-        <title>Contact Message</title>
-        <style>
-            body {{ background-color: #cccccc; }}
-            .eml {{ font-family: Arial, sans-serif; color: #ff0000; }}
-            .epl {{ text-align: center; }}
-            .eml td {{ padding: 10px; }}
-            .epl img {{ height: 150px; width: 150px; }}
-        </style>
-        <link rel='stylesheet' type='text/css' href='{_smtpSettings.SiteDomain}/css/email.css'>
-        <link rel='shortcut icon' href='{_smtpSettings.SiteLogo}' type='image/x-icon'>
-    </head>
-    <body>
-    <pre>
-        <a href='{_smtpSettings.SiteDomain}'>{_smtpSettings.SiteDomain}</a>
-    </pre>
-    <pre>
-        <div class='eml'>
-            <table>
-                <tr>
-                    <td>
-                        <font>On <i>{DateTime.Now:s}</i>, <b>{nameAndEmail}</b> sent the following message<b>{attnTo}</b>:</font><br /><br />
-                        <table>
-                            <tr><td><font color='Green'>{message}</font></td></tr>
-                            <tr><td>&nbsp;</td></tr>
-                            <tr><td><br><font>End of Message.</font></td></tr>
-                        </table>
-                    </td>
-                    <td class='epl'><img src='{_smtpSettings.SiteLogo}' alt='{_smtpSettings.Server}' style='height:150px; width:150px'></td>
-                </tr>
-            </table>
-        </div>
-        <div class='eml'>
-            <p><font size='1'>This message was sent from <a href='{_smtpSettings.SiteDomain}' target='_blank'>{_smtpSettings.SiteDomain}</a> on behalf of <b>{from}</b>.<hr/>{mailgunOpt}</font></p>
-        </div>
-        </body>
-</html>";
-        return htmlEmail;
     }
 
 }

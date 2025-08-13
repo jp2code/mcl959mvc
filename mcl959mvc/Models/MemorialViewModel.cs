@@ -13,4 +13,5 @@ public class MemorialViewModel
     public MemorialModel Memorial { get; set; }
     public List<CommentsModel> Comments { get; set; }
     public string DisplayName { get; set; } = string.Empty;
+    public DateTime DiedOn { get; set; }
 }

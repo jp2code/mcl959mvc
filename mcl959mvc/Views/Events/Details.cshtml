@@ -38,14 +38,36 @@
     </dl>
 </div>
 <h3>Comments</h3>
-<ul>
-    @foreach (var comment in Model.Comments)
-    {
-        <li>
-            <strong>@comment.UserId</strong>: @comment.Message <em>(@comment.TimeStamp)</em>
-        </li>
-    }
-</ul>
+<table class="table">
+    <thead>
+        <tr>
+            <th width="20%">User</th>
+            <th width="50%">Message</th>
+            <th width="20%">Time</th>
+            <th width="*">
+                @if (isAdmin)
+                {
+                    <a asp-action="AddComment" asp-controller="Events" class="btn btn-primary">Add Comment</a>
+                }
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var comment in Model.Comments)
+        {
+            <tr>
+                <td>@comment.UserId</td>
+                <td>@comment.Message</td>
+                <td>@comment.TimeStamp.ToString("g")</td>
+                <td>
+                    @if (isAdmin)
+                    {
+                        <a asp-action="DeleteComment" asp-controller="Events" asp-route-id="@comment.Id">Delete</a>
+                    }
+                </td>
+            </tr>
+        }
+</table>
 
 @if (isRegistered)
 {
@@ -64,7 +86,7 @@
 }
 else
 {
-    <p><em>You must be logged in to add a comment.</em></p>
+    <p>You must <a asp-area="Identity" asp-page="/Account/Login">log in</a> or <a asp-area="Identity" asp-page="/Account/Register">register</a> to post a comment.</p>
 }
 
 @section Scripts {

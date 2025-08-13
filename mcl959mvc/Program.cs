@@ -1,11 +1,11 @@
 using mcl959mvc.Classes;
 using mcl959mvc.Data;
 using mcl959mvc.Models;
+using mcl959mvc.Services; // Add this using directive
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore; // Ensure this is included
 using Microsoft.Extensions.DependencyInjection; // Ensure this is included
-using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
-using mcl959mvc.Services; // Add this using directive
 
 var builder = WebApplication.CreateBuilder(args);
 // Explicitly load appsettings.Secrets.json
@@ -76,6 +76,23 @@ else
 }
 
 app.UseHttpsRedirection();
+
+app.Use(async (context, next) =>
+{
+    var req = context.Request;
+    var host = req.Host.Host.ToLower();
+
+    // Redirect to www if not already www and not localhost
+    if (!host.StartsWith("www.") && !host.Contains("localhost"))
+    {
+        var newHost = "www." + req.Host;
+        var newUrl = $"{req.Scheme}://{newHost}{req.Path}{req.QueryString}";
+        context.Response.Redirect(newUrl, permanent: true);
+        return;
+    }
+    await next();
+});
+
 app.UseStaticFiles();
 
 app.UseRouting();

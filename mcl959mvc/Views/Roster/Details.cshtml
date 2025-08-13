@@ -132,7 +132,10 @@
     </div>
     <div class="row">
         <div class="col-md-4">
-            <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
+            @if (isAdmin)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
+            }
         </div>
         <div class="col-md-4"></div>
         <div class="col-md-4">

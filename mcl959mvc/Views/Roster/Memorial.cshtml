@@ -8,18 +8,51 @@
 }
 
 <h2>@Model.DisplayName</h2>
-<p>@Model.Memorial.Description</p>
-<p>Date of Birth: @Model.Memorial.Dob?.ToShortDateString()</p>
+<p>Died: @Model.DiedOn.ToShortDateString()</p>
+
+<div id="descriptionSection">
+    <div id="descriptionDisplay" contenteditable="false" style="min-height:100px; border:1px solid #ccc; padding:8px;">
+        @Html.Raw(Model.Memorial.Description)
+    </div>
+    <a href="javascript:void(0);" id="editDescription" @(isAdmin ? "" : "style='display:none;'")>Edit</a>
+    <a href="javascript:void(0);" id="saveDescription" style="display:none;">Save</a>
+    <a href="javascript:void(0);" id="cancelEdit" style="display:none;">Cancel</a>
+</div>
+
+<form id="editMemorialForm" method="post" asp-action="EditMemorialDescription" asp-controller="Roster" style="display:none;">
+    <input type="hidden" name="id" value="@Model.Id" />
+    <input type="hidden" name="description" id="descriptionInput" />
+    <input type="hidden" name="save" id="saveInput" />
+</form>
+
 
 <h3>Comments</h3>
-<ul>
-@foreach (var comment in Model.Comments)
-{
-    <li>
-        <strong>@comment.UserId</strong>: @comment.Message <em>(@comment.TimeStamp)</em>
-    </li>
-}
-</ul>
+<table class="table">
+    <thead>
+        <tr>
+            <th width="20%">User</th>
+            <th width="50%">Message</th>
+            <th width="20%">Time</th>
+            <th width="*">&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var comment in Model.Comments)
+        {
+            <tr>
+                <td>@comment.UserId</td>
+                <td>@comment.Message</td>
+                <td>@comment.TimeStamp.ToString("g")</td>
+                <td>
+                    @if (isAdmin)
+                    {
+                        <a asp-action="DeleteComment" asp-controller="Roster" asp-route-id="@comment.Id">Delete</a>
+                    }
+                </td>
+            </tr>
+        }
+</table>
+
 @if (isRegistered)
 {
     <h4>Add a Comment</h4>
@@ -37,16 +70,51 @@
 }
 else
 {
-    <p><em>You must be registered and logged in to add a comment.</em></p>
+    <p>You must <a asp-area="Identity" asp-page="/Account/Login">log in</a> or <a asp-area="Identity" asp-page="/Account/Register">register</a> to post a comment.</p>
 }
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        $(document).ready(function () {
+            $('#miMember').addClass('selected');
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+            var editBtn = document.getElementById('editDescription');
+            var saveBtn = document.getElementById('saveDescription');
+            var cancelBtn = document.getElementById('cancelEdit');
+            var descDiv = document.getElementById('descriptionDisplay');
+            var form = document.getElementById('editMemorialForm');
+            var descInput = document.getElementById('descriptionInput');
+            var saveInput = document.getElementById('saveInput');
+
+            if (editBtn) {
+                editBtn.addEventListener('click', function () {
+                    descDiv.contentEditable = "true";
+                    descDiv.focus();
+                    editBtn.style.display = "none";
+                    saveBtn.style.display = "";
+                    cancelBtn.style.display = "";
+                });
+            }
+
+            if (saveBtn) {
+                saveBtn.addEventListener('click', function () {
+                    descInput.value = descDiv.innerHTML;
+                    saveInput.value = "true";
+                    form.submit();
+                });
+            }
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function () {
+                    descInput.value = descDiv.innerHTML;
+                    saveInput.value = "false";
+                    form.submit();
+                });
+            }
+        });
+    </script>
 }
-<script>
-    $(document).ready(function () {
-        $('#miMember').addClass('selected');
-    });
-</script>

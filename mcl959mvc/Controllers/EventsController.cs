@@ -1,21 +1,25 @@
 ﻿using mcl959mvc;
+using mcl959mvc.Classes;
 using mcl959mvc.Data;
 using mcl959mvc.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace mcl959mvc.Controllers;
 
 public class EventsController : Mcl959MemberController
 {
     private readonly Mcl959DbContext _context;
+    private readonly SmtpSettings _smtpSettings;
 
-    public EventsController(Mcl959DbContext context, UserManager<ApplicationUser> userManager)
+    public EventsController(Mcl959DbContext context, UserManager<ApplicationUser> userManager, IOptions<SmtpSettings> smptOptions)
         : base(userManager)
     {
         _context = context;
+        _smtpSettings = smptOptions.Value ?? throw new ArgumentNullException(nameof(smptOptions));
     }
 
     // GET: Events
@@ -29,8 +33,8 @@ public class EventsController : Mcl959MemberController
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
-        var evt = await _context.Events.FindAsync(id);
-        if (evt == null) return NotFound();
+        var item = await _context.Events.FindAsync(id);
+        if (item == null) return NotFound();
 
         var comments = await _context.Comments
             .Where(c => c.TableSource == "Events" && c.ParentId == id)
@@ -39,7 +43,7 @@ public class EventsController : Mcl959MemberController
 
         var model = new EventsAndCommentsModel()
         {
-            Event = evt,
+            Event = item,
             Comments = comments,
         };
         return View(model);
@@ -56,17 +60,17 @@ public class EventsController : Mcl959MemberController
     // POST: Events/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(EventsModel evt)
+    public async Task<IActionResult> Create(EventsModel item)
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
         if (ModelState.IsValid)
         {
-            _context.Add(evt);
+            _context.Add(item);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
-        return View(evt);
+        return View(item);
     }
 
     // GET: Events/Edit/5
@@ -75,26 +79,27 @@ public class EventsController : Mcl959MemberController
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
         if (id == null) return NotFound();
-        var evt = await _context.Events.FindAsync(id);
-        if (evt == null) return NotFound();
-        return View(evt);
+        var item = await _context.Events.FindAsync(id);
+        if (item == null) return NotFound();
+        return View(item);
     }
 
     // POST: Events/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, EventsModel evt)
+    public async Task<IActionResult> Edit(int id, EventsModel item)
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
-        if (id != evt.Id) return NotFound();
+        if (id != item.Id) return NotFound();
         if (ModelState.IsValid)
         {
-            _context.Update(evt);
+            _context.Update(item);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            // Redirect to Details with the same id after saving
+            return RedirectToAction(nameof(Details), new { id = item.Id });
         }
-        return View(evt);
+        return View(item);
     }
 
     // GET: Events/Delete/5
@@ -103,9 +108,9 @@ public class EventsController : Mcl959MemberController
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
         if (id == null) return NotFound();
-        var evt = await _context.Events.FindAsync(id);
-        if (evt == null) return NotFound();
-        return View(evt);
+        var item = await _context.Events.FindAsync(id);
+        if (item == null) return NotFound();
+        return View(item);
     }
 
     // POST: Events/Delete/5
@@ -115,10 +120,10 @@ public class EventsController : Mcl959MemberController
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
-        var evt = await _context.Events.FindAsync(id);
-        if (evt != null)
+        var item = await _context.Events.FindAsync(id);
+        if (item != null)
         {
-            _context.Events.Remove(evt);
+            _context.Events.Remove(item);
             await _context.SaveChangesAsync();
         }
         return RedirectToAction(nameof(Index));
@@ -129,12 +134,41 @@ public class EventsController : Mcl959MemberController
     public async Task<IActionResult> AddComment(CommentsModel item)
     {
         await CheckUserIdentity();
-        if (!User.Identity.IsAuthenticated) return Forbid();
+        if (!IsRegistered) return Forbid();
+
         item.TimeStamp = DateTime.UtcNow;
         item.TableSource = "Events";
         _context.Comments.Add(item);
         await _context.SaveChangesAsync();
+        var regarding = $"{UserEmail}";
+        var eventItem = await _context.Events.FindAsync(item.ParentId);
+        if (eventItem != null)
+        {
+            regarding = $"{eventItem.EventName} ({eventItem.Id})";
+        }
+        var emailMessage = @$"
+The following comment was added to the event {regarding} by {UserEmail}:
+<blockquote>{item.Message}</blockquote>
+";
+        await EmailTool.SendEmailAsync(
+            _smtpSettings,
+            UserEmail, UserEmail, string.Empty,
+            $"Comment on Event for {regarding}",
+            emailMessage);
         return RedirectToAction(nameof(Details), new { id = item.Id });
+    }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteComment(int id)
+    {
+        await CheckUserIdentity();
+        if (!IsRegistered) return Forbid();
+        var comment = await _context.Comments.FindAsync(id);
+        if (comment == null) return NotFound();
+        _context.Comments.Remove(comment);
+        await _context.SaveChangesAsync();
+        // Redirect back to the event details page
+        return RedirectToAction(nameof(Details), new { id = comment.ParentId });
     }
 
 }
