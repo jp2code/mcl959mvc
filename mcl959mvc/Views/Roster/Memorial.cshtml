@@ -1,22 +1,39 @@
 ﻿@model mcl959mvc.Models.MemorialViewModel
 @{
-    ViewData["Title"] = "Roster";
+    ViewData["Title"] = Model.DisplayName;
     Layout = "~/Views/Shared/_Layout.cshtml";
     var isAdmin = User.HasClaim("isAdmin", "true");
     var isMember = User.HasClaim("isMember", "true");
     var isRegistered = User.HasClaim("isRegistered", "true");
+    var photoPath = $"/photos/{Model.Memorial.RosterId}.jpg";
+    var defaultPhotoPath = "/photos/mcl959bw.jpg";
 }
 
-<h2>@Model.DisplayName</h2>
-<p>Died: @Model.DiedOn.ToShortDateString()</p>
-
-<div id="descriptionSection">
-    <div id="descriptionDisplay" contenteditable="false" style="min-height:100px; border:1px solid #ccc; padding:8px;">
-        @Html.Raw(Model.Memorial.Description)
+<div id="descriptionSection" style="display: flex; align-items: flex-start;">
+    <div style="flex: 2; min-width:0;">
+        <h2>@Model.DisplayName</h2>
+        <p>
+            Died: @Model.DiedOn.ToShortDateString()
+            <hr />
+            @if (isAdmin)
+            {
+                <div>
+                    <a href="javascript:void(0);" id="editDescription">Edit</a>
+                    <a href="javascript:void(0);" id="saveDescription" style="display:none;">Save</a>
+                    <a href="javascript:void(0);" id="cancelEdit" style="display:none;">Cancel</a>
+                </div>
+            }
+        </p>
+        <div id="descriptionDisplay" contenteditable="false" style="min-height:100px; border:1px solid #ccc; padding:8px;">
+            @Html.Raw(Model.Memorial.Description)
+        </div>
     </div>
-    <a href="javascript:void(0);" id="editDescription" @(isAdmin ? "" : "style='display:none;'")>Edit</a>
-    <a href="javascript:void(0);" id="saveDescription" style="display:none;">Save</a>
-    <a href="javascript:void(0);" id="cancelEdit" style="display:none;">Cancel</a>
+    <div style="flex: 1; max-width:33%; margin-left: 32px; display: flex; justify-content: flex-end;">
+        <img src="@photoPath"
+             alt="In memory of @Model.DisplayName"
+             style="width:100%; max-width:220px; height: auto; border-radius: 8px; border: 1px solid #ccc;"
+             onerror="this.onerror=null;this.src='@defaultPhotoPath';" />
+    </div>
 </div>
 
 <form id="editMemorialForm" method="post" asp-action="EditMemorialDescription" asp-controller="Roster" style="display:none;">

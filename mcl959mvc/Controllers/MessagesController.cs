@@ -222,7 +222,7 @@ public class MessagesController : Mcl959MemberController
             }
             var body = $"From: {fromName} <{fromEmail}>\n\n{item.Comments}";
             await EmailTool.SendEmailAsync(_smtpSettings, fromName, fromEmail, attnTo, subject, body);
-
+            TempData["EmailSentMessage"] = $"The message below has been sent.<br/>Any replies will be sent to the email address you provided: <a href='mailto:{fromEmail}'>{fromEmail}</a>.";
             ModelState.AddModelError("Success", "Your message has been sent.");
             return RedirectToAction(nameof(Details), new { id = item.Id });
         }

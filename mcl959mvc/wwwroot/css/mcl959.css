@@ -183,7 +183,7 @@ body {
 }
 
 .selected:hover > a {
-    background-color: rgb( 189, 189, 189 ); /* lighter silver */
+    background-color: rgb( 189, 189, 189 ); /* graphite gray */
     color: black;
 }
 
@@ -195,7 +195,7 @@ input[readonly], textarea[readonly] {
 }
 
 div.admin {
-    background-color: rgb( 189, 189, 189 ); /* lighter silver */
+    background-color: rgb( 189, 189, 189 ); /* graphite gray */
     border: 1px solid #999999; /* silver */
     color: red; /*=Gold, #C0C0C0;=silver */
     padding: 10px 10px 10px 10px;
@@ -203,6 +203,7 @@ div.admin {
 
 div.alert {
     color: #CC0000; /* red */
+    background-color: #0050AE; /* lighter dress blue */
 }
 
 div.logo {

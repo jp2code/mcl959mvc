@@ -6,7 +6,12 @@
 }
 
 <h2>Your message has been sent!</h2>
-
+@if (TempData["EmailSentMessage"] != null)
+{
+    <div class="alert alert-success">
+        @Html.Raw(TempData["EmailSentMessage"])
+    </div>
+}
 <div class="row">
     <div class="col-md-12">
         <table class="table">
