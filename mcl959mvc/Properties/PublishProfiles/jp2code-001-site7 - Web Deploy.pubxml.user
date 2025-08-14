@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+This file is used by the publish/package process of your Web project. You can customize the behavior of this process
+by editing this MSBuild file. In order to learn more about this please visit https://go.microsoft.com/fwlink/?LinkID=208121. 
+-->
+<Project>
+  <PropertyGroup>
+    <TimeStampOfAssociatedLegacyPublishXmlFile />
+    <EncryptedPassword>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAA9UsCUPnkcEG0t67NzxVMZgAAAAACAAAAAAAQZgAAAAEAACAAAADZe9GaAprjurIF2E3jfU9ZjxvFCxzcY4fPMQQ9KiN49gAAAAAOgAAAAAIAACAAAAArHGr28aeTSKwut65rHnyrRPds1AiMQFHcTcogvBcfUCAAAADwys/n6WAAi5S2kEtt5pdadkYwjlR2a/4532VOvedTxEAAAAA7i+X16hhppv2okSZ98pqaRMUdsnfz87rhjX8suTKu+6NYXfkeMXdvBcU2WS9A8j2sZxhIHLVKwgnwptIuKkaX</EncryptedPassword>
+    <History>True|2025-08-14T15:32:21.1276145Z||;True|2025-08-14T10:27:08.1156748-05:00||;True|2025-08-14T10:22:34.9988773-05:00||;True|2025-08-14T10:17:27.4501708-05:00||;True|2025-08-14T10:16:18.4504864-05:00||;True|2025-08-14T09:58:52.2043514-05:00||;True|2025-08-14T09:31:57.0245351-05:00||;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+  <ItemGroup>
+    <DestinationConnectionStrings Include="Mcl959Database">
+      <Value>Data Source=SQL5073.site4now.net%3bInitial Catalog=DB_9CF886_mcl959%3bUser Id=DB_9CF886_mcl959_admin%3bPassword=SemperFi%401776%3b</Value>
+    </DestinationConnectionStrings>
+  </ItemGroup>
+  <ItemGroup>
+    <EFMigrations Include="mcl959mvc.Data.ApplicationDbContext">
+      <Value>Data Source=SQL5073.site4now.net%3bInitial Catalog=DB_9CF886_mcl959%3bUser Id=DB_9CF886_mcl959_admin%3bPassword=SemperFi%401776%3b</Value>
+    </EFMigrations>
+    <EFMigrations Include="mcl959mvc.Models.Mcl959DbContext">
+      <Value>Data Source=SQL5073.site4now.net%3bInitial Catalog=DB_9CF886_mcl959%3bUser Id=DB_9CF886_mcl959_admin%3bPassword=SemperFi%401776%3b</Value>
+    </EFMigrations>
+  </ItemGroup>
+</Project>

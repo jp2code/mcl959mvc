@@ -1,0 +1,28 @@
+﻿@{
+    ViewData["Title"] = "Not Found";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isAdmin = User.HasClaim("isAdmin", "true");
+}
+<h2>Not Found</h2>
+<p>
+    Sorry, the item you are looking for could not be found.<br />
+    @if (ViewBag.Id != null)
+    {
+        <strong>ID:</strong> 
+        @ViewBag.Id
+    }
+    @if (isAdmin)
+    {
+        <br />
+        <a href="@Url.Action("Index", "Events")">Go to Events</a>
+        <br />
+        <a href="@Url.Action("Index", "Roster")">Go to Roster</a>
+    }
+    else
+    {
+        <br />
+        <a href="@Url.Action("Index", "Home")">Return to Home</a>
+    }
+)
+</p>
+<a href="/">Return to Home</a>

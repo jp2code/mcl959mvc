@@ -1,6 +1,8 @@
 ﻿@model ErrorViewModel
 @{
     ViewData["Title"] = "Error";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isAdmin = User.HasClaim("isAdmin", "true");
 }
 
 <h1 class="text-danger">Error.</h1>
@@ -11,6 +13,10 @@
     <p>
         <strong>Request ID:</strong> <code>@Model.RequestId</code>
     </p>
+}
+@if (isAdmin)
+{
+    
 }
 
 <h3>Development Mode</h3>

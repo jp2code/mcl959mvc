@@ -52,14 +52,20 @@ builder.Services.AddControllersWithViews();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-// Register the logger provider
-builder.Logging.AddProvider(new DatabaseLoggerProvider(
-     builder.Services.BuildServiceProvider().GetRequiredService<Mcl959DbContext>()));
-builder.Services.AddScoped<MembershipService>();
 
 // Ensure the following line is present in your .csproj file to include the Swashbuckle.AspNetCore package
 // <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+builder.Services.AddScoped<MembershipService>();
+
 var app = builder.Build();
+
+// Register the logger provider after building the app
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<Mcl959DbContext>();
+    var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+    loggerFactory.AddProvider(new DatabaseLoggerProvider(dbContext));
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -93,6 +99,8 @@ app.Use(async (context, next) =>
     await next();
 });
 
+app.UseStatusCodePagesWithReExecute("/Home/Error404", "?code={0}");
+
 app.UseStaticFiles();
 
 app.UseRouting();
@@ -104,4 +112,14 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
 
-app.Run();
+try
+{
+    // app.UseDeveloperExceptionPage(); // remove this after figuring out the login issue
+    app.Run();
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogCritical(ex, "Application failed to start.");
+    throw;
+}

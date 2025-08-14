@@ -122,55 +122,63 @@ namespace mcl959mvc.Areas.Identity.Pages.Account
         {
             returnUrl ??= Url.Content("~/");
 
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-
-            if (ModelState.IsValid)
+            try
             {
-                // This doesn't count login failures towards account lockout
-                // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-                var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+                ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
-                if (result.Succeeded)
+                if (ModelState.IsValid)
                 {
-                    var user = await _userManager.FindByEmailAsync(Input.Email);
-                    if (user != null)
+                    // This doesn't count login failures towards account lockout
+                    // To enable password failures to trigger account lockout, set lockoutOnFailure: true
+                    var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+
+                    if (result.Succeeded)
                     {
-                        await _membershipService.FindRosterMember(user);
-
-                        var claims = new List<Claim>
+                        var user = await _userManager.FindByEmailAsync(Input.Email);
+                        if (user != null)
                         {
-                            new Claim("isRegistered", "true"),
-                            new Claim("isMember", user.IsMember ? "true" : "false"),
-                            new Claim("isAdmin", user.IsAdmin ? "true" : "false")
-                        };
+                            await _membershipService.FindRosterMember(user);
 
-                        // Remove old claims if they exist
-                        var oldClaims = (await _userManager.GetClaimsAsync(user))
-                            .Where(c => c.Type == "isMember" || c.Type == "isRegistered" || c.Type == "isAdmin").ToList();
-                        if (oldClaims.Any())
-                            await _userManager.RemoveClaimsAsync(user, oldClaims);
+                            var claims = new List<Claim>
+                            {
+                                new Claim("isRegistered", "true"),
+                                new Claim("isMember", user.IsMember ? "true" : "false"),
+                                new Claim("isAdmin", user.IsAdmin ? "true" : "false")
+                            };
 
-                        await _userManager.AddClaimsAsync(user, claims);
+                            // Remove old claims if they exist
+                            var oldClaims = (await _userManager.GetClaimsAsync(user))
+                                .Where(c => c.Type == "isMember" || c.Type == "isRegistered" || c.Type == "isAdmin").ToList();
+                            if (oldClaims.Any())
+                                await _userManager.RemoveClaimsAsync(user, oldClaims);
+
+                            await _userManager.AddClaimsAsync(user, claims);
+                        }
+                        _logger.LogInformation($"User '{Input.Email}' logged in.");
+                        return LocalRedirect(returnUrl);
                     }
-                    _logger.LogInformation($"User '{Input.Email}' logged in.");
-                    return LocalRedirect(returnUrl);
-                }
-                if (result.RequiresTwoFactor)
-                {
-                    return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
-                }
-                if (result.IsLockedOut)
-                {
-                    _logger.LogWarning($"User '{Input.Email}' account locked out.");
-                    return RedirectToPage("./Lockout");
-                }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return Page();
+                    if (result.RequiresTwoFactor)
+                    {
+                        return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
+                    }
+                    if (result.IsLockedOut)
+                    {
+                        _logger.LogWarning($"User '{Input.Email}' account locked out.");
+                        return RedirectToPage("./Lockout");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                        return Page();
+                    }
                 }
             }
-
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled exception during login for user {Email}", Input?.Email);
+                // Optionally, show a user-friendly error message
+                ModelState.AddModelError(string.Empty, "An unexpected error occurred. Please try again later.");
+            }
             // If we got this far, something failed, redisplay form
             return Page();
         }

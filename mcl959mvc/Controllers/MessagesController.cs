@@ -28,8 +28,9 @@ public class MessagesController : Mcl959MemberController
          IHttpClientFactory httpClientFactory,
          Mcl959DbContext context,
          UserManager<ApplicationUser> userManager,
-         IOptions<SmtpSettings> smptOptions)
-         : base(userManager)
+         IOptions<SmtpSettings> smptOptions,
+         ILogger<Controller> logger)
+         : base(userManager, logger)
     {
         _cache = cache;
         _httpClientFactory = httpClientFactory;

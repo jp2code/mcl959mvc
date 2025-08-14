@@ -14,8 +14,12 @@ public class RosterController : Mcl959MemberController
     private readonly Mcl959DbContext _context;
     private readonly SmtpSettings _smtpSettings;
 
-    public RosterController(Mcl959DbContext context, UserManager<ApplicationUser> userManager, IOptions<SmtpSettings> smptOptions)
-        : base(userManager)
+    public RosterController(
+        Mcl959DbContext context,
+        UserManager<ApplicationUser> userManager,
+        IOptions<SmtpSettings> smptOptions,
+        ILogger<Controller> logger)
+        : base(userManager, logger)
     {
         _context = context;
         _smtpSettings = smptOptions.Value ?? throw new ArgumentNullException(nameof(smptOptions));
@@ -186,7 +190,7 @@ public class RosterController : Mcl959MemberController
         }
         // Get comments for this memorial
         var comments = await _context.Comments
-            .Where(c => c.TableSource == "Memorial" && c.ParentId == memorial.Id)
+            .Where(c => c.TableSource == "Memorial" && c.ParentId == member.Id)
             .ToListAsync();
 
         if (string.IsNullOrEmpty(memorial.Description))
@@ -215,10 +219,9 @@ please contact us so that the web sergeant can update this page.";
         if (!IsRegistered) return Forbid();
 
         item.TimeStamp = DateTime.UtcNow;
-        item.TableSource = "Memorial";
         _context.Comments.Add(item);
         await _context.SaveChangesAsync();
-        var regarding = $"{UserEmail}";
+        var regarding = $"(roster member id {item.ParentId} with no member number)";
         var roster = await _context.Roster.FindAsync(item.ParentId);
         if (roster != null)
         {
@@ -233,11 +236,11 @@ The following comment was added to the memorial for {regarding}:
             $"Comment on Memorial for {regarding}",
             emailMessage);
         // Redirect back to the memorial page
-        return RedirectToAction("Memorial", "Roster");
+        return RedirectToAction(nameof(Memorial), new { id = item.ParentId });
     }
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteComment(int id)
+    public async Task<IActionResult> DeleteComment(int id, int parentId)
     {
         await CheckUserIdentity();
         if (!IsRegistered) return Forbid();
@@ -246,7 +249,7 @@ The following comment was added to the memorial for {regarding}:
         _context.Comments.Remove(comment);
         await _context.SaveChangesAsync();
         // Redirect back to the memorial page
-        return RedirectToAction("Memorial", new { id = comment.ParentId });
+        return RedirectToAction("Memorial", new { id = parentId });
     }
 
     [HttpPost]

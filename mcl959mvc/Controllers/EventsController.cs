@@ -15,8 +15,8 @@ public class EventsController : Mcl959MemberController
     private readonly Mcl959DbContext _context;
     private readonly SmtpSettings _smtpSettings;
 
-    public EventsController(Mcl959DbContext context, UserManager<ApplicationUser> userManager, IOptions<SmtpSettings> smptOptions)
-        : base(userManager)
+    public EventsController(Mcl959DbContext context, UserManager<ApplicationUser> userManager, IOptions<SmtpSettings> smptOptions, ILogger<Controller> logger)
+        : base(userManager, logger)
     {
         _context = context;
         _smtpSettings = smptOptions.Value ?? throw new ArgumentNullException(nameof(smptOptions));
@@ -32,10 +32,17 @@ public class EventsController : Mcl959MemberController
     // GET: Events/Details/5
     public async Task<IActionResult> Details(int? id)
     {
-        if (id == null) return NotFound();
+        if (id == null)
+        {
+            _logger.LogWarning("Details called with null id");
+            return View("Error404");
+        }
         var item = await _context.Events.FindAsync(id);
-        if (item == null) return NotFound();
-
+        if (item == null)
+        {
+            ViewBag.Id = id;
+            return View("Error404");
+        }
         var comments = await _context.Comments
             .Where(c => c.TableSource == "Events" && c.ParentId == id)
             .OrderByDescending(c => c.TimeStamp)
@@ -152,14 +159,14 @@ The following comment was added to the event {regarding} by {UserEmail}:
 ";
         await EmailTool.SendEmailAsync(
             _smtpSettings,
-            UserEmail, UserEmail, string.Empty,
+            item.UserId, UserEmail, string.Empty,
             $"Comment on Event for {regarding}",
             emailMessage);
-        return RedirectToAction(nameof(Details), new { id = item.Id });
+        return RedirectToAction(nameof(Details), new { id = item.ParentId });
     }
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteComment(int id)
+    public async Task<IActionResult> DeleteComment(int id, int parentId)
     {
         await CheckUserIdentity();
         if (!IsRegistered) return Forbid();
@@ -168,7 +175,7 @@ The following comment was added to the event {regarding} by {UserEmail}:
         _context.Comments.Remove(comment);
         await _context.SaveChangesAsync();
         // Redirect back to the event details page
-        return RedirectToAction(nameof(Details), new { id = comment.ParentId });
+        return RedirectToAction(nameof(Details), new { id = parentId });
     }
 
 }

@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using mcl959mvc.Data;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 
 namespace mcl959mvc.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : Mcl959MemberController
     {
         private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public HomeController(IWebHostEnvironment webHostEnvironment)
+        public HomeController(IWebHostEnvironment webHostEnvironment, UserManager<ApplicationUser> userManager, ILogger<Controller> logger)
+            : base(userManager, logger)
         {
             _webHostEnvironment = webHostEnvironment;
         }
