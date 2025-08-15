@@ -7,6 +7,7 @@ wwwroot\css\mcl959.ttf
 wwwroot\css\mcl959.woff
 wwwroot\css\site.css
 wwwroot\favicon.ico
+wwwroot\images\2b53f5c2-0d8e-46c8-9af4-40b9a4f1b2a9.png
 wwwroot\images\bloodstripe.gif
 wwwroot\images\bloodstripe.pdn
 wwwroot\images\det959.jpg

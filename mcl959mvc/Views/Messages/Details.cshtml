@@ -1,57 +1,43 @@
 ﻿@model mcl959mvc.Models.MessagesModel
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Message Details";
     Layout = "~/Views/Shared/_Layout.cshtml";
-    bool isAdmin = User.HasClaim("isAdmin", "true");
+    var isAdmin = User.HasClaim("isAdmin", "true");
+    var defaultPhotoPath = "/photos/mcl959bw.jpg";
 }
 
-<h2>Your message has been sent!</h2>
-@if (TempData["EmailSentMessage"] != null)
-{
-    <div class="alert alert-success">
-        @Html.Raw(TempData["EmailSentMessage"])
-    </div>
-}
-<div class="row">
-    <div class="col-md-12">
-        <table class="table">
-            <tbody>
-                <tr>
-                    <th scope="row" width="25%">Name</th>
-                    <td width="50%"><input asp-for="Name" class="form-control w-100" readonly="true" /></td>
-                    <td width="25%"></td>
-                </tr>
-                <tr>
-                    <th scope="row">Email</th>
-                    <td><input asp-for="Email" class="form-control w-100" readonly="true" /></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <th scope="row">Message</th>
-                    <td><textarea asp-for="Comments" class="form-control w-100" rows="4" readonly="true"></textarea></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <th scope="row">Date</th>
-                    <td><input asp-for="Date" class="form-control w-100" readonly="true" /></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <th scope="row"></th>
-                    <td>
+<div class="container mt-4">
+    <div class="card mb-4 shadow-sm" style="background: #004392; color: #FFD700; border-radius: 8px;">
+        <div class="row g-0">
+            <div class="col-md-4 d-flex align-items-top justify-content-center" style="background: #0050AE; border-radius: 8px;">
+                <img src="@defaultPhotoPath"
+                     alt="Message"
+                     class="img-fluid rounded m-3"
+                     style="max-width: 100%; max-height: 300px; border: 1px solid #ccc; background: #fff;" />
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.Subject</h2>
+                    <p class="mb-2">
+                        <strong>From:</strong> @Model.Name &lt;@Model.Email&gt;<br />
+                        <strong>Date:</strong> @Model.Date.ToString("f")
+                    </p>
+                    <hr style="border-color: #FFD700;" />
+                    <div class="mb-3">
+                        <strong>Message:</strong>
+                        <div class="mt-2" style="white-space: pre-line;">
+                            @Html.Raw(Model.Comments)
+                        </div>
+                    </div>
+                    <div>
+                        <a asp-action="Index" class="btn btn-secondary btn-sm">Back to List</a>
                         @if (isAdmin)
                         {
-                            <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-danger btn-sm ms-2">Edit</a>
                         }
-                    </td>
-                    <td><a asp-action="Index">Back to List</a></td>
-                </tr>
-            </tbody>
-        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-<script>
-    $(document).ready(function () {
-        $('#miContact').addClass('selected');
-    });
-</script>

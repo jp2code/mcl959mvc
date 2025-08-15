@@ -76,6 +76,7 @@ C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\obj\Release\net8.0\PubTmp\Out\
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\obj\Release\net8.0\PubTmp\Out\NuGet.ProjectModel.dll
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\obj\Release\net8.0\PubTmp\Out\NuGet.Protocol.dll
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\obj\Release\net8.0\PubTmp\Out\NuGet.Versioning.dll
+C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\obj\Release\net8.0\PubTmp\Out\SixLabors.ImageSharp.dll
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\obj\Release\net8.0\PubTmp\Out\Swashbuckle.AspNetCore.Swagger.dll
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\obj\Release\net8.0\PubTmp\Out\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\obj\Release\net8.0\PubTmp\Out\Swashbuckle.AspNetCore.SwaggerUI.dll

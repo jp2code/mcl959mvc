@@ -3,104 +3,112 @@
     ViewData["Title"] = Model.DisplayName;
     Layout = "~/Views/Shared/_Layout.cshtml";
     var isAdmin = User.HasClaim("isAdmin", "true");
-    var isMember = User.HasClaim("isMember", "true");
     var isRegistered = User.HasClaim("isRegistered", "true");
     var photoPath = $"/photos/{Model.Memorial.RosterId}.jpg";
     var defaultPhotoPath = "/photos/mcl959bw.jpg";
 }
 
-<div id="descriptionSection" style="display: flex; align-items: flex-start;">
-    <div style="flex: 2; min-width:0;">
-        <h2>@Model.DisplayName</h2>
-        <p>
-            Died: @Model.DiedOn.ToShortDateString()
-            <hr />
-            @if (isAdmin)
-            {
-                <div>
-                    <a href="javascript:void(0);" id="editDescription">Edit</a>
-                    <a href="javascript:void(0);" id="saveDescription" style="display:none;">Save</a>
-                    <a href="javascript:void(0);" id="cancelEdit" style="display:none;">Cancel</a>
+<div class="container mt-4">
+    <div class="card mb-4 shadow-sm" style="background: #004392; color: #FFD700; border-radius: 8px;">
+        <div class="row g-0">
+            <div class="col-md-4 d-flex align-items-top justify-content-center" style="background: #0050AE; border-radius: 8px;">
+                <img src="@photoPath"
+                     alt="In memory of @Model.DisplayName"
+                     class="img-fluid rounded m-3"
+                     style="max-width: 100%; max-height: 300px; border: 1px solid #ccc; background: #fff;"
+                     onerror="this.onerror=null;this.src='@defaultPhotoPath';" />
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h2 class="card-title">@Model.DisplayName</h2>
+                    <p class="mb-2">
+                        <strong>Died:</strong> @Model.DiedOn.ToShortDateString()
+                    </p>
+                    <hr style="border-color: #FFD700;" />
+                    <div class="mb-3">
+                        <strong>Description:</strong>
+                        <div id="descriptionDisplay" class="mt-2" style="white-space: pre-line;">
+                            @Html.Raw(Model.Memorial.Description)
+                        </div>
+                        @if (isAdmin)
+                        {
+                            <div class="mt-2">
+                                <a href="javascript:void(0);" id="editDescription">Edit</a>
+                                <a href="javascript:void(0);" id="saveDescription" style="display:none;">Save</a>
+                                <a href="javascript:void(0);" id="cancelEdit" style="display:none;">Cancel</a>
+                            </div>
+                        }
+                    </div>
                 </div>
-            }
-        </p>
-        <div id="descriptionDisplay" contenteditable="false" style="min-height:100px; border:1px solid #ccc; padding:8px;">
-            @Html.Raw(Model.Memorial.Description)
+            </div>
         </div>
     </div>
-    <div style="flex: 1; max-width:33%; margin-left: 32px; display: flex; justify-content: flex-end;">
-        <img src="@photoPath"
-             alt="In memory of @Model.DisplayName"
-             style="width:100%; max-width:220px; height: auto; border-radius: 8px; border: 1px solid #ccc;"
-             onerror="this.onerror=null;this.src='@defaultPhotoPath';" />
-    </div>
+
+    <form id="editMemorialForm" method="post" asp-action="EditMemorialDescription" asp-controller="Roster" style="display:none;">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <input type="hidden" name="description" id="descriptionInput" />
+        <input type="hidden" name="save" id="saveInput" />
+    </form>
+
+    <h3>Comments</h3>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th width="20%">User</th>
+                <th width="50%">Message</th>
+                <th width="20%">Time</th>
+                <th width="10%"></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var comment in Model.Comments)
+        {
+            <tr>
+                <td>@comment.UserId</td>
+                <td>@comment.Message</td>
+                <td>@comment.TimeStamp.ToString("g")</td>
+                <td>
+                    @if (isAdmin)
+                    {
+                        <a onclick="event.preventDefault(); if(confirm('Are you sure you want to delete this comment?')) { document.getElementById('delete-comment-@comment.Id').submit(); }"
+                            href="#">Delete</a>
+                        <form id="delete-comment-@comment.Id" asp-action="DeleteComment" asp-controller="Roster" method="post" style="display:none;">
+                            <input type="hidden" name="id" value="@comment.Id" />
+                            <input type="hidden" name="parentId" value="@Model.Memorial.RosterId" />
+                            @Html.AntiForgeryToken()
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    @if (isRegistered)
+    {
+        <h4>Add a Comment</h4>
+        <form asp-action="AddComment" asp-controller="Roster" method="post">
+            <input type="hidden" name="TableSource" value="Memorial" />
+            <input type="hidden" name="ParentId" value="@Model.Memorial.RosterId" />
+            <div class="form-group mb-2">
+                <label for="UserId">Comment As</label>
+                <input type="text" name="UserId" class="form-control" value="@User.Identity.Name" />
+            </div>
+            <div class="form-group mb-2">
+                <label for="Message">Comment</label>
+                <textarea name="Message" class="form-control" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Post Comment</button>
+        </form>
+    }
+    else
+    {
+        <p>You must <a asp-area="Identity" asp-page="/Account/Login">log in</a> or <a asp-area="Identity" asp-page="/Account/Register">register</a> to post a comment.</p>
+    }
 </div>
 
-<form id="editMemorialForm" method="post" asp-action="EditMemorialDescription" asp-controller="Roster" style="display:none;">
-    <input type="hidden" name="id" value="@Model.Id" />
-    <input type="hidden" name="description" id="descriptionInput" />
-    <input type="hidden" name="save" id="saveInput" />
-</form>
-
-
-<h3>Comments</h3>
-<table class="table">
-    <thead>
-        <tr>
-            <th width="20%">User</th>
-            <th width="50%">Message</th>
-            <th width="20%">Time</th>
-            <th width="10%">&nbsp;</th>
-        </tr>
-    </thead>
-    <tbody>
-    @foreach (var comment in Model.Comments)
-    {
-        <tr>
-            <td>@comment.UserId</td>
-            <td>@comment.Message</td>
-            <td>@comment.TimeStamp.ToString("g")</td>
-            <td>
-                @if (isAdmin)
-                {
-                    <a onclick="event.preventDefault(); if(confirm('Are you sure you want to delete this comment?')) { document.getElementById('delete-comment-@comment.Id').submit(); }"
-                        href="#">Delete</a>
-                    <form id="delete-comment-@comment.Id" asp-action="DeleteComment" asp-controller="Roster" method="post" style="display:none;">
-                        <input type="hidden" name="id" value="@comment.Id" />
-                        <input type="hidden" name="parentId" value="@Model.Memorial.RosterId" />
-                        @Html.AntiForgeryToken()
-                    </form>
-                }
-            </td>
-        </tr>
-    }
-    </tbody>
-</table>
-
-@if (isRegistered)
-{
-    <h4>Add a Comment</h4>
-    <form asp-action="AddComment" asp-controller="Roster" method="post">
-        <input type="hidden" name="TableSource" value="Memorial" />
-        <input type="hidden" name="ParentId" value="@Model.Memorial.RosterId" />
-        <div class="form-group">
-            <label for="UserId">Comment As</label>
-            <input type="text" name="UserId" class="form-control" value="@User.Identity.Name" />
-            <label for="Message">Comment</label>
-            <textarea name="Message" class="form-control" required></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Post Comment</button>
-    </form>
-}
-else
-{
-    <p>You must <a asp-area="Identity" asp-page="/Account/Login">log in</a> or <a asp-area="Identity" asp-page="/Account/Register">register</a> to post a comment.</p>
-}
-
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
         $(document).ready(function () {
             $('#miMember').addClass('selected');

@@ -275,3 +275,4 @@ C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\obj\Release\net8.0\refint\mcl9
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\obj\Release\net8.0\mcl959mvc.pdb
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\obj\Release\net8.0\mcl959mvc.genruntimeconfig.cache
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\obj\Release\net8.0\ref\mcl959mvc.dll
+C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\bin\Release\net8.0\SixLabors.ImageSharp.dll
