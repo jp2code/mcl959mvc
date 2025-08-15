@@ -7,6 +7,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using System;
+using System.IO;
+using System.Linq;
+using System.Net.Mail;
 
 namespace mcl959mvc.Controllers;
 
@@ -61,18 +67,55 @@ public class EventsController : Mcl959MemberController
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
-        return View();
+        // Get list of image files from wwwroot/images
+        var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+        var imageFiles = Directory.Exists(imagesFolder)
+            ? Directory.GetFiles(imagesFolder)
+                .Where(f => allowedExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                .Select(f => Path.GetFileName(f))
+                .ToList()
+            : new List<string>();
+        ViewBag.Images = imageFiles;
+        return View(new EventsModel());
     }
 
     // POST: Events/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(EventsModel item)
+    public async Task<IActionResult> Create(EventsModel item, IFormFile? ImageUpload)
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
         if (ModelState.IsValid)
         {
+            if ((ImageUpload != null) && (0 < ImageUpload.Length))
+            {
+                if (MAX4MB < ImageUpload.Length)
+                {
+                    ModelState.AddModelError("Attachment", "File size exceeds the maximum limit.");
+                    return View(item);
+                }
+                var allowedTypes = new[] { ".jpg", ".jpeg", ".gif", ".png" };
+                var ext = Path.GetExtension(ImageUpload.FileName).ToLowerInvariant();
+                if (!allowedTypes.Contains(ext))
+                {
+                    ModelState.AddModelError("ImageUpload", "Invalid file type.");
+                    return View(item);
+                }
+                var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+                using var image = Image.Load(ImageUpload.OpenReadStream());
+                image.Mutate(x => x.Resize(new ResizeOptions
+                {
+                    Mode = ResizeMode.Max,
+                    Size = new Size(600, 600) // Adjust as needed for 30% width
+                }));
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(ImageUpload.FileName)}";
+                var filePath = Path.Combine(imagesFolder, fileName);
+                await image.SaveAsync(filePath);
+                item.ImageFileName = fileName;
+            }
+            item.EventCreated = DateTime.UtcNow;
             _context.Add(item);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
@@ -88,19 +131,55 @@ public class EventsController : Mcl959MemberController
         if (id == null) return NotFound();
         var item = await _context.Events.FindAsync(id);
         if (item == null) return NotFound();
+        // Get list of image files from wwwroot/images
+        var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+        var imageFiles = Directory.Exists(imagesFolder)
+            ? Directory.GetFiles(imagesFolder)
+                .Where(f => allowedExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                .Select(f => Path.GetFileName(f))
+                .ToList()
+            : new List<string>();
+        ViewBag.Images = imageFiles;
         return View(item);
     }
 
     // POST: Events/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, EventsModel item)
+    public async Task<IActionResult> Edit(int id, EventsModel item, IFormFile? ImageUpload)
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
         if (id != item.Id) return NotFound();
         if (ModelState.IsValid)
         {
+            if ((ImageUpload != null) && (0 < ImageUpload.Length))
+            {
+                if (MAX4MB < ImageUpload.Length)
+                {
+                    ModelState.AddModelError("Attachment", "File size exceeds the maximum limit.");
+                    return View(item);
+                }
+                var allowedTypes = new[] { ".jpg", ".jpeg", ".gif", ".png" };
+                var ext = Path.GetExtension(ImageUpload.FileName).ToLowerInvariant();
+                if (!allowedTypes.Contains(ext))
+                {
+                    ModelState.AddModelError("ImageUpload", "Invalid file type.");
+                    return View(item);
+                }
+                var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+                using var image = Image.Load(ImageUpload.OpenReadStream());
+                image.Mutate(x => x.Resize(new ResizeOptions
+                {
+                    Mode = ResizeMode.Max,
+                    Size = new Size(600, 600) // Adjust as needed for 30% width
+                }));
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(ImageUpload.FileName)}";
+                var filePath = Path.Combine(imagesFolder, fileName);
+                await image.SaveAsync(filePath);
+                item.ImageFileName = fileName;
+            }
             _context.Update(item);
             await _context.SaveChangesAsync();
             // Redirect to Details with the same id after saving

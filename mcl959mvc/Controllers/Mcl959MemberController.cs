@@ -7,6 +7,7 @@ namespace mcl959mvc.Controllers;
 
 public abstract class Mcl959MemberController : Controller
 {
+    protected const int MAX4MB = 4 * 1024 * 1024; // 4 MB
     protected readonly UserManager<ApplicationUser> _userManager;
     protected readonly ILogger<Controller> _logger;
     public string UserEmail;
@@ -60,4 +61,5 @@ public abstract class Mcl959MemberController : Controller
             }
         }
     }
+
 }

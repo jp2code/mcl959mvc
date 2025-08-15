@@ -17,7 +17,6 @@ namespace mcl959mvc.Controllers;
 
 public class MessagesController : Mcl959MemberController
 {
-    private const int MAX4MB = 4 * 1024 * 1024; // 4 MB
     private readonly Mcl959DbContext _context;
     private readonly IMemoryCache _cache;
     private readonly IHttpClientFactory _httpClientFactory; // For sending email (or use your own service)

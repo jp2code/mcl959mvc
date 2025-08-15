@@ -3247,6 +3247,22 @@
           }
         }
       },
+      "SixLabors.ImageSharp/3.1.11": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/SixLabors.ImageSharp.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/SixLabors.ImageSharp.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "build/SixLabors.ImageSharp.props": {}
+        }
+      },
       "Swashbuckle.AspNetCore/6.2.3": {
         "type": "package",
         "dependencies": {
@@ -5039,6 +5055,7 @@
           "Microsoft.EntityFrameworkCore.SqlServer": "8.0.18",
           "Microsoft.EntityFrameworkCore.Tools": "8.0.18",
           "Microsoft.VisualStudio.Web.CodeGeneration.Design": "8.0.7",
+          "SixLabors.ImageSharp": "3.1.11",
           "Swashbuckle.AspNetCore": "6.2.3",
           "Swashbuckle.AspNetCore.SwaggerUI": "9.0.3",
           "jQuery": "3.7.1"
@@ -10204,6 +10221,22 @@
         "runtimes/ubuntu.16.10-x64/native/System.Security.Cryptography.Native.OpenSsl.so"
       ]
     },
+    "SixLabors.ImageSharp/3.1.11": {
+      "sha512": "JfPLyigLthuE50yi6tMt7Amrenr/fA31t2CvJyhy/kQmfulIBAqo5T/YFUSRHtuYPXRSaUHygFeh6Qd933EoSw==",
+      "type": "package",
+      "path": "sixlabors.imagesharp/3.1.11",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "build/SixLabors.ImageSharp.props",
+        "lib/net6.0/SixLabors.ImageSharp.dll",
+        "lib/net6.0/SixLabors.ImageSharp.xml",
+        "sixlabors.imagesharp.128.png",
+        "sixlabors.imagesharp.3.1.11.nupkg.sha512",
+        "sixlabors.imagesharp.nuspec"
+      ]
+    },
     "Swashbuckle.AspNetCore/6.2.3": {
       "sha512": "cnzQDn0Le+hInsw2SYwlOhOCPXpYi/szcvnyqZJ12v+QyrLBwAmWXBg6RIyHB18s/mLeywC+Rg2O9ndz0IUNYQ==",
       "type": "package",
@@ -14500,6 +14533,7 @@
       "Microsoft.AspNetCore.Mvc.Testing >= 8.0.0",
       "Microsoft.NET.Test.Sdk >= 17.8.0",
       "Moq >= 4.20.72",
+      "SixLabors.ImageSharp >= 3.1.11",
       "coverlet.collector >= 6.0.0",
       "mcl959mvc >= 1.0.0",
       "xunit >= 2.5.6",
@@ -14574,6 +14608,10 @@
           "Moq": {
             "target": "Package",
             "version": "[4.20.72, )"
+          },
+          "SixLabors.ImageSharp": {
+            "target": "Package",
+            "version": "[3.1.11, )"
           },
           "coverlet.collector": {
             "target": "Package",

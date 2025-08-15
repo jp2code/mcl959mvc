@@ -8,39 +8,65 @@
 }
 
 <h2>Edit Event</h2>
-<div>
-    <dl class="row">
-        <div class="col-md-12">
-            <form asp-action="Edit">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                <input type="hidden" asp-for="Id" />
-                <div class="form-group">
-                    <label asp-for="EventName" class="control-label"></label>
-                    <input asp-for="EventName" class="form-control" />
-                    <span asp-validation-for="EventName" class="text-danger"></span>
-                </div>
-                <div class="form-group">
-                    <label asp-for="EventDescription" class="control-label"></label>
-                    <textarea asp-for="EventDescription" class="form-control" rows="8" style="width:100%; min-width:100%; min-height:200px;"></textarea>
-                    <span asp-validation-for="EventDescription" class="text-danger"></span>
-                </div>
-                <div class="form-group">
-                    <label asp-for="EventDate" class="control-label"></label>
-                    <input asp-for="EventDate" class="form-control" />
-                    <span asp-validation-for="EventDate" class="text-danger"></span>
-                </div>
-                <div class="form-group">
-                    @if (isAdmin)
+<div class="row">
+    <div class="col-md-12">
+        @using (Html.BeginForm("Edit", "Events", FormMethod.Post, new { enctype = "multipart/form-data" }))
+        {
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="EventName" class="control-label">Name of Event</label>
+                <input asp-for="EventName" class="form-control" />
+                <span asp-validation-for="EventName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label for="ImageFileName">Event Image</label>
+                <select id="ImageFileName" name="ImageFileName" class="form-control">
+                    <option value="">-- Select an image --</option>
+                    @foreach (var img in (List<string>)ViewBag.Images)
                     {
-                        <input type="submit" value="Save" class="btn btn-primary" />
+                        <option value="@img">@img</option>
                     }
-                </div>
-                <div class="form-group">
-                    <a asp-action="Index">Back to List</a>
-                </div>
-            </form>
-        </div>
-    </dl>
+                    <option value="__browse__">Browse...</option>
+                </select>
+                <input type="file" id="ImageUpload" name="ImageUpload" style="display:none;" accept="image/*" />
+                <br />
+                <span class="text-muted">
+                    Upload a new image if not listed above.
+                    4MB size limit, PNG or JPG format. Large images will be reduced to a maximum of 300 pixels wide.
+                </span>
+            </div>
+            <script>
+                document.getElementById('ImageFileName').addEventListener('change', function () {
+                    if (this.value === '__browse__') {
+                        document.getElementById('ImageUpload').style.display = '';
+                    } else {
+                        document.getElementById('ImageUpload').style.display = 'none';
+                    }
+                });
+            </script>
+            <div class="form-group">
+                <label asp-for="EventDescription" class="control-label">Description</label>
+                <textarea asp-for="EventDescription" class="form-control" rows="8" style="width:100%; min-width:100%; min-height:200px;"></textarea>
+                <span asp-validation-for="EventDescription" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EventDate" class="control-label">Date and Time</label>
+                <input asp-for="EventDate" class="form-control" />
+                <span asp-validation-for="EventDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                @if (isAdmin)
+                {
+                    <input type="submit" value="Save" class="btn btn-primary" />
+                }
+            </div>
+            <div class="form-group">
+                <a asp-action="Index">Back to List</a>
+            </div>
+        }
+    </div>
 </div>
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

@@ -13,15 +13,24 @@
         <div class="col-md-12">
             <form>
                 <div class="form-group">
-                    <label asp-for="Event.EventName" class="control-label"></label>
+                    <label asp-for="Event.EventName" class="control-label">Name of Event</label>
                     <input asp-for="Event.EventName" class="form-control" readonly="readonly" />
                 </div>
                 <div class="form-group">
-                    <label asp-for="Event.EventDescription" class="control-label"></label>
+                    <label asp-for="Event.ImageFileName" class="control-label">Image</label>
+                    @if (!string.IsNullOrEmpty(Model.Event.ImageFileName))
+                    {
+                        <img src="~/images/@Model.Event.ImageFileName"
+                             alt="Event Image"
+                             style="width:100%; max-width:220px; height:auto; border-radius:8px; border:1px solid #ccc;" />
+                    }
+                </div>
+                <div class="form-group">
+                    <label asp-for="Event.EventDescription" class="control-label">Description</label>
                     <textarea asp-for="Event.EventDescription" class="form-control" rows="8" style="width:100%; min-width:100%; min-height:200px;" readonly="readonly"></textarea>
                 </div>
                 <div class="form-group">
-                    <label asp-for="Event.EventDate" class="control-label"></label>
+                    <label asp-for="Event.EventDate" class="control-label">Date and Time</label>
                     <input asp-for="Event.EventDate" class="form-control" readonly="readonly" />
                 </div>
                 <div class="form-group">

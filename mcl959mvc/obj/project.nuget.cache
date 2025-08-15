@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "FzKA+X6nbuw=",
+  "dgSpecHash": "AkAw8DtTITE=",
   "success": true,
   "projectFilePath": "C:\\Users\\jp2code\\Source\\Repos\\mcl959mvc\\mcl959mvc\\mcl959mvc.csproj",
   "expectedPackageFiles": [
@@ -136,6 +136,7 @@
     "C:\\Users\\jp2code\\.nuget\\packages\\nuget.projectmodel\\6.11.0\\nuget.projectmodel.6.11.0.nupkg.sha512",
     "C:\\Users\\jp2code\\.nuget\\packages\\nuget.protocol\\6.11.0\\nuget.protocol.6.11.0.nupkg.sha512",
     "C:\\Users\\jp2code\\.nuget\\packages\\nuget.versioning\\6.11.0\\nuget.versioning.6.11.0.nupkg.sha512",
+    "C:\\Users\\jp2code\\.nuget\\packages\\sixlabors.imagesharp\\3.1.11\\sixlabors.imagesharp.3.1.11.nupkg.sha512",
     "C:\\Users\\jp2code\\.nuget\\packages\\swashbuckle.aspnetcore\\6.2.3\\swashbuckle.aspnetcore.6.2.3.nupkg.sha512",
     "C:\\Users\\jp2code\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\6.2.3\\swashbuckle.aspnetcore.swagger.6.2.3.nupkg.sha512",
     "C:\\Users\\jp2code\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\6.2.3\\swashbuckle.aspnetcore.swaggergen.6.2.3.nupkg.sha512",

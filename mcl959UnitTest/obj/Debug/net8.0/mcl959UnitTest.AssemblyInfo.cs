@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("mcl959UnitTest")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7f59f7142480ee2ddcb6cd9e2dad17f663478fa1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+594291ab3ede82b2412464fc9ddde6c1a07a9d37")]
 [assembly: System.Reflection.AssemblyProductAttribute("mcl959UnitTest")]
 [assembly: System.Reflection.AssemblyTitleAttribute("mcl959UnitTest")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -25,4 +25,8 @@ public partial class EventsModel
 
     [Column(TypeName = "datetime")]
     public DateTime? EventCreated { get; set; }
+
+    [StringLength(255)]
+    [Unicode(false)]
+    public string? ImageFileName { get; set; }
 }

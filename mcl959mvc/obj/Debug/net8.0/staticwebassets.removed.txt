@@ -1,5 +1,0 @@
-C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\wwwroot\photos\DennisCampbell.jpg
-C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\wwwroot\photos\GaryMcDonald.jpg
-C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\wwwroot\photos\HargettGordonK.jpg
-C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\wwwroot\photos\MiltonSaxon.jpg
-C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\wwwroot\photos\WayneDolive.jpg
