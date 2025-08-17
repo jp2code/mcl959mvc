@@ -206,6 +206,13 @@ div.alert {
     background-color: #0050AE; /* lighter dress blue */
 }
 
+div.card {
+    color: #999999; /* silver */
+    background-color: #004392; /* dress blues blue */
+    font-family: sans-serif, monospace;
+    text-shadow: 1px 1px 1px rgba(0,43,92,80);
+}
+
 div.logo {
     background: url('/images/mcl959.gif') no-repeat #999;
     background-color: transparent; /* dress blues blue */

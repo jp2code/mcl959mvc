@@ -122,3 +122,4 @@ wwwroot\photos\635.jpg
 wwwroot\photos\665.jpg
 wwwroot\photos\mcl959bw.jpg
 wwwroot\images\2b53f5c2-0d8e-46c8-9af4-40b9a4f1b2a9.png
+wwwroot\uploads\MaximosReportCard.c4d059b0-defe-404a-809b-9946cfc2b2f9.pdf

@@ -6,6 +6,12 @@
     var defaultPhotoPath = "/photos/mcl959bw.jpg";
 }
 
+@if (TempData["EmailSentMessage"] != null)
+{
+    <div class="alert alert-success">
+        @Html.Raw(TempData["EmailSentMessage"])
+    </div>
+}
 <div class="container mt-4">
     <div class="card mb-4 shadow-sm" style="background: #004392; color: #FFD700; border-radius: 8px;">
         <div class="row g-0">
@@ -41,3 +47,14 @@
         </div>
     </div>
 </div>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+<script>
+    $(document).ready(function () {
+        $('#miContact').addClass('selected');
+    });
+</script>
+0
