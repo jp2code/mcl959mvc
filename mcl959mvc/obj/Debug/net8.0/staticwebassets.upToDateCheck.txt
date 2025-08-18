@@ -122,3 +122,4 @@ wwwroot\photos\patriotWallSM.jpg
 wwwroot\photos\wallOfHonor.jpg
 wwwroot\photos\wallOfHonorSM.jpg
 wwwroot\uploads\index.html
+wwwroot\uploads\MaximosReportCard.c4d059b0-defe-404a-809b-9946cfc2b2f9.pdf

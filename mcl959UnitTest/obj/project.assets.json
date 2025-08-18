@@ -5033,7 +5033,7 @@
           }
         }
       },
-      "xunit.runner.visualstudio/2.5.3": {
+      "xunit.runner.visualstudio/2.5.6": {
         "type": "package",
         "compile": {
           "lib/net6.0/_._": {}
@@ -14497,10 +14497,10 @@
         "xunit.extensibility.execution.nuspec"
       ]
     },
-    "xunit.runner.visualstudio/2.5.3": {
-      "sha512": "HFFL6O+QLEOfs555SqHii48ovVa4CqGYanY+B32BjLpPptdE+wEJmCFNXlLHdEOD5LYeayb9EroaUpydGpcybg==",
+    "xunit.runner.visualstudio/2.5.6": {
+      "sha512": "CW6uhMXNaQQNMSG1IWhHkBT+V5eqHqn7MP0zfNMhU9wS/sgKX7FGL3rzoaUgt26wkY3bpf7pDVw3IjXhwfiP4w==",
       "type": "package",
-      "path": "xunit.runner.visualstudio/2.5.3",
+      "path": "xunit.runner.visualstudio/2.5.6",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -14514,11 +14514,11 @@
         "build/net6.0/xunit.abstractions.dll",
         "build/net6.0/xunit.runner.reporters.netcoreapp10.dll",
         "build/net6.0/xunit.runner.utility.netcoreapp10.dll",
-        "build/net6.0/xunit.runner.visualstudio.dotnetcore.testadapter.dll",
         "build/net6.0/xunit.runner.visualstudio.props",
+        "build/net6.0/xunit.runner.visualstudio.testadapter.dll",
         "lib/net462/_._",
         "lib/net6.0/_._",
-        "xunit.runner.visualstudio.2.5.3.nupkg.sha512",
+        "xunit.runner.visualstudio.2.5.6.nupkg.sha512",
         "xunit.runner.visualstudio.nuspec"
       ]
     },
@@ -14537,7 +14537,7 @@
       "coverlet.collector >= 6.0.0",
       "mcl959mvc >= 1.0.0",
       "xunit >= 2.5.6",
-      "xunit.runner.visualstudio >= 2.5.3"
+      "xunit.runner.visualstudio >= 2.5.6"
     ]
   },
   "packageFolders": {
@@ -14623,7 +14623,7 @@
           },
           "xunit.runner.visualstudio": {
             "target": "Package",
-            "version": "[2.5.3, )"
+            "version": "[2.5.6, )"
           }
         },
         "imports": [

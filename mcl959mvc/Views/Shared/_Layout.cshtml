@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using System.Text.Json
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -15,8 +16,9 @@
     <header>
         @{
             string currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+            string currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
         }
-        <div class="logo"></div>
+        <div class="logo desktop-logo"></div>
         <div class="head">
             <h1 style="z-index: 3;">
                 Marine Corps League<br />
@@ -33,19 +35,19 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
-                        <li id="miHome" class="nav-item @(currentController == "Home" ? "active" : "")">
+                        <li id="miHome" class="nav-item @(currentController == "Home" && currentAction != "About" ? "selected" : "")">
                             <a class="nav-link" asp-controller="Home" asp-action="Index">MCL959</a>
                         </li>
-                        <li id="miEvent" class="nav-item @(currentController == "Events" ? "active" : "")">
+                        <li id="miEvent" class="nav-item @(currentController == "Events" ? "selected" : "")">
                             <a class="nav-link" asp-controller="Events" asp-action="Index">Events</a>
                         </li>
-                        <li id="miMember" class="nav-item @(currentController == "Roster" ? "active" : "")">
+                        <li id="miMember" class="nav-item @(currentController == "Roster" ? "selected" : "")">
                             <a class="nav-link" asp-controller="Roster" asp-action="Index">Members</a>
                         </li>
-                        <li id="miAbout" class="nav-item @(currentController == "Home" ? "active" : "")">
+                        <li id="miAbout" class="nav-item @(currentController == "Home" && currentAction == "About" ? "selected" : "")">
                             <a class="nav-link" asp-controller="Home" asp-action="About">About</a>
                         </li>
-                        <li id="miContact" class="nav-item @(currentController == "Messages" ? "active" : "")">
+                        <li id="miContact" class="nav-item @(currentController == "Messages" ? "selected" : "")">
                             <a class="nav-link" asp-controller="Messages" asp-action="Index">Contact</a>
                         </li>
                         <!-- Add more controllers/actions as needed -->
@@ -61,6 +63,7 @@
             </main>
         </div>
     </div>
+    <div class="logo mobile-logo"></div>
     <footer class="border-top footer text-muted">
         <div class="container">
             Find and like us on Facebook at <a href="https://www.facebook.com/mcl959">Facebook.com/mcl959</a><br />
@@ -72,18 +75,37 @@
         <div id="errorPopupContent"></div>
         <button onclick="document.getElementById('errorPopup').style.display='none';">Close</button>
     </div>
+    @{
+        // Safely handle possible nulls in ModelState
+        var modelState = ViewData.ModelState ?? new Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary();
+        var errorDict = modelState
+            .Where(x => x.Value != null && x.Value.Errors.Any())
+            .ToDictionary(
+                x => x.Key,
+                x => x.Value!.Errors.Select(e => e.ErrorMessage).ToList()
+            );
+        var modelStateErrorsJson = JsonSerializer.Serialize(errorDict);
+    }
+    <input type="hidden" id="modelStateErrors" value="@modelStateErrorsJson" />
     @section Scripts {
         <script>
             document.addEventListener("DOMContentLoaded", function () {
+                var modelStateErrorsJson = document.getElementById('modelStateErrors').value;
+                var modelStateErrors = {};
+                if (modelStateErrorsJson) {
+                    try {
+                        modelStateErrors = JSON.parse(modelStateErrorsJson);
+                    } catch (e) {
+                        modelStateErrors = {};
+                    }
+                }
                 var errorMessages = [];
-                @if (ViewData.ModelState != null && !ViewData.ModelState.IsValid)
-                {
-                    foreach (var entry in ViewData.ModelState)
-                    {
-                        foreach (var error in entry.Value.Errors)
-                        {
-                            @:errorMessages.push("@error.ErrorMessage");
-                        }
+                for (var key in modelStateErrors) {
+                    if (modelStateErrors.hasOwnProperty(key)) {
+                        var errors = modelStateErrors[key];
+                        errors.forEach(function (error) {
+                            errorMessages.push(error);
+                        });
                     }
                 }
                 if (errorMessages.length > 0) {

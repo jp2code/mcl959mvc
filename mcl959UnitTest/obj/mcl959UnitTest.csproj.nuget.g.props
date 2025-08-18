@@ -15,7 +15,7 @@
     <SourceRoot Include="C:\Program Files (x86)\Microsoft\Xamarin\NuGet\" />
   </ItemGroup>
   <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
-    <Import Project="$(NuGetPackageRoot)xunit.runner.visualstudio\2.5.3\build\net6.0\xunit.runner.visualstudio.props" Condition="Exists('$(NuGetPackageRoot)xunit.runner.visualstudio\2.5.3\build\net6.0\xunit.runner.visualstudio.props')" />
+    <Import Project="$(NuGetPackageRoot)xunit.runner.visualstudio\2.5.6\build\net6.0\xunit.runner.visualstudio.props" Condition="Exists('$(NuGetPackageRoot)xunit.runner.visualstudio\2.5.6\build\net6.0\xunit.runner.visualstudio.props')" />
     <Import Project="$(NuGetPackageRoot)xunit.core\2.6.0\build\xunit.core.props" Condition="Exists('$(NuGetPackageRoot)xunit.core\2.6.0\build\xunit.core.props')" />
     <Import Project="$(NuGetPackageRoot)sixlabors.imagesharp\3.1.11\build\SixLabors.ImageSharp.props" Condition="Exists('$(NuGetPackageRoot)sixlabors.imagesharp\3.1.11\build\SixLabors.ImageSharp.props')" />
     <Import Project="$(NuGetPackageRoot)microsoft.codeanalysis.analyzers\3.3.4\buildTransitive\Microsoft.CodeAnalysis.Analyzers.props" Condition="Exists('$(NuGetPackageRoot)microsoft.codeanalysis.analyzers\3.3.4\buildTransitive\Microsoft.CodeAnalysis.Analyzers.props')" />

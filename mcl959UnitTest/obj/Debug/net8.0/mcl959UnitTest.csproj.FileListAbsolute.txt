@@ -653,3 +653,4 @@ C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959UnitTest\obj\Debug\net8.0\refint\m
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959UnitTest\obj\Debug\net8.0\mcl959UnitTest.pdb
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959UnitTest\obj\Debug\net8.0\mcl959UnitTest.genruntimeconfig.cache
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959UnitTest\obj\Debug\net8.0\ref\mcl959UnitTest.dll
+C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959UnitTest\bin\Debug\net8.0\SixLabors.ImageSharp.dll
