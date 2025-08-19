@@ -274,5 +274,4 @@ C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\bin\Debug\net8.0\runtimes\win\
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Security.Cryptography.ProtectedData.dll
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Windows.Extensions.dll
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\obj\Debug\net8.0\mcl959mvc.sourcelink.json
-C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Users\jp2code\Source\Repos\mcl959mvc\mcl959mvc\bin\Debug\net8.0\SixLabors.ImageSharp.dll

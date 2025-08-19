@@ -1,2 +1,9 @@
 .vs/
 appsettings.secrets.json
+
+# Build results
+bin/
+obj/
+
+# NuGet packages
+packages/

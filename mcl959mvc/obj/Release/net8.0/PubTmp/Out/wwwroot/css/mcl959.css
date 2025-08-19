@@ -1,5 +1,4 @@
-﻿/*  9/27/2018 */
-@font-face {
+﻿@font-face {
     font-family: 'mcl959_font';
     src: url('mcl959.eot'); /* IE9 Compat Modes */
     src: url('mcl959.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
@@ -358,47 +357,43 @@ div.footer { /* ref: https://css-tricks.com/snippets/css/sticky-footer/ */
     font-size: x-small;
 }
 
-/* mcl959mvc/wwwroot/css/mcl959.css */
-.roster-details-grid {
-    border: 1px solid #dee2e6; /* Light gray border for separation */
-    border-radius: 6px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
+/* Mobile styles */
+@media (max-width: 767px) {
+    .desktop-logo {
+        display: none !important;
+    }
+    .mobile-logo {
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        position: static !important;
+        left: auto !important;
+        top: auto !important;
+        width: 120px !important;
+        height: 120px !important;
+        background: url('/images/mcl959.gif') no-repeat center center !important;
+        background-size: contain !important;
+    }
+    .head {
+        height: 80px !important; /* Adjust to match your background image height */
+        background-size: contain !important;
+       	background-repeat: no-repeat !important;
+        background-position: center center !important;
+    }
+    .navbar {
+        left: 15px !important;
+        width: calc(100% - 30px) !important; /* Optional: ensures navbar fits screen */
+    }
 }
 
-.roster-field {
-    background: none; /* No background, uses parent background */
-    padding: 0.15rem 0.3rem; /* Reduced padding for less white space */
-    margin-bottom: 0.3rem;   /* Less margin between fields */
-    min-height: 40px;        /* Reduced minimum height for compactness */
-    box-shadow: none;
-}
-
-.roster-value {
-    background: #0050AE !important; /* Lighter dress blue (matches even table row background) */
-    color: #FFD700;      /* Gold (matches odd table row text) */
-    font-size: 1.05em;
-    font-weight: 500;
-    padding: 0.15em 0.3em 0.1em 0.3em; /* Less padding for compact look */
-    border-radius: 4px 4px 0 0;
-    margin-bottom: 0.1em;
-    min-height: 1.5em; /* Ensures field is visible even if empty */
-    display: flex;
-    align-items: center;
-}
-
-.roster-label {
-    background: #004392; /* Dress blues blue (matches odd table row background) */
-    color: #FFD700 !important;      /* Gold for high contrast */
-    font-size: 0.95em;
-    padding: 0.1em 0.3em 0.15em 0.3em; /* Less padding for compact look */
-    border-radius: 0 0 4px 4px;
-    text-align: left;
-    font-weight: 600;
-    border-top: 1px solid #dee2e6; /* Light gray border for separation */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-shadow: 0 1px 1px #003366; /* Subtle shadow for clarity */
+/* Desktop styles */
+@media (min-width: 768px) {
+    .desktop-logo {
+        display: block;
+    }
+    .mobile-logo {
+        display: none;
+    }
 }
