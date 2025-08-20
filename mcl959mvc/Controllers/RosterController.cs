@@ -256,6 +256,8 @@ The following comment was added to the memorial for {regarding}:
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditMemorialDescription(int id, string description, bool save)
     {
+        await CheckUserIdentity();
+        if (!IsAdmin) return Forbid();
         var memorial = await _context.Memorial.FindAsync(id);
         if (memorial == null) return NotFound();
         if (save)

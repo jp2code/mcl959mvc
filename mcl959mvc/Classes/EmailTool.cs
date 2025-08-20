@@ -13,6 +13,14 @@ public class EmailTool
         // Implement your email sending logic here
         // For example, use SMTP, SendGrid, or any other provider
         System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+        if (string.IsNullOrEmpty(fromName))
+        {
+            fromName = _smtpSettings.SiteDomain;
+        }
+        if (string.IsNullOrEmpty(fromEmail))
+        {
+            fromEmail = _smtpSettings.FromEmail;
+        }
         var mailgunMsg = "<a href=\"http://api.mailgun.net\">Mailgun Requests API</a>";
         var textBody = EmailTextBody(fromName, fromEmail, attnTo, body, mailgunMsg);
         var htmlBody = EmailHtmlBody(fromName, fromEmail, attnTo, body, mailgunMsg);
