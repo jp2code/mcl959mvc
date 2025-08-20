@@ -84,10 +84,10 @@ public class RosterController : Mcl959MemberController
         return View(viewModel);
     }
     // GET: Roster/Details/225510
-    public async Task<IActionResult> Details(string memberNumber)
+    public async Task<IActionResult> Details(string memberNumber, int? id)
     {
-        if (string.IsNullOrEmpty(memberNumber)) return NotFound();
-        var member = await _context.Roster.FirstOrDefaultAsync(x => x.MemberNumber == memberNumber);
+        if (string.IsNullOrEmpty(memberNumber) && (id == null)) return NotFound();
+        var member = await _context.Roster.FirstOrDefaultAsync(x => x.MemberNumber == memberNumber || x.Id == id);
         if (member == null) return NotFound();
         return View(member);
     }

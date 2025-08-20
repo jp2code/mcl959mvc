@@ -145,10 +145,13 @@
                         @item.DisplayName
                     </td>
                     <td>
-                        <a asp-action="Details" asp-controller="Roster"
-                            asp-route-memberNumber="@item.MemberNumber"
-                            asp-route-page="1">@item.MemberNumber</a>
-                    </td>
+                            <a asp-action="Details"
+                               asp-controller="Roster"
+                               asp-route-memberNumber="@item.MemberNumber"
+                               asp-route-id="@item.Id">
+                                @(!string.IsNullOrEmpty(item.MemberNumber) ? item.MemberNumber : "N/A")
+                            </a>
+                        </td>
                     <td>
                         @if (!string.IsNullOrWhiteSpace(item.PersonalPhone))
                         {
