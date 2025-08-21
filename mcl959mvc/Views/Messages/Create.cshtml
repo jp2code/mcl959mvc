@@ -29,14 +29,7 @@
                     <tr>
                         <th scope="row">Send To</th>
                         <td>
-                            @if (!isMember)
-                            {
-                                <p>Web Sergeant</p>
-                            }
-                            else
-                            {
-                                <select asp-for="SendTo" class="form-control w-100" asp-items="ViewBag.Recipients"></select>
-                            }
+                            <select asp-for="SendTo" class="form-control w-100" asp-items="ViewBag.Recipients"></select>
                         </td>
                         <td></td>
                     </tr>

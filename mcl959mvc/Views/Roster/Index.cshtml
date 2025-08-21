@@ -56,9 +56,6 @@
             <tr>
                 <th>Position</th>
                 <th>Name</th>
-                <th>Member Number</th>
-                <th>Phone</th>
-                <th>Email</th>
             </tr>
         </thead>
         <tbody>
@@ -67,9 +64,6 @@
                 <tr>
                     <td>@officer.Position</td>
                     <td>@officer.DisplayName</td>
-                    <td>@officer.MemberNumber</td>
-                    <td>@officer.Phone</td>
-                    <td>@officer.Email</td>
                 </tr>
             }
         </tbody>
@@ -119,72 +113,72 @@
 @if (isAdmin)
 {
     <div id="divRoster" class="admin">
-    <h2>Admin Roster</h2>
+        <h2>Admin Roster</h2>
         <p>
             <a asp-action="Create">Add New Member</a>
         </p>
         <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Row</th>
-                <th>Name</th>
-                <th>Number</th>
-                <th>Phone</th>
-                <th>Email</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model.AllMembers
-                .OrderBy(x => x.LastName)
-                .ThenBy(x => x.FirstName)
-                .ThenBy(x => x.MemberNumber))
-            {
+            <thead>
                 <tr>
-                    <td>@(nRoster++)</td>
-                    <td>
-                        @item.DisplayName
-                    </td>
-                    <td>
-                            <a asp-action="Details"
-                               asp-controller="Roster"
-                               asp-route-memberNumber="@item.MemberNumber"
-                               asp-route-id="@item.Id">
-                                @(!string.IsNullOrEmpty(item.MemberNumber) ? item.MemberNumber : "N/A")
-                            </a>
-                        </td>
-                    <td>
-                        @if (!string.IsNullOrWhiteSpace(item.PersonalPhone))
-                        {
-                            <a href="tel:@item.PersonalPhone">@item.PersonalPhone</a>
-                        }
-                        else if (!string.IsNullOrWhiteSpace(item.WorkEmail))
-                        {
-                            <a href="tel:@item.WorkEmail">@item.WorkEmail</a>
-                        }
-                        else
-                        {
-                            <span>No Phone</span>
-                        }
-                    </td>
-                    <td>
-                        @if (!string.IsNullOrWhiteSpace(item.PersonalEmail))
-                        {
-                            <a href="mailto:@item.PersonalEmail">@Html.Raw(item.PersonalEmail)</a>
-                        }
-                        else if (!string.IsNullOrWhiteSpace(item.WorkEmail))
-                        {
-                            <a href="mailto:@item.WorkEmail">@Html.Raw(item.WorkEmail)</a>
-                        }
-                        else
-                        {
-                            <span>No Email</span>
-                        }
-                    </td>
+                    <th>Row</th>
+                    <th>Name</th>
+                    <th>Number</th>
+                    <th>Phone</th>
+                    <th>Email</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-</div>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.AllMembers
+                    .OrderBy(x => x.LastName)
+                    .ThenBy(x => x.FirstName)
+                    .ThenBy(x => x.MemberNumber))
+                {
+                    <tr>
+                        <td>@(nRoster++)</td>
+                        <td>
+                            @item.DisplayName
+                        </td>
+                        <td>
+                                <a asp-action="Details"
+                                   asp-controller="Roster"
+                                   asp-route-memberNumber="@item.MemberNumber"
+                                   asp-route-id="@item.Id">
+                                    @(!string.IsNullOrEmpty(item.MemberNumber) ? item.MemberNumber : "N/A")
+                                </a>
+                            </td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(item.PersonalPhone))
+                            {
+                                <a href="tel:@item.PersonalPhone">@item.PersonalPhone</a>
+                            }
+                            else if (!string.IsNullOrWhiteSpace(item.WorkEmail))
+                            {
+                                <a href="tel:@item.WorkEmail">@item.WorkEmail</a>
+                            }
+                            else
+                            {
+                                <span>No Phone</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(item.PersonalEmail))
+                            {
+                                <a href="mailto:@item.PersonalEmail">@Html.Raw(item.PersonalEmail)</a>
+                            }
+                            else if (!string.IsNullOrWhiteSpace(item.WorkEmail))
+                            {
+                                <a href="mailto:@item.WorkEmail">@Html.Raw(item.WorkEmail)</a>
+                            }
+                            else
+                            {
+                                <span>No Email</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
 
 <script>

@@ -86,12 +86,21 @@ public class MessagesController : Mcl959MemberController
                                  select new
                                  {
                                      member.PersonalEmail,
+                                     member.PersonalPhone,
+                                     member.WorkEmail,
+                                     member.WorkPhone,
                                      NameAndRank = $"{member.DisplayName} ({rank.DisplayRank})"
                                  })
             {
+                var email =
+                    !string.IsNullOrEmpty(item.PersonalEmail) ? item.PersonalEmail :
+                    !string.IsNullOrEmpty(item.WorkEmail) ? item.WorkEmail :
+                    !string.IsNullOrEmpty(item.PersonalPhone) ? item.PersonalPhone :
+                    !string.IsNullOrEmpty(item.WorkPhone) ? item.WorkPhone :
+                    "[N/A]";
                 list.Add(new SelectListItem
                 {
-                    Value = item.PersonalEmail,
+                    Value = email,
                     Text = item.NameAndRank
                 });
             }
@@ -103,11 +112,12 @@ public class MessagesController : Mcl959MemberController
                 .OrderBy(x => x.LastName)
                 .ThenBy(x => x.FirstName))
             {
-                var email = !string.IsNullOrEmpty(item.PersonalEmail) ? item.PersonalEmail :
+                var email = 
+                    !string.IsNullOrEmpty(item.PersonalEmail) ? item.PersonalEmail :
                     !string.IsNullOrEmpty(item.WorkEmail) ? item.WorkEmail :
                     !string.IsNullOrEmpty(item.PersonalPhone) ? item.PersonalPhone :
                     !string.IsNullOrEmpty(item.WorkPhone) ? item.WorkPhone :
-                    $"[NO Info For '{item.DisplayName}']";
+                    "[N/A]";
                 list.Add(new SelectListItem
                 {
                     Value = email,
