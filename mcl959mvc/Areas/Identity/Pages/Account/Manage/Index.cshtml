@@ -20,6 +20,39 @@
                 <label asp-for="Input.PhoneNumber" class="form-label"></label>
                 <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
             </div>
+            @if (Model.HasRosterMatch)
+            {
+                <div class="form-group">
+                    <label asp-for="Input.PersonalEmail"></label>
+                    <input asp-for="Input.PersonalEmail" class="form-control" />
+                    <span asp-validation-for="Input.PersonalEmail" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Input.PersonalAddress"></label>
+                    <input asp-for="Input.PersonalAddress" class="form-control" />
+                    <span asp-validation-for="Input.PersonalAddress" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Input.PersonalPhone"></label>
+                    <input asp-for="Input.PersonalPhone" class="form-control" />
+                    <span asp-validation-for="Input.PersonalPhone" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Input.WorkEmail"></label>
+                    <input asp-for="Input.WorkEmail" class="form-control" />
+                    <span asp-validation-for="Input.WorkEmail" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Input.WorkAddress"></label>
+                    <input asp-for="Input.WorkAddress" class="form-control" />
+                    <span asp-validation-for="Input.WorkAddress" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Input.WorkPhone"></label>
+                    <input asp-for="Input.WorkPhone" class="form-control" />
+                    <span asp-validation-for="Input.WorkPhone" class="text-danger"></span>
+                </div>
+            }
             <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
         </form>
     </div>
