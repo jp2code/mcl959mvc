@@ -17,8 +17,8 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="EventName" class="control-label">Name of Event</label>
-                <input asp-for="EventName" class="form-control" />
-                <span asp-validation-for="EventName" class="text-danger"></span>
+                <input asp-for="EventName" class="form-control" onkeyup="showRemaining(EventName, spanEventName, 50)" />
+                <span id="spanEventName" asp-validation-for="EventName" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label for="ImageFileName">Event Image</label>

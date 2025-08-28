@@ -298,6 +298,22 @@ div, li, p, div > li {
     color: #FFD700; /*=Gold, #C0C0C0;=silver */
 }
 
+.past-events a,
+.past-events h2,
+.past-events th {
+    color: #A9A9A9; /* #A9A9A9 DarkGray */
+}
+
+.past-events tr:nth-child(even) td {
+    color: #D3D3D3; /* #D3D3D3 LightGray */
+    background-color: #0050AE; /* lighter dress blue */
+}
+
+.past-events tr:nth-child(odd) td {
+    color: #899499; /* #899499 Pewter */
+    background-color: #004392; /* dress blues blue */
+}
+
 .table td input.form-control,
 .table td select.form-control,
 .table td textarea.form-control {
@@ -396,6 +412,16 @@ div.footer { /* ref: https://css-tricks.com/snippets/css/sticky-footer/ */
     }
 }
 
+#next-meeting-calendar {
+    width: 330px; /* or whatever width you want */
+    min-width: 330px; /* prevents shrinking below this */
+    margin-bottom: 2rem;
+    display: block;
+}
+#next-meeting-calendar table {
+    width: 100%;
+}
+
 #popupMessage {
     background: #fff !important;
     color: #000 !important;
@@ -417,4 +443,33 @@ div.footer { /* ref: https://css-tricks.com/snippets/css/sticky-footer/ */
 }
 #popupMessage.show {
     opacity: 1;
+}
+#next-meeting {
+    display: flex;
+    flex-wrap: wrap; /* allows wrapping on small screens */
+    gap: 2rem; /* optional: space between the two divs */
+    align-items: flex-start; /* aligns items to the top */
+}
+#next-meeting-text {
+    flex: 1 1 250px; /* grow, shrink, min width */
+    min-width: 200px;
+}
+#next-meeting-calendar {
+    flex: 0 0 auto; /* do not grow/shrink, use content width */
+}
+#next-meeting-calendar {
+    font-family: Arial, sans-serif;
+    width: 220px; /* 220px * 1.5 */
+    padding: 8px; /* optional: 8px * 1.5 */
+}
+#next-meeting-calendar th, #next-meeting-calendar td {
+    width: 28px; /* 28px * 1.5 */
+    height: 28px; /* 28px * 1.5 */
+    text-align: center;
+}
+#next-meeting-calendar .today {
+    background: #ffeb3b;
+    color: #d32f2f;
+    border-radius: 50%;
+    font-weight: bold;
 }

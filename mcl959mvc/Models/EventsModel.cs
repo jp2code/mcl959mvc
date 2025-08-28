@@ -18,6 +18,7 @@ public partial class EventsModel
 
     [StringLength(255)]
     [Unicode(false)]
+    [Column(TypeName = "varchar(max)")]
     public string? EventDescription { get; set; }
 
     [Column(TypeName = "datetime")]

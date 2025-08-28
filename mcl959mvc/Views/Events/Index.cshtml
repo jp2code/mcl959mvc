@@ -14,33 +14,98 @@
     </p>
 }
 <div class="container">
-    <table class="table">
-        <thead>
-            <tr>
-                <th class="col-2" scope="col">Name</th>
-                <th class="col-8" scope="col">Description</th>
-                <th class="col-2" scope="col">Event Date</th>
-            </tr>
-        </thead>
-        <tbody>
-    @foreach (var item in Model) {
-            <tr>
-                <th class="col-2" scope="row">
-                    <a asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.EventName)</a>
-                </th>
-                <td class="col-8">
-                    @Html.DisplayFor(modelItem => item.EventDescription)
-                </td>
-                <td class="col-2">
-                    @Html.DisplayFor(modelItem => item.EventDate)
-                </td>
-            </tr>
-    }
-        </tbody>
-    </table>
+    <div id="next-meeting" class="next-meeting">
+        <div id="next-meeting-text">
+            <h4>Meetings are the 4th Tuesday of the month</h4>
+            <p>
+                Meetings are held on the 4th Tuesday of each month except for December (when it falls close to Christmas).
+                <br/>
+                Our next meeting will be <b><span id="next-meeting-label"></span></b>. Doors open at 1800 (6 PM), and the meetings start at 1900 (7PM).
+                <br />
+            </p>
+            <p style="text-align:center">
+                <a href="https://www.google.com/maps/place/1512%2BAlpine%2BRd,%2BLongview,%2BTX%2B75601/" target="_blank">
+                    1512 Alpine Rd, Longview, TX 75601
+                    <img src="~/images/1512alpineroad.jpg" alt="map" style="width: 450px;" />
+                </a>
+            </p>
+        </div>
+        <div id="next-meeting-calendar" style="text-align:center;"></div>
+    </div>
+    <div class="current-events">
+        <h2>Upcoming Events</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="col-2" scope="col">Name</th>
+                    <th class="col-8" scope="col">Description</th>
+                    <th class="col-2" scope="col">Event Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model
+                .Where(x => DateTime.Today <= x.EventDate)
+                .OrderBy(x => x.EventDate))
+                {
+                    <tr>
+                        <th class="col-2" scope="row">
+                            <a asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.EventName)</a>
+                        </th>
+                        <td class="col-8">
+                            @Html.DisplayFor(modelItem => item.EventDescription)
+                        </td>
+                        <td class="col-2">
+                            @Html.DisplayFor(modelItem => item.EventDate)
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="past-events">
+        <h2>Past Events</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="col-2 past-events" scope="col">Name</th>
+                    <th class="col-8 past-events" scope="col">Description</th>
+                    <th class="col-2 past-events" scope="col">Event Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model
+                .Where(x => x.EventDate < DateTime.Today)
+                .OrderByDescending(x => x.EventDate))
+                {
+                    <tr>
+                        <th class="col-2 past-events" scope="row">
+                            <a asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.EventName)</a>
+                        </th>
+                        <td class="col-8 past-events">
+                            @Html.DisplayFor(modelItem => item.EventDescription)
+                        </td>
+                        <td class="col-2 past-events">
+                            @Html.DisplayFor(modelItem => item.EventDate)
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
-<script>
-    $(document).ready(function () {
-        $('#miEvent').addClass('selected');
-    });
-</script>
+@section Scripts {
+    <script>
+        $(function () {
+            const today = new Date();
+            const nextMeeting = getNextMeetingDate(today);
+            renderSimpleCalendar('next-meeting-calendar', nextMeeting);
+            $('#miEvent').addClass('selected');
+            let label = document.getElementById("next-meeting-label");
+            if (label && nextMeeting) {
+                // Format as "Month Day, Year"
+                const options = { month: 'long', day: 'numeric', year: 'numeric' };
+                label.textContent = nextMeeting.toLocaleDateString(undefined, options);
+            }
+        });
+    </script>
+}
