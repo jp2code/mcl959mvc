@@ -1,6 +1,7 @@
 ﻿using mcl959mvc.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 
 namespace mcl959mvc.Controllers
 {
@@ -21,7 +22,7 @@ namespace mcl959mvc.Controllers
 
         public IActionResult About()
         {
-            return View();
+           return View();
         }
     }
 }

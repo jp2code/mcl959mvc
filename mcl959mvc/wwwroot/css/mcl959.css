@@ -29,7 +29,6 @@ html, body {
     height: 100%;
     padding-top: 50px;
     padding-bottom: 20px;
-    text-shadow: 1px 1px 1px rgba(0,43,92,80);
 }
 
 blockquote {
@@ -45,7 +44,6 @@ body {
     color: #999999; /* silver */
     background-color: #004392; /* dress blues blue */
     font-family: sans-serif, monospace;
-    text-shadow: 1px 1px 1px rgba(0,43,92,80);
 }
 /* Set padding to keep content from hitting the edges */
 .body-content {
@@ -396,4 +394,27 @@ div.footer { /* ref: https://css-tricks.com/snippets/css/sticky-footer/ */
     .mobile-logo {
         display: none;
     }
+}
+
+#popupMessage {
+    background: #fff !important;
+    color: #000 !important;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 50vw;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: auto;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 1.5rem 1rem;
+    display: block;
+}
+#popupMessage.show {
+    opacity: 1;
 }

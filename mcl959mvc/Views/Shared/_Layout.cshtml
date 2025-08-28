@@ -1,4 +1,29 @@
 ﻿@using System.Text.Json
+@{
+    // Safely handle possible nulls in ModelState
+    var modelState = ViewData.ModelState ?? new Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary();
+    var errorDict = modelState
+        .Where(x => x.Value != null && x.Value.Errors.Any())
+        .ToDictionary(
+            x => x.Key,
+            x => x.Value!.Errors.Select(e => e.ErrorMessage).ToList()
+        );
+
+    // Compose the popup message if there are errors
+    var popupMessage = TempData["PopupMessage"] as string;
+    if (errorDict.Count > 0)
+    {
+        var allErrors = string.Join("<br/>", errorDict.SelectMany(kvp => kvp.Value));
+        if (!string.IsNullOrEmpty(popupMessage))
+        {
+            popupMessage += "<hr/>" + allErrors;
+        }
+        else
+        {
+            popupMessage = allErrors;
+        }
+    }
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -61,59 +86,67 @@
             <main role="main">
                 @RenderBody()
             </main>
+            @if (!string.IsNullOrEmpty(popupMessage))
+            {
+                <div id="popupMessage" class="alert alert-info alert-dismissible fade center-popup" role="alert">
+                    @Html.Raw(popupMessage)
+                    <button id="popupCloseBtn" type="button" class="btn-close" aria-label="Close"></button>
+                </div>
+            }
         </div>
     </div>
     <div class="logo mobile-logo"></div>
     <footer class="border-top footer text-muted">
         <div class="container">
             Find and like us on Facebook at <a href="https://www.facebook.com/mcl959">Facebook.com/mcl959</a><br />
-            &copy; 2025 - mcl959mvc - <a asp-area="" asp-controller="Home" asp-action="About">About</a><br />
+            &copy; 2025 - mcl959mvc - <a asp-area="" asp-controller="Home" asp-action="About">About</a>
+            <div id="showPopupDiv">
+                <a href="#" id="showPopupLink">View last Message</a>
+            </div><br />
         </div>
     </footer>
     @await RenderSectionAsync("Scripts", required: false)
-    <div id="errorPopup" class="popup_box" style="display:none; position:fixed; left:50%; top:20%; transform:translate(-50%,0); z-index:9999; background:#fff; border:2px solid #cc0000; padding:20px; min-width:300px;">
-        <div id="errorPopupContent"></div>
-        <button onclick="document.getElementById('errorPopup').style.display='none';">Close</button>
-    </div>
-    @{
-        // Safely handle possible nulls in ModelState
-        var modelState = ViewData.ModelState ?? new Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary();
-        var errorDict = modelState
-            .Where(x => x.Value != null && x.Value.Errors.Any())
-            .ToDictionary(
-                x => x.Key,
-                x => x.Value!.Errors.Select(e => e.ErrorMessage).ToList()
-            );
-        var modelStateErrorsJson = JsonSerializer.Serialize(errorDict);
-    }
-    <input type="hidden" id="modelStateErrors" value="@modelStateErrorsJson" />
-    @section Scripts {
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                var modelStateErrorsJson = document.getElementById('modelStateErrors').value;
-                var modelStateErrors = {};
-                if (modelStateErrorsJson) {
-                    try {
-                        modelStateErrors = JSON.parse(modelStateErrorsJson);
-                    } catch (e) {
-                        modelStateErrors = {};
-                    }
-                }
-                var errorMessages = [];
-                for (var key in modelStateErrors) {
-                    if (modelStateErrors.hasOwnProperty(key)) {
-                        var errors = modelStateErrors[key];
-                        errors.forEach(function (error) {
-                            errorMessages.push(error);
-                        });
-                    }
-                }
-                if (errorMessages.length > 0) {
-                    document.getElementById('errorPopupContent').innerHTML = errorMessages.join("<br>");
-                    document.getElementById('errorPopup').style.display = 'block';
-                }
-            });
-        </script>
-    }   
+    <script>
+        console.log("SCRIPT LOADED");
+        document.addEventListener("DOMContentLoaded", function () {
+            console.log("DOM fully loaded and parsed");
+            var popup = document.getElementById('popupMessage');
+            var closeButton = document.getElementById('popupCloseBtn');
+            var showPopupLink = document.getElementById('showPopupLink');
+            var popupTimeout;
+
+            console.log('popup:', popup);
+            console.log('closeButton:', closeButton);
+            console.log('showPopupLink:', showPopupLink);
+
+            if (popup) {
+                setTimeout(function () {
+                    console.log('Showing popup');
+                    popup.classList.add('show');
+                }, 10);
+            }
+
+            if (closeButton && popup) {
+                closeButton.addEventListener('click', function (event) {
+                    console.log('Closing popup');
+                    event.preventDefault();
+                    popup.classList.remove('show');
+                    clearTimeout(popupTimeout);
+                });
+            }
+
+            if (showPopupLink && popup) {
+                showPopupLink.addEventListener('click', function (event) {
+                    console.log('Show last message clicked');
+                    event.preventDefault();
+                    popup.classList.add('show');
+                    clearTimeout(popupTimeout);
+                    popupTimeout = setTimeout(function () {
+                        popup.classList.remove('show');
+                    }, 20000);
+                });
+            }
+        });
+    </script>
     </body>
 </html>
