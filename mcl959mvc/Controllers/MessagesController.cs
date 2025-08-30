@@ -52,18 +52,25 @@ public class MessagesController : Mcl959MemberController
     public async Task<IActionResult> Create()
     {
         await CheckUserIdentity();
-        ViewBag.Recipients = GetRecipients();
-        return View(new MessagesModel
+        var model = new MessagesModel()
         {
-            Name = string.Empty,
+            Name = "",
             Email = UserEmail,
+            SendTo = "",
             Subject = "MCL959 Contact Message",
-            SendTo = string.Empty,
-            Date = DateTime.UtcNow,
+            Date = DateTime.Now,
+            Code = "",
             CodeSent = false,
-            ResetToken = null,
-            Code = string.Empty
-        });
+            ResetToken = null
+        };
+        var recipients = GetRecipients();
+        ViewBag.Recipients = recipients;
+        var selectedRecipient = recipients.FirstOrDefault(x => x.Text == "Select a member");
+        if(selectedRecipient != null)
+        {
+            model.SendTo = selectedRecipient.Value;
+        }
+        return View(model);
     }
 
     private List<SelectListItem> GetRecipients()
@@ -72,41 +79,60 @@ public class MessagesController : Mcl959MemberController
         {
             new SelectListItem
             {
-                Value = string.Empty,
+                Value = "no one",
                 Text = "Select a member",
-                Selected = true
             }
         };
-        if (!IsAdmin)
+        if (IsAdmin)
         {
-            foreach (var item in from rank in _context.MemberRanks
-                                 join member in _context.Roster on rank.MemberNumber equals member.MemberNumber
-                                 where member.DiedOn == null
-                                 orderby rank.DisplayRank
-                                 select new
-                                 {
-                                     member.PersonalEmail,
-                                     member.PersonalPhone,
-                                     member.WorkEmail,
-                                     member.WorkPhone,
-                                     NameAndRank = $"{member.DisplayName} ({rank.DisplayRank})"
-                                 })
+            list.Add(new SelectListItem
             {
-                var email =
-                    !string.IsNullOrEmpty(item.PersonalEmail) ? item.PersonalEmail :
-                    !string.IsNullOrEmpty(item.WorkEmail) ? item.WorkEmail :
-                    !string.IsNullOrEmpty(item.PersonalPhone) ? item.PersonalPhone :
-                    !string.IsNullOrEmpty(item.WorkPhone) ? item.WorkPhone :
-                    "[N/A]";
-                list.Add(new SelectListItem
-                {
-                    Value = email,
-                    Text = item.NameAndRank
-                });
-            }
+                Value = "admin space",
+                Text = "---- ADMIN OPTION -----"
+            });
+            list.Add(new SelectListItem
+            {
+                Value = "*.*",
+                Text = "All Members"
+            });
         }
-        else
+        list.Add(new SelectListItem
         {
+            Value = "*.*",
+            Text = "--- ELECTED OFFICERS ---"
+        });
+        foreach (var item in from rank in _context.MemberRanks
+            join member in _context.Roster on rank.MemberNumber equals member.MemberNumber
+            where member.DiedOn == null
+            orderby rank.NumericRank descending
+            select new
+            {
+                member.PersonalEmail,
+                member.PersonalPhone,
+                member.WorkEmail,
+                member.WorkPhone,
+                NameAndRank = $"{member.DisplayName} ({rank.DisplayRank})"
+            })
+        {
+            var email =
+                !string.IsNullOrEmpty(item.PersonalEmail) ? item.PersonalEmail :
+                !string.IsNullOrEmpty(item.WorkEmail) ? item.WorkEmail :
+                !string.IsNullOrEmpty(item.PersonalPhone) ? item.PersonalPhone :
+                !string.IsNullOrEmpty(item.WorkPhone) ? item.WorkPhone :
+                "[N/A]";
+            list.Add(new SelectListItem
+            {
+                Value = email,
+                Text = item.NameAndRank
+            });
+        }
+        if (IsAdmin || IsMember)
+        {
+            list.Add(new SelectListItem
+            {
+                Value = "member space",
+                Text = "--- MEMBER SPACE ----"
+            });
             foreach (var item in _context.Roster
                 .Where(x => x.DiedOn == null)
                 .OrderBy(x => x.LastName)
@@ -124,6 +150,11 @@ public class MessagesController : Mcl959MemberController
                     Text = item.DisplayName
                 });
             }
+        }
+        var selectedItem = list.FirstOrDefault(x => x.Text == "Select a member");
+        if (selectedItem != null)
+        {
+            selectedItem.Selected = true;
         }
         return list;
     }
@@ -202,7 +233,6 @@ public class MessagesController : Mcl959MemberController
                 // Use fileUrl in your comments
                 item.Comments += $"\n\n<b>Attachment:</b> <a href=\"{fileUrl}\">{Attachment.FileName}</a>";
             }
-            await CheckUserIdentity();
             if (string.IsNullOrEmpty(item.Name))
             {
                 item.Name = "John Doe";

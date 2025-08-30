@@ -1,0 +1,11 @@
+﻿@page "{id:int}"
+@model mcl959mvc.Pages.Roster.UploadPhotoModel
+@{
+    ViewData["Title"] = "Upload Photo";
+}
+<form id="imgUpload" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <input type="file" name="Photo" accept=".jpg,.jpeg,image/jpeg" required />
+    <br />
+    <button type="submit">Upload</button>
+</form>

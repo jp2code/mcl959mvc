@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 using System.Text.Json.Nodes;
 
 namespace mcl959mvc.Controllers;
@@ -28,7 +30,8 @@ public class RosterController : Mcl959MemberController
     public async Task<IActionResult> Index()
     {
         await CheckUserIdentity();
-        var allMembers = await _context.Roster.ToListAsync();
+        var allMembers = await _context.Roster
+            .ToListAsync();
         var pagedRoster = allMembers
             .OrderBy(m => m.LastName)
             .ThenBy(m => m.FirstName)
@@ -97,7 +100,7 @@ public class RosterController : Mcl959MemberController
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
-        return View();
+        return View(new Roster());
     }
 
     // POST: Roster/Create
@@ -107,6 +110,11 @@ public class RosterController : Mcl959MemberController
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
+        // Set Name before validation
+        member.Name = member.GetFullName();
+        member.CreatedDate = DateTime.Now;
+        ModelState.Clear();
+        TryValidateModel(member);
         if (ModelState.IsValid)
         {
             _context.Add(member);
@@ -135,6 +143,21 @@ public class RosterController : Mcl959MemberController
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
         if (id != member.Id) return NotFound();
+        // Fetch the existing entity
+        var existingMember = await _context.Roster.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
+        if (existingMember == null) return NotFound();
+
+        // Preserve CreatedDate
+        member.CreatedDate = existingMember.CreatedDate;
+
+        // Set Name before validation
+        member.Name = member.GetFullName();
+        if (member.MemberNumber == null)
+        {
+            member.MemberNumber = "";
+        }
+        ModelState.Clear();
+        TryValidateModel(member);
         if (ModelState.IsValid)
         {
             _context.Update(member);
@@ -283,5 +306,4 @@ The following comment was added to the memorial for {regarding}:
         }
         return RedirectToAction("Memorial", new { id = memorial.RosterId });
     }
-
 }

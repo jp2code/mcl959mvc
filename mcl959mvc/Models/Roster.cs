@@ -26,7 +26,7 @@ public partial class Roster
 
     [StringLength(50)]
     [Unicode(false)]
-    public string MemberNumber { get; set; } = null!;
+    public string MemberNumber { get; set; } = "";
 
     [StringLength(50)]
     [Unicode(false)]
@@ -111,4 +111,10 @@ public partial class Roster
 
     [NotMapped]
     public string? Oath { get; set; }
+
+    public string GetFullName()
+    {
+        return string.Join(" ", new[] { FirstName, MiddleName, LastName }
+            .Where(s => !string.IsNullOrWhiteSpace(s)));
+    }
 }

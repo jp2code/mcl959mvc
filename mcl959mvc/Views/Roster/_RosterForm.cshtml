@@ -1,0 +1,134 @@
+﻿@model mcl959mvc.Models.Roster
+@{
+    bool isAdmin = User.HasClaim("isAdmin", "true");
+    var photoPath = $"/photos/{Model.Id}.jpg";
+    var mode = "View"; // force "View" for non-admins
+    if (isAdmin)
+    {
+        mode = ViewBag.Mode as string ?? "View";
+    }
+    bool isReadOnly = mode == "View" || mode == "Delete";
+    string readOnlyAttr = isReadOnly ? "readonly" : "";
+    bool isDelete = mode == "Delete";
+}
+
+<div class="container mt-4">
+    <div class="card mb-4 shadow-sm" style="background: #004392; color: #FFD700; border-radius: 8px;">
+        <div class="row g-0">
+            <div class="col-md-4 d-flex flex-column align-items-center justify-content-start" style="background: #0050AE; border-radius: 8px;">
+                <img src="@photoPath"
+                        alt="@Model.GetFullName()"
+                        class="img-fluid rounded m-3"
+                        style="max-width: 100%; max-height: 300px; border: 1px solid #ccc; background: #fff;"
+                        onerror="this.onerror=null;this.src='/photos/mcl959bw.jpg';" />
+                @if (isAdmin && (mode == "Edit" || mode == "Delete"))
+                {
+                    <div id="imgUploadDiv" style="width:100%; text-align:center; margin-top:1rem;">
+                        <form id="photoUploadForm" enctype="multipart/form-data" method="post" action="/Roster/UploadPhoto/@Model.Id">
+                            @Html.AntiForgeryToken()
+                            <input type="file" id="photoInput" name="Photo" accept=".jpg,.jpeg,image/jpeg" required />
+                            <br />
+                            <button type="submit" class="btn btn-sm btn-secondary">Change</button>
+                        </form>
+                        <div id="uploadResult" style="margin-top:0.5rem;"></div>
+                    </div>
+                }
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <!-- Main Roster form starts here -->
+                    <form asp-action="@mode" method="post">
+                        @if (mode == "Edit" || mode == "Delete")
+                        {
+                            @Html.HiddenFor(m => m.Id)
+                        }
+                        <h2 class="card-title">@Model.DisplayName</h2>
+                        <p class="mb-2">
+                            <strong>Created:</strong> @Model.CreatedDate.ToShortDateString()
+                        </p>
+                        <hr style="border-color: #FFD700;" />
+                        <div class="mb-3">
+                            <table class="table">
+                                <tr>
+                                    <td width="30%">First Name:<br /><input asp-for="FirstName" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    <td width="30%">Middle:<br /><input asp-for="MiddleName" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    <td>Last Name:<br /><input asp-for="LastName" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3">Display As:<br /><input asp-for="DisplayName" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                </tr>
+                                <tr>
+                                    <td>Member Number:<br /><input asp-for="MemberNumber" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    <td>Start Date:<br /><input asp-for="MemberStartDate" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    <td>Expires:<br /><input asp-for="MemberExpireDate" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                </tr>
+                                <tr>
+                                    <td>Life Member Number:<br /><input asp-for="LifeMemberNumber" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    <td>Life Member Date:<br /><input asp-for="LifeMemberDate" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Address:<br /><input asp-for="PersonalAddress" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    <td>Phone:<br /><input asp-for="PersonalPhone" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    <td>Email:<br /><input asp-for="PersonalEmail" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                </tr>
+                                <tr>
+                                    <td>Alternate Address:<br /><input asp-for="WorkAddress" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    <td>Alternate Phone:<br /><input asp-for="WorkPhone" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    <td>Alternate Email:<br /><input asp-for="WorkEmail" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                </tr>
+                                <tr>
+                                    <td>Created:<br /><input asp-for="CreatedDate" asp-format="{0:yyyy-MM-dd}" readonly="true" /></td>
+                                    <td>Died:<br /><input asp-for="DiedOn" asp-format="{0:MM/dd/yyyy}" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    <td>Authenticated:<br /><input asp-for="Authenticated" readonly="true" /></td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align:right;">
+                                        @if (isAdmin)
+                                        {
+                                            @if (mode == "Edit" || mode == "Create")
+                                            {
+                                                <button type="submit" class="btn btn-primary">Save</button>
+                                            } else
+                                            {
+                                                <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
+                                            }
+                                        }
+                                    </td>
+                                    <td style="text-align:center;">
+                                        @if (isAdmin)
+                                        {
+                                            if (isDelete)
+                                            {
+                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                            }
+                                        }
+                                    </td>
+                                    <td style="text-align:center;"><a asp-action="Index">Back to List</a></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#miMember').addClass('selected');
+        document.getElementById('photoUploadForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const response = await fetch(this.action, {
+                method: 'POST',
+                body: formData
+            });
+            const text = await response.text();
+            document.getElementById('uploadResult').innerHTML = text;
+            var d = new Date();
+            $('img[alt="@Model.GetFullName()"]').attr('src', '@photoPath' + '?v=' + d.getTime());
+        });
+    });
+</script>
+

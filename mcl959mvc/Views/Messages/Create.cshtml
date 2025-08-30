@@ -31,7 +31,7 @@
                         <td>
                             <select asp-for="SendTo" class="form-control w-100" asp-items="ViewBag.Recipients"></select>
                         </td>
-                        <td></td>
+                        <td><span asp-validation-for="SendTo" class="text-danger"></span></td>
                     </tr>
                     <tr>
                         <th scope="row">Message</th>
@@ -71,5 +71,14 @@
 <script>
     $(document).ready(function () {
         $('#miContact').addClass('selected');
+        var $sendTo = $('[name="SendTo"]');
+        $sendTo.on('change', function(){
+            var selected = $(this).find('option:selected');
+            // Check if the text starts with "---"
+            if (selected.text().trim().startsWith("---")) {
+                // Reset to the first option
+                $(this).prop('selectedIndex', 0);
+            }
+        });
     });
 </script>

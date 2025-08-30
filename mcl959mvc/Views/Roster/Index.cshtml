@@ -128,7 +128,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model.AllMembers
+                @foreach (var item in Model.LivingMembers
                     .OrderBy(x => x.LastName)
                     .ThenBy(x => x.FirstName)
                     .ThenBy(x => x.MemberNumber))

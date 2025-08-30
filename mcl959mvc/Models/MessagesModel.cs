@@ -12,21 +12,24 @@ public partial class MessagesModel
     [Column("ID")]
     public int Id { get; set; }
 
+    [Required(ErrorMessage = "A Name is required.")]
     [StringLength(50)]
     [Unicode(false)]
     public required string? Name { get; set; }
 
+    [Required(ErrorMessage = "An Email address is required.")]
     [StringLength(50)]
     [Unicode(false)]
     [EmailAddress]
     public required string? Email { get; set; }
-    // optional
+    [Required(ErrorMessage = "The SendTo field is required.")]
     public string SendTo { get; set; } = "";
 
     [StringLength(50)]
     [Unicode(false)]
     public string Subject { get; set; } = null!;
 
+    [Required(ErrorMessage = "A message is required.")]
     [Unicode(false)]
     public string Comments { get; set; } = null!;
 
