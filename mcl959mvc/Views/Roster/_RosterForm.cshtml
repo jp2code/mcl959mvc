@@ -1,7 +1,7 @@
 ﻿@model mcl959mvc.Models.Roster
 @{
     bool isAdmin = User.HasClaim("isAdmin", "true");
-    var photoPath = $"/photos/{Model.Id}.jpg";
+    var photoPath = Model.HasPhoto ? $"/photos/{Model.Id}.jpg" : "/photos/mcl959bw.jpg";
     var mode = "View"; // force "View" for non-admins
     if (isAdmin)
     {
@@ -19,8 +19,7 @@
                 <img src="@photoPath"
                         alt="@Model.GetFullName()"
                         class="img-fluid rounded m-3"
-                        style="max-width: 100%; max-height: 300px; border: 1px solid #ccc; background: #fff;"
-                        onerror="this.onerror=null;this.src='/photos/mcl959bw.jpg';" />
+                        style="max-width: 100%; max-height: 300px; border: 1px solid #ccc; background: #fff;" />
                 @if (isAdmin && (mode == "Edit" || mode == "Delete"))
                 {
                     <div id="imgUploadDiv" style="width:100%; text-align:center; margin-top:1rem;">
@@ -104,7 +103,7 @@
                                             }
                                         }
                                     </td>
-                                    <td style="text-align:center;"><a asp-action="Index">Back to List</a></td>
+                                    <td style="text-align:center;"><a href="#" onclick="history.back(); return false;">Back to List</a></td>
                                 </tr>
                             </table>
                         </div>

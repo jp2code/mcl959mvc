@@ -110,7 +110,7 @@ public partial class Roster
     public string? LastName { get; set; }
 
     [NotMapped]
-    public string? Oath { get; set; }
+    public bool HasPhoto { get; set; }
 
     public string GetFullName()
     {

@@ -84,8 +84,14 @@
             {
                 <tr>
                     <td>
-                        <a asp-controller="Roster" asp-action="Memorial" asp-route-id="@member.Id">
+                        <a asp-controller="Roster"
+                        asp-action="Memorial"
+                        asp-route-id="@member.Id"
+                        target="_blank"
+                        rel="noopener"
+                        class="external-link">
                             @member.DisplayName
+                            <span aria-label="Opens in a new tab" title="Opens in a new tab" style="font-size:0.9em; margin-left:0.25em;">&#x2197;</span>
                         </a>
                     </td>
                     <td>@member.DiedOn</td>
@@ -139,13 +145,17 @@
                             @item.DisplayName
                         </td>
                         <td>
-                                <a asp-action="Details"
-                                   asp-controller="Roster"
-                                   asp-route-memberNumber="@item.MemberNumber"
-                                   asp-route-id="@item.Id">
-                                    @(!string.IsNullOrEmpty(item.MemberNumber) ? item.MemberNumber : "N/A")
-                                </a>
-                            </td>
+                            <a asp-controller="Roster" 
+                                asp-action="Details"
+                                asp-route-memberNumber="@item.MemberNumber"
+                                asp-route-id="@item.Id"
+                               target="_blank"
+                               rel="noopener"
+                               class="external-link">
+                                @(!string.IsNullOrEmpty(item.MemberNumber) ? item.MemberNumber : "N/A")
+                                <span aria-label="Opens in a new tab" title="Opens in a new tab" style="font-size:0.9em; margin-left:0.25em;">&#x2197;</span>
+                            </a>
+                        </td>
                         <td>
                             @if (!string.IsNullOrWhiteSpace(item.PersonalPhone))
                             {

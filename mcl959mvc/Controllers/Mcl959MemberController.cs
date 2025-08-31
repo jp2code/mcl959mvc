@@ -10,7 +10,6 @@ public abstract class Mcl959MemberController : Controller
     protected const int MAX4MB = 4 * 1024 * 1024; // 4 MB
     protected readonly UserManager<ApplicationUser> _userManager;
     protected readonly ILogger<Controller> _logger;
-    public string UserEmail;
     public bool IsRegistered;
     public bool IsMember;
     public bool IsAdmin;
@@ -21,6 +20,7 @@ public abstract class Mcl959MemberController : Controller
         _logger = logger;
     }
 
+    public string UserEmail { get; set; } = "";
     // Exception filter implementation
     public void OnException(ExceptionContext context)
     {

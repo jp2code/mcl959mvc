@@ -15,16 +15,19 @@ public class RosterController : Mcl959MemberController
 {
     private readonly Mcl959DbContext _context;
     private readonly SmtpSettings _smtpSettings;
+    private readonly IWebHostEnvironment _webHostEnvironment;
 
     public RosterController(
         Mcl959DbContext context,
         UserManager<ApplicationUser> userManager,
         IOptions<SmtpSettings> smptOptions,
-        ILogger<Controller> logger)
+        ILogger<Controller> logger,
+        IWebHostEnvironment webHostEnvironment)
         : base(userManager, logger)
     {
         _context = context;
         _smtpSettings = smptOptions.Value ?? throw new ArgumentNullException(nameof(smptOptions));
+        _webHostEnvironment = webHostEnvironment;
     }
 
     public async Task<IActionResult> Index()
@@ -92,6 +95,7 @@ public class RosterController : Mcl959MemberController
         if (string.IsNullOrEmpty(memberNumber) && (id == null)) return NotFound();
         var member = await _context.Roster.FirstOrDefaultAsync(x => x.MemberNumber == memberNumber || x.Id == id);
         if (member == null) return NotFound();
+        member.HasPhoto = HasPhoto(member);
         return View(member);
     }
 
@@ -121,6 +125,7 @@ public class RosterController : Mcl959MemberController
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+        member.HasPhoto = HasPhoto(member);
         return View(member);
     }
 
@@ -132,6 +137,7 @@ public class RosterController : Mcl959MemberController
         if (id == null) return NotFound();
         var member = await _context.Roster.FindAsync(id);
         if (member == null) return NotFound();
+        member.HasPhoto = HasPhoto(member);
         return View(member);
     }
 
@@ -176,6 +182,7 @@ public class RosterController : Mcl959MemberController
         if (id == null) return NotFound();
         var member = await _context.Roster.FindAsync(id);
         if (member == null) return NotFound();
+        member.HasPhoto = HasPhoto(member);
         return View(member);
     }
 
@@ -230,7 +237,8 @@ please contact us so that the web sergeant can update this page.";
             Memorial = memorial,
             Comments = comments,
             DisplayName = $"{member.DisplayName}",
-            DiedOn = (DateTime)member.DiedOn
+            DiedOn = (DateTime)member.DiedOn,
+            HasPhoto = HasPhoto(member)
         };
         return View(viewModel);
     }
@@ -305,5 +313,16 @@ The following comment was added to the memorial for {regarding}:
                 emailMessage);
         }
         return RedirectToAction("Memorial", new { id = memorial.RosterId });
+    }
+
+    private bool HasPhoto(Roster member)
+    {
+        var result = false;
+        if (member != null)
+        {
+            var photoFile = Path.Combine(_webHostEnvironment.WebRootPath, "photos", $"{member.Id}.jpg");
+            result = System.IO.File.Exists(photoFile);
+        }
+        return result;
     }
 }

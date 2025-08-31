@@ -14,4 +14,5 @@ public class MemorialViewModel
     public List<CommentsModel> Comments { get; set; }
     public string DisplayName { get; set; } = string.Empty;
     public DateTime DiedOn { get; set; }
+    public bool HasPhoto { get; set; }
 }

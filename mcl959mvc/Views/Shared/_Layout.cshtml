@@ -36,6 +36,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/mcl959.css" asp-append-version="true" />
+    <link rel="preload" href="/css/mcl959.woff" as="font" type="font/woff2" crossorigin>
 </head>
 <body>
     <header>
@@ -107,17 +108,11 @@
     </footer>
     @await RenderSectionAsync("Scripts", required: false)
     <script>
-        console.log("SCRIPT LOADED");
         document.addEventListener("DOMContentLoaded", function () {
-            console.log("DOM fully loaded and parsed");
             var popup = document.getElementById('popupMessage');
             var closeButton = document.getElementById('popupCloseBtn');
             var showPopupLink = document.getElementById('showPopupLink');
             var popupTimeout;
-
-            console.log('popup:', popup);
-            console.log('closeButton:', closeButton);
-            console.log('showPopupLink:', showPopupLink);
 
             if (popup) {
                 setTimeout(function () {
