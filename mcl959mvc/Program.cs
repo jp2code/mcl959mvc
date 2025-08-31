@@ -18,6 +18,7 @@ var smtpServer = builder.Configuration["Smtp:Server"];
 var fromEmail = builder.Configuration["Smtp:FromEmail"];
 var siteDomain = builder.Configuration["Smtp:SiteDomain"];
 var siteLogo = builder.Configuration["Smtp:SiteLogo"];
+var mailgunApiKey = builder.Configuration["Key:MailGunApiKey"];
 // Add services to the container.
 builder.Services.AddHttpClient();
 builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, SmtpEmailSender>();
@@ -29,6 +30,7 @@ builder.Services.Configure<SmtpSettings>(options =>
     options.FromEmail = fromEmail ?? throw new ArgumentNullException("Smtp:FromEmail");
     options.SiteDomain = siteDomain ?? throw new ArgumentNullException("Smtp:SiteDomain");
     options.SiteLogo = siteLogo ?? throw new ArgumentNullException("Smtp:SiteLogo");
+    options.MailGunApiKey = mailgunApiKey ?? throw new ArgumentNullException("Key:MailGunApiKey");
 });
 builder.Services.AddDbContext<Mcl959DbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Mcl959Database")));

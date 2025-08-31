@@ -1,4 +1,6 @@
 ﻿using System.Net.Mail;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace mcl959mvc.Classes;
 
@@ -21,7 +23,8 @@ public class EmailTool
         {
             fromEmail = _smtpSettings.FromEmail;
         }
-        var mailgunMsg = "<a href=\"http://api.mailgun.net\">Mailgun Requests API</a>";
+        var token = GenerateUnsubscribeToken(fromEmail);
+        var mailgunMsg = $"<a href='{settings.Server}/unsubscribe?email={{recipient.email}}&token={token}'>Unsubscribe</a>";
         var textBody = EmailTextBody(fromName, fromEmail, attnTo, body, mailgunMsg);
         var htmlBody = EmailHtmlBody(fromName, fromEmail, attnTo, body, mailgunMsg);
         var textView = AlternateView.CreateAlternateViewFromString(textBody, null, "text/plain");
@@ -114,6 +117,18 @@ End of Message
     </body>
 </html>";
         return htmlEmail;
+    }
+
+    public static string GenerateUnsubscribeToken(string email)
+    {
+        var secret = _smtpSettings.MailGunApiKey; // Store securely (e.g., in appsettings.json)
+        var input = $"{email}:{secret}";
+        using var sha256 = SHA256.Create();
+        var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+        return Convert.ToBase64String(bytes)
+            .Replace("+", "-")
+            .Replace("/", "_")
+            .Replace("=", ""); // URL-safe
     }
 
 }

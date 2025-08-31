@@ -21,6 +21,19 @@ public class MessagesController : Mcl959MemberController
     private readonly IMemoryCache _cache;
     private readonly IHttpClientFactory _httpClientFactory; // For sending email (or use your own service)
     private readonly SmtpSettings _smtpSettings;
+    private static SelectListItem[] LISTITEMSPACERS = new SelectListItem[] {
+        new SelectListItem { Value = "admin space", Text = "---- ADMIN OPTION -----" },
+        new SelectListItem { Value = "*.*", Text = "All Members" },
+        new SelectListItem { Value = "officer space", Text = "--- ELECTED OFFICERS ---" },
+        new SelectListItem { Value = "member space", Text = "--- MEMBER SPACE ----" },
+    };
+    enum ListItemType
+    {
+        AdminOption,
+        AllMembers,
+        ElectedOfficers,
+        MemberSpace
+    }
 
     public MessagesController(
          IMemoryCache cache,
@@ -85,22 +98,10 @@ public class MessagesController : Mcl959MemberController
         };
         if (IsAdmin)
         {
-            list.Add(new SelectListItem
-            {
-                Value = "admin space",
-                Text = "---- ADMIN OPTION -----"
-            });
-            list.Add(new SelectListItem
-            {
-                Value = "*.*",
-                Text = "All Members"
-            });
+            list.Add(LISTITEMSPACERS[(int)ListItemType.AdminOption]);
+            list.Add(LISTITEMSPACERS[(int)ListItemType.AllMembers]);
         }
-        list.Add(new SelectListItem
-        {
-            Value = "*.*",
-            Text = "--- ELECTED OFFICERS ---"
-        });
+        list.Add(LISTITEMSPACERS[(int)ListItemType.ElectedOfficers]);
         foreach (var item in from rank in _context.MemberRanks
             join member in _context.Roster on rank.MemberNumber equals member.MemberNumber
             where member.DiedOn == null
@@ -128,11 +129,7 @@ public class MessagesController : Mcl959MemberController
         }
         if (IsAdmin || IsMember)
         {
-            list.Add(new SelectListItem
-            {
-                Value = "member space",
-                Text = "--- MEMBER SPACE ----"
-            });
+            list.Add(LISTITEMSPACERS[(int)ListItemType.MemberSpace]);
             foreach (var item in _context.Roster
                 .Where(x => x.DiedOn == null)
                 .OrderBy(x => x.LastName)
@@ -235,7 +232,7 @@ public class MessagesController : Mcl959MemberController
             }
             if (string.IsNullOrEmpty(item.Name))
             {
-                item.Name = "John Doe";
+                item.Name = "John Doe"; // this should never happen if IsValid works correctly
             }
             item.Date = DateTime.UtcNow;
             _context.Messages.Add(item);
@@ -244,23 +241,51 @@ public class MessagesController : Mcl959MemberController
             var fromEmail = $"{item.Email}";
             var subject = "New Contact Message";
             var attnTo = item.SendTo;
-            var roster = _context.Roster.FirstOrDefault(x => x.PersonalEmail == attnTo);
-            if (roster == null)
+            var emailEveryone = IsAdmin && (attnTo == LISTITEMSPACERS[(int)ListItemType.AllMembers].Value);
+            if (!emailEveryone)
             {
-                roster = _context.Roster.FirstOrDefault(x => x.WorkEmail == attnTo);
+                var roster = _context.Roster.FirstOrDefault(x => x.PersonalEmail == attnTo);
+                if (roster == null)
+                {
+                    roster = _context.Roster.FirstOrDefault(x => x.WorkEmail == attnTo);
+                }
+                if (roster != null)
+                {
+                    attnTo = $" with attention to {roster.DisplayName} <a href='mailto:{roster.PersonalEmail}'>{roster.PersonalEmail}</a>";
+                }
+                else if (!string.IsNullOrEmpty(attnTo))
+                {
+                    attnTo = $" with attention to {attnTo}";
+                }
+                else
+                {
+                    attnTo = "";
+                }
+                var body = $"From: {fromName} <{fromEmail}>\n\n{item.Comments}";
+                await EmailTool.SendEmailAsync(_smtpSettings, fromName, fromEmail, attnTo, subject, body);
             }
-            if (roster != null)
+            else
             {
-                attnTo = $" with attention to {roster.DisplayName} <a href='mailto:{roster.PersonalEmail}'>{roster.PersonalEmail}</a>";
-            } else if (!string.IsNullOrEmpty(attnTo))
-            {
-                attnTo = $" with attention to {attnTo}";
-            } else
-            {
-                attnTo = "";
+                // Email all members
+                var members = from member in _context.Roster
+                              where member.DiedOn == null
+                              select new
+                              {
+                                  member.DisplayName,
+                                  member.PersonalEmail,
+                                  member.WorkEmail
+                              };
+                foreach (var member in members)
+                {
+                    if (!string.IsNullOrEmpty(member.PersonalEmail) || !string.IsNullOrEmpty(member.WorkEmail))
+                    {
+                        var toEmail = !string.IsNullOrEmpty(member.PersonalEmail) ? member.PersonalEmail : member.WorkEmail;
+                        var toName = member.DisplayName;
+                        var body = $"From: {fromName} <{fromEmail}>\n\n{item.Comments}";
+                        await EmailTool.SendEmailAsync(_smtpSettings, fromName, fromEmail, $" with attention to {toName} <a href='mailto:{toEmail}'>{toEmail}</a>", subject, body);
+                    }
+                }
             }
-            var body = $"From: {fromName} <{fromEmail}>\n\n{item.Comments}";
-            await EmailTool.SendEmailAsync(_smtpSettings, fromName, fromEmail, attnTo, subject, body);
             TempData["EmailSentMessage"] = $"The message below has been sent.<br/>Any replies will be sent to the email address you provided: <a href='mailto:{fromEmail}'>{fromEmail}</a>.";
             ModelState.AddModelError("Success", "Your message has been sent.");
             return RedirectToAction(nameof(Details), new { id = item.Id });

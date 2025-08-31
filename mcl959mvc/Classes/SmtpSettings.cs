@@ -8,4 +8,5 @@ public class SmtpSettings
     public string FromEmail { get; set; } = "";
     public string SiteDomain { get; set; } = "";
     public string SiteLogo { get; set; } = "";
+    public string MailGunApiKey { get; set; } = "";
 }

@@ -9,6 +9,7 @@ public interface IClassKeys
     string MailGunHost { get; }
     string MailGunSmtpUser { get; }
     string MailGunSmtpPwd { get; }
+    string MailGunApiKey { get; }
     string MicrosoftAppId { get; }
     string MicrosoftAppSecret { get; }
     string TwitterAppId { get; }
@@ -26,6 +27,7 @@ public class ClassKeys : IClassKeys
     public string MailGunHost { get; private set; }
     public string MailGunSmtpUser { get; private set; }
     public string MailGunSmtpPwd { get; private set; }
+    public string MailGunApiKey { get; private set; }
     public string MicrosoftAppId { get; private set; }
     public string MicrosoftAppSecret { get; private set; }
     public string TwitterAppId { get; private set; }
@@ -42,6 +44,7 @@ public class ClassKeys : IClassKeys
         MailGunHost = configuration["MailGunHost"];
         MailGunSmtpUser = configuration["MailGunSmtpUser"];
         MailGunSmtpPwd = configuration["MailGunSmtpPwd"];
+        MailGunApiKey = configuration["MailGunApiKey"];
         MicrosoftAppId = configuration["MicrosoftAppId"];
         MicrosoftAppSecret = configuration["MicrosoftAppSecret"];
         TwitterAppId = configuration["TwitterAppId"];

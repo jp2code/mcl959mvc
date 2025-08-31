@@ -14,4 +14,6 @@ public class ApplicationUser : IdentityUser
     [NotMapped]
     public bool IsAdmin { get; set; } = false;
 
+    public bool? Unsubscribe { get; set; }
+
 }
