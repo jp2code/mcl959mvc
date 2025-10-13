@@ -236,7 +236,7 @@ public class EventsController : Mcl959MemberController
 The following comment was added to the event {regarding} by {UserEmail}:
 <blockquote>{item.Message}</blockquote>
 ";
-        await EmailTool.SendEmailAsync(
+        await EmailTool.SendEmailAsync1(
             _smtpSettings,
             item.UserId, UserEmail, string.Empty,
             $"Comment on Event for {regarding}",

@@ -137,7 +137,7 @@ namespace mcl959mvc.Areas.Identity.Pages.Account
                         var user = await _userManager.FindByEmailAsync(Input.Email);
                         if (user != null)
                         {
-                            await _membershipService.FindRosterMember(user);
+                            await _membershipService.MapToRoster(user);
 
                             var claims = new List<Claim>
                             {

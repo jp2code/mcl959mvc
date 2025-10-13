@@ -169,7 +169,7 @@ public class MessagesController : Mcl959MemberController
                 // Generate and send code
                 var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
                 _cache.Set($"ContactCode_{item.Email}", code, TimeSpan.FromMinutes(10));
-                await EmailTool.SendEmailAsync(
+                await EmailTool.SendEmailAsync1(
                     _smtpSettings,
                     _smtpSettings.Username, _smtpSettings.FromEmail, $" to {User.Identity?.Name}", "Your verification code", $"Your code is: {code}");
                 item.CodeSent = true;
@@ -262,11 +262,12 @@ public class MessagesController : Mcl959MemberController
                     attnTo = "";
                 }
                 var body = $"From: {fromName} <{fromEmail}>\n\n{item.Comments}";
-                await EmailTool.SendEmailAsync(_smtpSettings, fromName, fromEmail, attnTo, subject, body);
+                await EmailTool.SendEmailAsync1(_smtpSettings, fromName, fromEmail, attnTo, subject, body);
             }
             else
             {
                 // Email all members
+                subject = $"MCL959 Contact Message to All Members";
                 var members = from member in _context.Roster
                               where member.DiedOn == null
                               select new
@@ -280,9 +281,7 @@ public class MessagesController : Mcl959MemberController
                     if (!string.IsNullOrEmpty(member.PersonalEmail) || !string.IsNullOrEmpty(member.WorkEmail))
                     {
                         var toEmail = !string.IsNullOrEmpty(member.PersonalEmail) ? member.PersonalEmail : member.WorkEmail;
-                        var toName = member.DisplayName;
-                        var body = $"From: {fromName} <{fromEmail}>\n\n{item.Comments}";
-                        await EmailTool.SendEmailAsync(_smtpSettings, fromName, fromEmail, $" with attention to {toName} <a href='mailto:{toEmail}'>{toEmail}</a>", subject, body);
+                        await EmailTool.SendEmailAsync2(_smtpSettings, toEmail, subject, item.Comments);
                     }
                 }
             }

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore; // Ensure this is included
 using Microsoft.Extensions.DependencyInjection; // Ensure this is included
 using Microsoft.OpenApi.Models;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 // Explicitly load appsettings.Secrets.json
@@ -58,6 +59,7 @@ builder.Services.AddSwaggerGen();
 // Ensure the following line is present in your .csproj file to include the Swashbuckle.AspNetCore package
 // <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
 builder.Services.AddScoped<MembershipService>();
+builder.Services.AddScoped<IFaqService, FaqService>();
 
 var app = builder.Build();
 
@@ -109,11 +111,147 @@ app.UseRouting();
 
 app.UseAuthorization();
 
+app.Use(async (ctx, next) =>
+{
+    if (ctx.User.Identity?.IsAuthenticated ?? false)
+    {
+        var userMgr = ctx.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
+        var svc = ctx.RequestServices.GetRequiredService<MembershipService>();
+        var user = await userMgr.GetUserAsync(ctx.User);
+        if (user != null)
+        {
+            await svc.MapToRoster(user);
+
+            var id = (ClaimsIdentity)ctx.User.Identity!;
+
+            // Remove previous transient claims (always re-sync)
+            var stale = id.FindAll(c => c.Type is "isRegistered" or "isMember" or "isAdmin").ToList();
+            foreach (var c in stale)
+            {
+                id.RemoveClaim(c);
+            }
+            id.AddClaim(new Claim("isRegistered", "true"));
+            id.AddClaim(new Claim("isMember", user.IsMember ? "true" : "false"));
+            id.AddClaim(new Claim("isAdmin", user.IsAdmin ? "true" : "false"));
+        }
+    }
+    await next();
+});
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
 app.MapControllers();
+
+app.MapPost("/api/chat/ask", async (
+    ChatRequest req,
+    IFaqService faq,
+    MembershipService membershipService,
+    UserManager<ApplicationUser> userManager,
+    HttpContext http) =>
+{
+    if (!http.User.Identity?.IsAuthenticated ?? true)
+        return Results.Unauthorized();
+
+    var user = await userManager.GetUserAsync(http.User);
+    var answer = "";
+    var isRegHelp = false;
+
+    // Registration intent detection
+    var q = req.Question?.ToLowerInvariant() ?? "";
+    if (q.Contains("register") || q.Contains("create account") || q.Contains("sign up"))
+    {
+        isRegHelp = true;
+        answer = """
+Steps to create an account:
+<ul style="margin:0;padding-left:18px;">
+<li>Click Register (top right).</li>
+<li>Fill required fields and submit.</li>
+<li>Check your email and confirm.</li>
+<li>Log in.</li>
+<li>If you are a paid member of MCL959, be sure that the email you provide here matches with the email you registered with.</li>
+<li>After login refresh Members page; you will be marked Authenticated if matched.</li>
+</ul>
+""";
+    }
+    else
+    {
+        var match = faq.FindBest(req.Question);
+        answer = match?.Answer ?? "I do not have an answer yet. Please rephrase or contact us via the Contact page.";
+    }
+
+    var suggestions = isRegHelp
+        ? new[] { "How do I reset my password?", "What are membership requirements?" }
+        : new[] { "How do I create an account?", "Where is the application form?" };
+
+    return Results.Ok(new ChatResponse {
+        Answer = answer,
+        IsRegistrationHelp = isRegHelp,
+        Suggestions = suggestions,
+        IsHtml = true
+    });
+})
+.RequireAuthorization();
+
+// Public (unauthenticated) limited endpoint
+app.MapPost("/api/chat/public", (ChatRequest req) =>
+{
+    var q = (req.Question ?? "").ToLowerInvariant();
+    bool loginIntent = q.Contains("login") || q.Contains("log in");
+    bool registerIntent = q.Contains("register") || q.Contains("sign up") || q.Contains("create account");
+    if (!(loginIntent || registerIntent))
+    {
+        return Results.Ok(new ChatResponse {
+            Answer = "Please log in for full answers. You can ask only about how to register or log in here.",
+            Suggestions = new[] { "How do I register?","How do I log in?" },
+            IsHtml = true
+        });
+    }
+    string answer;
+    if (registerIntent)
+    {
+        // Raw string literal: opening """ on its own line, closing """ aligned
+        answer = """
+Registration steps:
+<ul style="margin:0;padding-left:18px;">
+<li>Click Register (top-right).</li>
+<li>Provide your email & password (email must be yours).</li>
+<li>Go to your email and confirm your identity by clicking on the link sent to you by this website.</li>
+<li>Return here, and log in with your email & password.</li>
+<li>Ensure the email matches a roster PersonalEmail or WorkEmail.</li>
+<li>After login refresh Members page; you will be marked Authenticated if matched.</li>
+</ul>
+To be recognized as member of MCL959, ensure your confirmed email matches the roster record.
+""";
+    }
+    else if (loginIntent)
+    {
+        answer = """
+Login steps:
+<ul style="margin:0;padding-left:18px;">
+<li>Click Login (top-right).</li>
+<li>Enter your registered email & password.</li>
+<li>If you just registered, be sure you confirmed the email link first.</li>
+</ul>
+If your email is recognized as a member of MCL959, you will gain member status automatically after login.
+""";
+    }
+    else
+    {
+        return Results.Ok(new ChatResponse
+        {
+            Answer = "Please log in for full answers. You can ask only about how to register or log in here.",
+            Suggestions = new[] { "How do I register?", "How do I log in?" },
+            IsHtml = true
+        });
+    }
+    return Results.Ok(new ChatResponse {
+        Answer = answer,
+        Suggestions = new[] { "How do I register?","How is membership with MCL959 granted?" },
+        IsHtml = true
+    });
+});
 
 try
 {

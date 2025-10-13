@@ -24,5 +24,10 @@ namespace mcl959mvc.Controllers
         {
            return View();
         }
+
+        public IActionResult ChatPanel()
+        {
+            return PartialView("_ChatPanel");
+        }
     }
 }

@@ -1,6 +1,10 @@
 ﻿@{
     ViewData["Title"] = "";
 }
+<button id="openAssistant" class="btn btn-sm btn-secondary" style="position:fixed;right:10px;bottom:10px;z-index:9998;">
+    Open Assistant
+</button>
+<div id="chatHost" style="display:none;"></div>
 
 <div>
     <div>
@@ -56,4 +60,35 @@
     $(document).ready(function () {
         $('#miHome').addClass('selected');
     });
+    (function () {
+        const btn = document.getElementById('openAssistant');
+        const host = document.getElementById('chatHost');
+        let loaded = false;
+
+        async function loadPanel() {
+            const res = await fetch('@Url.Action("ChatPanel", "Home")', { credentials: 'same-origin' });
+            const html = await res.text();
+            host.innerHTML = html;
+
+            // Execute any scripts from the partial (since innerHTML won't run them)
+            host.querySelectorAll('script').forEach(old => {
+                const s = document.createElement('script');
+                if (old.src) {
+                    s.src = old.src; s.async = false;
+                } else {
+                    s.textContent = old.textContent;
+                }
+                document.body.appendChild(s);
+                document.body.removeChild(s);
+            });
+            loaded = true;
+        }
+
+        btn.addEventListener('click', async () => {
+            if (!loaded) await loadPanel();
+            host.style.display = host.style.display === 'none' ? '' : 'none';
+            btn.textContent = host.style.display === 'none' ? 'Open Assistant' : 'Close Assistant';
+        });
+    })();
 </script>
+

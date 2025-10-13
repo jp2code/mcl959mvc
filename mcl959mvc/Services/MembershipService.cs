@@ -1,84 +1,51 @@
-﻿using mcl959mvc.Classes;
-using mcl959mvc.Data;
+﻿using mcl959mvc.Data;
 using mcl959mvc.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace mcl959mvc.Services;
 
 public class MembershipService
 {
-    private readonly ApplicationDbContext _identityContext;
+    private static readonly string[] AdminRanks = { "Commandant", "Paymaster", "Web Sergeant" };
     private readonly Mcl959DbContext _mcl959Context;
 
-    public MembershipService(ApplicationDbContext identityContext, Mcl959DbContext appContext)
+    public MembershipService(Mcl959DbContext appContext)
     {
-        _identityContext = identityContext;
         _mcl959Context = appContext;
     }
 
-    public async Task<Roster?> FindRosterMember(ApplicationUser user)
+    // Recomputes transient flags; nothing persisted except roster.Authenticated
+    public async Task MapToRoster(ApplicationUser user, CancellationToken ct = default)
     {
-        Roster result = null;
         ArgumentNullException.ThrowIfNull(user);
-        var normalizedEmail = user.NormalizedEmail;
-        var rosterList = await _mcl959Context.Roster
-            .Where(r =>
-                (!string.IsNullOrEmpty(r.PersonalEmail) && r.PersonalEmail.ToUpper() == normalizedEmail) ||
-                (!string.IsNullOrEmpty(r.WorkEmail) && r.WorkEmail.ToUpper() == normalizedEmail)
-            ).ToListAsync();
-        foreach (var roster in rosterList)
+
+        if (user.EmailConfirmed)
         {
-            result = roster;
-            user.IsMember = true;
-            if (!roster.Authenticated)
+            var normalized = user.NormalizedEmail;
+            var rosterList = await _mcl959Context.Roster
+                .Where(r =>
+                    (!string.IsNullOrEmpty(r.PersonalEmail) && r.PersonalEmail.ToUpper() == normalized) ||
+                    (!string.IsNullOrEmpty(r.WorkEmail) && r.WorkEmail.ToUpper() == normalized))
+                .ToListAsync(ct);
+            foreach (var roster in rosterList)
             {
-                roster.Authenticated = true;
-                _mcl959Context.Roster.Update(roster);
-                await _mcl959Context.SaveChangesAsync();
-            }
-            var ranks = await _mcl959Context.MemberRanks
-                .Where(r => r.MemberNumber == roster.MemberNumber).ToListAsync();
-            foreach (var rank in ranks)
-            {
-                user.IsAdmin = rank.DisplayRank.In([
-                    "Commandant",
-                    "Paymaster",
-                    "Web Sergeant",
-                ]);
+                user.IsMember = true;
+                if (!roster.Authenticated)
+                {
+                    roster.Authenticated = true;
+                    _mcl959Context.Roster.Update(roster);
+                }
+                var ranks = await _mcl959Context.MemberRanks
+                    .Where(mr => mr.MemberNumber == roster.MemberNumber)
+                    .Select(mr => mr.DisplayRank)
+                    .ToListAsync(ct);
+                user.IsAdmin = ranks.Any(rank => AdminRanks.Contains(rank));
                 if (user.IsAdmin)
                 {
                     break;
                 }
             }
-            if (user.IsAdmin)
-            {
-                break;
-            }
         }
-        return result;
     }
 
-    public async Task UpgradeRegisteredToMemberAsync()
-    {
-        var confirmedUsers = await _identityContext.Users
-            .Where(u => u.EmailConfirmed)
-            .ToListAsync();
-        foreach (var user in confirmedUsers)
-        {
-            var normalizedEmail = user.NormalizedEmail;
-            var roster = await _mcl959Context.Roster
-                .FirstOrDefaultAsync(r =>
-                    r.PersonalEmail != null && r.PersonalEmail.ToUpper() == normalizedEmail ||
-                    r.WorkEmail != null && r.WorkEmail.ToUpper() == normalizedEmail
-                );
-            if (roster != null)
-            {
-                user.IsMember = true;
-                roster.Authenticated = true;
-                _mcl959Context.Roster.Update(roster);
-            }
-        }
-        await _mcl959Context.SaveChangesAsync();
-    }
 }

@@ -261,7 +261,7 @@ please contact us so that the web sergeant can update this page.";
         var emailMessage = $@"
 The following comment was added to the memorial for {regarding}:
 <blockquote>{item.Message}</blockquote>";
-        await EmailTool.SendEmailAsync(
+        await EmailTool.SendEmailAsync1(
             _smtpSettings,
             item.UserId, UserEmail, string.Empty,
             $"Comment on Memorial for {regarding}",
@@ -306,7 +306,7 @@ The following comment was added to the memorial for {regarding}:
             var emailMessage = $@"
 The following comment was added to the memorial for {regarding}:
 <blockquote>{description}</blockquote>";
-            await EmailTool.SendEmailAsync(
+            await EmailTool.SendEmailAsync1(
                 _smtpSettings,
                 UserEmail, UserEmail, string.Empty,
                 $"Comment on Memorial for {regarding}",
