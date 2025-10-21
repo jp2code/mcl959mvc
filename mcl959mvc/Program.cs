@@ -109,6 +109,43 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// Authenticate first
+app.UseAuthentication();
+
+// OPTIONAL: inject transient claims here so they affect authorization too
+app.Use(async (ctx, next) =>
+{
+    if (ctx.User.Identity?.IsAuthenticated ?? false)
+    {
+        var userMgr = ctx.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
+        var svc = ctx.RequestServices.GetRequiredService<MembershipService>();
+        var db = ctx.RequestServices.GetRequiredService<Mcl959DbContext>(); // same scoped DbContext
+
+        var user = await userMgr.GetUserAsync(ctx.User);
+        if (user != null)
+        {
+            // Recompute flags each request
+            user.IsMember = false;
+            user.IsAdmin = false;
+            await svc.MapToRoster(user);
+
+            // If MapToRoster set roster.Authenticated, persist it once
+            await db.SaveChangesAsync();
+
+            // isRegistered = EmailConfirmed
+            var id = (ClaimsIdentity)ctx.User.Identity!;
+            var stale = id.FindAll(c => c.Type is "isRegistered" or "isMember" or "isAdmin").ToList();
+            foreach (var c in stale) id.RemoveClaim(c);
+
+            id.AddClaim(new Claim("isRegistered", user.EmailConfirmed ? "true" : "false"));
+            id.AddClaim(new Claim("isMember", user.IsMember ? "true" : "false"));
+            id.AddClaim(new Claim("isAdmin", user.IsAdmin ? "true" : "false"));
+        }
+    }
+    await next();
+});
+
+// Then authorize
 app.UseAuthorization();
 
 app.Use(async (ctx, next) =>

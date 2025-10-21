@@ -6,11 +6,18 @@
     bool isAdmin = User.HasClaim("isAdmin", "true");
 }
 
-<h2>Detachment 959 Events</h2>
+<!-- Modal host -->
+<div class="modal fade" id="entityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content" id="entityModalContent"></div>
+    </div>
+</div>
+
+<h2>Events</h2>
 @if (isAdmin)
 {
     <p>
-        <a asp-action="Create">Add New Event</a>
+        <a href="#" data-popup="Create">Create New</a>
     </p>
 }
 <div class="container">
@@ -18,9 +25,9 @@
         <div id="next-meeting-text">
             <h4>Meetings are the 4th Tuesday of the month</h4>
             <p>
-                Meetings are held on the 4th Tuesday of each month except for December (when it falls close to Christmas).
+                Meetings are held on the 4th Tuesday of each month except for December (when it falls close to Christmas). Doors open at 1800 (6 PM), and the meetings start at 1900 (7PM).
                 <br/>
-                Our next meeting will be <b><span id="next-meeting-label"></span></b>. Doors open at 1800 (6 PM), and the meetings start at 1900 (7PM).
+                Our next meeting will be <b><span id="next-meeting-label"></span></b>.
                 <br />
             </p>
             <p style="text-align:center">
@@ -49,7 +56,7 @@
                 {
                     <tr>
                         <th class="col-2" scope="row">
-                            <a asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.EventName)</a>
+                            <a href="#" data-popup="Details" data-id="@item.Id">@item.EventName</a>
                         </th>
                         <td class="col-8">
                             @Html.DisplayFor(modelItem => item.EventDescription)
@@ -79,7 +86,7 @@
                 {
                     <tr>
                         <th class="col-2 past-events" scope="row">
-                            <a asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.EventName)</a>
+                            <a href="#" data-popup="Details" data-id="@item.Id">@item.EventName</a>
                         </th>
                         <td class="col-8 past-events">
                             @Html.DisplayFor(modelItem => item.EventDescription)
@@ -96,6 +103,8 @@
 @section Scripts {
     <script>
         $(function () {
+            const modalEl = document.getElementById('entityModal');
+            const modal   = new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
             const today = new Date();
             const nextMeeting = getNextMeetingDate(today);
             renderSimpleCalendar('next-meeting-calendar', nextMeeting);
@@ -106,6 +115,41 @@
                 const options = { month: 'long', day: 'numeric', year: 'numeric' };
                 label.textContent = nextMeeting.toLocaleDateString(undefined, options);
             }
-        });
+
+            async function openPopup(popupType, id) {
+                const url  = '@Url.Action("Popup", "Events")' + `?popupType=${popupType}` + (id ? `&id=${id}` : '');
+                const html = await fetch(url, { credentials:'same-origin' }).then(r=>r.text());
+                document.getElementById('entityModalContent').innerHTML = html;
+
+                const form = document.getElementById('popupForm');
+                if (form) {
+                   form.addEventListener('submit', async (e) => {
+                      e.preventDefault();
+                      const resp = await fetch(form.action, {
+                          method: 'POST',
+                          body: new FormData(form),
+                          credentials: 'same-origin'
+                          // headers: { 'X-Requested-With': 'XMLHttpRequest' } // optional pattern
+                      });
+                      if (resp.redirected) {
+                          modal.hide();
+                          window.location.href = resp.url; // or location.reload()
+                          return;
+                      }
+                      const body = await resp.text();
+                      document.getElementById('entityModalContent').innerHTML = body;
+                   });
+                }
+                modal.show();
+            }
+
+            document.addEventListener('click', (e) => {
+                const a = e.target.closest('[data-popup]');
+                if (!a) return;
+                e.preventDefault();
+                openPopup(a.getAttribute('data-popup'), a.getAttribute('data-id'));
+            });
+      
+    });
     </script>
 }

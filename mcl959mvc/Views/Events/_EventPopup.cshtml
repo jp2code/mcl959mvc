@@ -1,0 +1,108 @@
+﻿@model mcl959mvc.Models.EventsAndCommentsModel
+@using System.IO
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@{
+    var popupType = (mcl959mvc.Models.PopupType)ViewBag.PopupType;
+    var isAdmin = (ViewBag.IsAdmin as bool?) ?? User.HasClaim("isAdmin", "true");
+    var isReadOnly = popupType is mcl959mvc.Models.PopupType.Details or mcl959mvc.Models.PopupType.Delete;
+    var title = $"Event {popupType}";
+    var fileName = Model.Event.ImageFileName;
+    var hasImage = !string.IsNullOrWhiteSpace(fileName) && File.Exists(System.IO.Path.Combine(Env.WebRootPath, "images", fileName));
+    var imagePath = Url.Content(hasImage ? $"~/images/{fileName}" : "~/photos/mcl959bw.jpg");
+}
+<div class="modal-header">
+    <h5 class="modal-title">@title</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body">
+    <form id="popupForm" method="post" enctype="multipart/form-data" action="@FormAction(popupType, Model.Event)">
+        @Html.AntiForgeryToken()
+        @if (popupType != mcl959mvc.Models.PopupType.Create)
+        {
+            @Html.HiddenFor(m => m.Event.Id)
+        }
+
+        <!-- Example fields. Add the rest of your fields from Edit/Create here. -->
+        <div class="mb-2">
+            <label class="form-label">Event Name</label>
+            <input asp-for="Event.EventName" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" />
+            <span asp-validation-for="Event.EventName" class="text-danger"></span>
+        </div>
+
+        @if (popupType == mcl959mvc.Models.PopupType.Create || popupType == mcl959mvc.Models.PopupType.Edit)
+        {
+            <div class="mb-2">
+                <label class="form-label">Event Image</label>
+                <select asp-for="Event.ImageFileName" class="form-select" disabled="@(isReadOnly ? "disabled" : null)">
+                    <option value="">-- Select an image --</option>
+                    @if (ViewBag.Images is IEnumerable<string> imgs)
+                    {
+                        foreach (var img in imgs)
+                        {
+                            <option value="@img" selected="@(Model.Event.ImageFileName == img)">@img</option>
+                        }
+                    }
+                </select>
+                <input type="file" id="ImageUpload" name="ImageUpload" style="display:none;" accept="image/*" />
+            </div>
+            <div class="mb-2">
+                <label class="form-label">Upload New Image</label>
+                <input type="file" name="ImageUpload" class="form-control" accept=".jpg,.jpeg,.png,.gif" @(isReadOnly ? "disabled" : null) />
+                <small class="text-muted">Image is optional. If provided, it will be resized and saved.</small>
+            </div>
+        } else
+        {
+            <div class="col-md-4 d-flex align-items-center justify-content-center" style="background: #f8f9fa;">
+                <img src="@imagePath"
+                     alt="Event Image"
+                     class="img-fluid rounded m-3"
+                     style="max-width: 100%; max-height: 300px; border: 1px solid #ccc;" />
+            </div>
+        }
+        <div class="form-group">
+            <label asp-for="Event.EventDescription" class="control-label">Description</label>
+            <textarea asp-for="Event.EventDescription" class="form-control" rows="8" style="width:100%; min-width:100%; min-height:200px;" disabled="@(isReadOnly ? "disabled" : null)"></textarea>
+            <span asp-validation-for="Event.EventDescription" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Event.EventDate" class="control-label">Date and Time</label>
+            <input asp-for="Event.EventDate" class="form-control" disabled="@(isReadOnly ? "disabled" : null)" />
+            <span asp-validation-for="Event.EventDate" class="text-danger"></span>
+        </div>
+    </form>
+</div>
+
+<div class="modal-footer">
+    @if (isAdmin) {
+        @switch(popupType)
+        {
+            case PopupType.Create:
+            case PopupType.Edit:
+                <button type="submit" form="popupForm" class="btn btn-primary">Save</button>
+                break;
+            case PopupType.Delete:
+                <button type="submit" form="popupForm" class="btn btn-primary">Delete</button>
+                break;
+            case PopupType.Details:
+                @* Do NOT submit the form from Details; open Edit/Delete popups instead *@
+                <a href="#" class="btn btn-primary" data-popup="Edit" data-id="@Model.Event.Id">Edit</a>
+                <a href="#" class="btn btn-danger" data-popup="Delete" data-id="@Model.Event.Id">Delete</a>
+                break;
+        }
+    }
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+</div>
+
+@functions {
+    string FormAction(mcl959mvc.Models.PopupType type, mcl959mvc.Models.EventsModel m)
+    {
+        return type switch
+        {
+            mcl959mvc.Models.PopupType.Create => Url.Action("Create", "Events"),
+            mcl959mvc.Models.PopupType.Edit => Url.Action("Edit", "Events", new { id = m.Id }),
+            mcl959mvc.Models.PopupType.Delete => Url.Action("Delete", "Events", new { id = m.Id }),
+            _ => "#"
+        };
+    }
+}

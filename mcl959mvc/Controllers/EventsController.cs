@@ -28,6 +28,28 @@ public class EventsController : Mcl959MemberController
         _smtpSettings = smptOptions.Value ?? throw new ArgumentNullException(nameof(smptOptions));
     }
 
+    // Helper: return the popup partial with correct ViewBag + VM
+    private IActionResult EventPartial(PopupType type, EventsModel ev, IEnumerable<CommentsModel>? comments = null)
+    {
+        ViewBag.PopupType = type;
+        if (type is PopupType.Create or PopupType.Edit) BuildImagesViewBag();
+        var vm = new EventsAndCommentsModel { Event = ev, Comments = comments?.ToList() ?? new() };
+        return PartialView("_EventPopup", vm);
+    }
+
+    // Helper: build images list for Create/Edit popups
+    private void BuildImagesViewBag()
+    {
+        var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+        var imageFiles = Directory.Exists(imagesFolder)
+            ? Directory.GetFiles(imagesFolder)
+                .Where(f => allowedExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                .Select(f => Path.GetFileName(f))
+                .ToList()
+            : new List<string>();
+        ViewBag.Images = imageFiles;
+    }
     // GET: Events
     public async Task<IActionResult> Index()
     {
@@ -35,123 +57,72 @@ public class EventsController : Mcl959MemberController
         return View(await _context.Events.ToListAsync());
     }
 
-    // GET: Events/Details/5
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null)
-        {
-            _logger.LogWarning("Details called with null id");
-            return View("Error404");
-        }
-        var item = await _context.Events.FindAsync(id);
-        if (item == null)
-        {
-            ViewBag.Id = id;
-            return View("Error404");
-        }
-        var comments = await _context.Comments
-            .Where(c => c.TableSource == "Events" && c.ParentId == id)
-            .OrderByDescending(c => c.TimeStamp)
-            .ToListAsync();
-
-        var model = new EventsAndCommentsModel()
-        {
-            Event = item,
-            Comments = comments,
-        };
-        return View(model);
-    }
-
-    // GET: Events/Create
-    public async Task<IActionResult> Create()
-    {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
-        // Get list of image files from wwwroot/images
-        var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-        var imageFiles = Directory.Exists(imagesFolder)
-            ? Directory.GetFiles(imagesFolder)
-                .Where(f => allowedExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-                .Select(f => Path.GetFileName(f))
-                .ToList()
-            : new List<string>();
-        ViewBag.Images = imageFiles;
-        return View(new EventsModel());
-    }
-
     // POST: Events/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(EventsModel item, IFormFile? ImageUpload)
+    public async Task<IActionResult> Create([Bind(Prefix = "Event")] EventsModel item, IFormFile? ImageUpload)
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
-        if (ModelState.IsValid)
+        try
         {
-            if ((ImageUpload != null) && (0 < ImageUpload.Length))
+            if (ModelState.IsValid)
             {
-                if (MAX4MB < ImageUpload.Length)
+                if ((ImageUpload != null) && (0 < ImageUpload.Length))
                 {
-                    ModelState.AddModelError("Attachment", "File size exceeds the maximum limit.");
-                    return View(item);
+                    if (MAX4MB < ImageUpload.Length)
+                    {
+                        ModelState.AddModelError("Attachment", "File size exceeds the maximum limit.");
+                        return EventPartial(PopupType.Create, item);
+                    }
+                    var allowedTypes = new[] { ".jpg", ".jpeg", ".gif", ".png" };
+                    var ext = Path.GetExtension(ImageUpload.FileName).ToLowerInvariant();
+                    if (!allowedTypes.Contains(ext))
+                    {
+                        ModelState.AddModelError("ImageUpload", "Invalid file type.");
+                        return EventPartial(PopupType.Create, item);
+                    }
+                    var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+                    using var image = Image.Load(ImageUpload.OpenReadStream());
+                    image.Mutate(x => x.Resize(new ResizeOptions
+                    {
+                        Mode = ResizeMode.Max,
+                        Size = new Size(600, 600) // Adjust as needed for 30% width
+                    }));
+                    var fileName = $"{Guid.NewGuid()}{Path.GetExtension(ImageUpload.FileName)}";
+                    var filePath = Path.Combine(imagesFolder, fileName);
+                    await image.SaveAsync(filePath);
+                    item.ImageFileName = fileName;
                 }
-                var allowedTypes = new[] { ".jpg", ".jpeg", ".gif", ".png" };
-                var ext = Path.GetExtension(ImageUpload.FileName).ToLowerInvariant();
-                if (!allowedTypes.Contains(ext))
-                {
-                    ModelState.AddModelError("ImageUpload", "Invalid file type.");
-                    return View(item);
-                }
-                var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
-                using var image = Image.Load(ImageUpload.OpenReadStream());
-                image.Mutate(x => x.Resize(new ResizeOptions
-                {
-                    Mode = ResizeMode.Max,
-                    Size = new Size(600, 600) // Adjust as needed for 30% width
-                }));
-                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(ImageUpload.FileName)}";
-                var filePath = Path.Combine(imagesFolder, fileName);
-                await image.SaveAsync(filePath);
-                item.ImageFileName = fileName;
+                item.EventCreated = DateTime.UtcNow;
+                _context.Add(item);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            } else
+            {
+                return EventPartial(PopupType.Create, item);
             }
-            item.EventCreated = DateTime.UtcNow;
-            _context.Add(item);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+        } catch (Exception err)
+        {
+            _logger.LogError(err, "Error creating event");
+            ModelState.AddModelError(string.Empty, "Unexpected error creating the event. Please try again.");
+            return EventPartial(PopupType.Create, item);
         }
-        return View(item);
-    }
-
-    // GET: Events/Edit/5
-    public async Task<IActionResult> Edit(int? id)
-    {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
-        if (id == null) return NotFound();
-        var item = await _context.Events.FindAsync(id);
-        if (item == null) return NotFound();
-        // Get list of image files from wwwroot/images
-        var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-        var imageFiles = Directory.Exists(imagesFolder)
-            ? Directory.GetFiles(imagesFolder)
-                .Where(f => allowedExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-                .Select(f => Path.GetFileName(f))
-                .ToList()
-            : new List<string>();
-        ViewBag.Images = imageFiles;
         return View(item);
     }
 
     // POST: Events/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, EventsModel item, IFormFile? ImageUpload)
+    public async Task<IActionResult> Edit([Bind(Prefix = "Event")] int id, EventsModel item, IFormFile? ImageUpload)
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
-        if (id != item.Id) return NotFound();
+        if (id != item.Id)
+        {
+            ModelState.AddModelError(string.Empty, "Mismatched event id.");
+            return EventPartial(PopupType.Edit, item);
+        }
         if (ModelState.IsValid)
         {
             if ((ImageUpload != null) && (0 < ImageUpload.Length))
@@ -183,20 +154,11 @@ public class EventsController : Mcl959MemberController
             _context.Update(item);
             await _context.SaveChangesAsync();
             // Redirect to Details with the same id after saving
-            return RedirectToAction(nameof(Details), new { id = item.Id });
+            return RedirectToAction(nameof(Index));
+        } else
+        {
+            return EventPartial(PopupType.Edit, item);
         }
-        return View(item);
-    }
-
-    // GET: Events/Delete/5
-    public async Task<IActionResult> Delete(int? id)
-    {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
-        if (id == null) return NotFound();
-        var item = await _context.Events.FindAsync(id);
-        if (item == null) return NotFound();
-        return View(item);
     }
 
     // POST: Events/Delete/5
@@ -241,7 +203,7 @@ The following comment was added to the event {regarding} by {UserEmail}:
             item.UserId, UserEmail, string.Empty,
             $"Comment on Event for {regarding}",
             emailMessage);
-        return RedirectToAction(nameof(Details), new { id = item.ParentId });
+        return RedirectToAction(nameof(Index));
     }
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -254,7 +216,57 @@ The following comment was added to the event {regarding} by {UserEmail}:
         _context.Comments.Remove(comment);
         await _context.SaveChangesAsync();
         // Redirect back to the event details page
-        return RedirectToAction(nameof(Details), new { id = parentId });
+        return RedirectToAction(nameof(Index));
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Popup(PopupType popupType, int? id)
+    {
+        await CheckUserIdentity();           // sets IsAdmin on the base controller
+        ViewBag.IsAdmin = IsAdmin;           // pass to view
+
+        if (popupType is PopupType.Create || popupType is PopupType.Edit)
+        {
+            // Build images list (same code you already use)
+            var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            var imageFiles = Directory.Exists(imagesFolder)
+                ? Directory.GetFiles(imagesFolder)
+                    .Where(f => allowedExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                    .Select(f => Path.GetFileName(f))
+                    .ToList()
+                : new List<string>();
+            ViewBag.Images = imageFiles;
+        }
+
+        EventsModel model;
+        switch (popupType)
+        {
+            case PopupType.Create:
+                await CheckUserIdentity();
+                if (!IsAdmin) return Forbid();
+                model = new EventsModel();
+                break;
+            default:
+                if (id == null) return BadRequest("id is required");
+                var item = await _context.Events.FindAsync(id);
+                if (item == null) return NotFound();
+                model = item;
+                break;
+        }
+
+        ViewBag.PopupType = popupType;
+        var comments = (popupType != PopupType.Create && model.Id != 0)
+            ? await _context.Comments
+                .Where(c => c.TableSource == "Events" && c.ParentId == model.Id)
+                .OrderByDescending(c => c.TimeStamp)
+                .ToListAsync()
+            : new List<CommentsModel>();
+        var modelWithComments = new EventsAndCommentsModel
+        {
+            Event = model,
+            Comments = comments
+        };
+        return PartialView("_EventPopup", modelWithComments);
+    }
 }

@@ -5,10 +5,17 @@
     bool isAdmin = User.HasClaim("isAdmin", "true");
 }
 
+<!-- Bootstrap modal host (added) -->
+<div class="modal fade" id="entityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content" id="entityModalContent"></div>
+    </div>
+</div>
+
 <h2>Email History</h2>
 
 <p>
-    <a asp-action="Create">New Message</a>
+    <a href="#" data-popup="Create">New Message</a>
 </p>
 @if (isAdmin)
 {
@@ -26,16 +33,17 @@
             {
                 <tr>
                     <td>
-                        <a asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Name)</a>
+                        <a href="#" data-popup="Details" data-id="@item.Id">@item.Name</a>
                     </td>
                     <td>
-                        <a asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Email)</a>
+                        <a href="#" data-popup="Details" data-id="@item.Id">@item.Email</a>
                     </td>
                     <td>
-                        <a asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Date)</a>
+                        <a href="#" data-popup="Details" data-id="@item.Id">@item.Date</a>
                     </td>
                     <td>
-                        <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                        <a href="#" data-popup="Edit" data-id="@item.Id">Edit</a> |
+                        <a href="#" data-popup="Delete" data-id="@item.Id">Delete</a>
                     </td>
                 </tr>
             }
@@ -43,7 +51,47 @@
     </table>
 }
 <script>
+(() => {
     $(document).ready(function () {
         $('#miContact').addClass('selected');
     });
+    const modalEl = document.getElementById('entityModal');
+    const modal   = new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
+    const isAdmin = @(User.HasClaim("isAdmin", "true") ? "true" : "false");
+    const openPopupType = '@(ViewBag.OpenPopupType ?? "")';
+
+
+    async function openPopup(popupType, id){
+        const url  = '@Url.Action("Popup", "Messages")' + `?popupType=${popupType}` + (id ? `&id=${id}` : '');
+        const html = await fetch(url, { credentials:'same-origin' }).then(r=>r.text());
+        document.getElementById('entityModalContent').innerHTML = html;
+
+        const form = document.getElementById('popupForm');
+        if (form){
+            form.addEventListener('submit', async (e)=>{
+            e.preventDefault();
+            const resp = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                credentials: 'same-origin'
+            });
+            if (resp.redirected){
+                modal.hide();
+                window.location.href = resp.url; // or location.reload()
+                return;
+            }
+            const body = await resp.text();
+            document.getElementById('entityModalContent').innerHTML = body;
+            });
+        }
+        modal.show();
+    }
+
+    document.addEventListener('click', (e)=>{
+    const a = e.target.closest('[data-popup]');
+    if (!a) return;
+    e.preventDefault();
+    openPopup(a.getAttribute('data-popup'), a.getAttribute('data-id'));
+    });
+})();
 </script>

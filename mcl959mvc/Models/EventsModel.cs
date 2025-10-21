@@ -14,6 +14,7 @@ public partial class EventsModel
 
     [StringLength(50)]
     [Unicode(false)]
+    [Required(ErrorMessage = "Event Name is required.")]
     public string? EventName { get; set; }
 
     [StringLength(255)]
@@ -22,6 +23,7 @@ public partial class EventsModel
     public string? EventDescription { get; set; }
 
     [Column(TypeName = "datetime")]
+    [Required(ErrorMessage = "Event Date and Time are required.")]
     public DateTime? EventDate { get; set; }
 
     [Column(TypeName = "datetime")]

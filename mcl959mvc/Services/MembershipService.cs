@@ -47,5 +47,15 @@ public class MembershipService
             }
         }
     }
+    // Optional: reintroduce TagUserAsync for backward compatibility
+    public async Task<Roster?> TagUserAsync(ApplicationUser user, bool returnRoster = false, CancellationToken ct = default)
+    {
+        await MapToRoster(user, ct);
+        if (!returnRoster || !user.IsMember) return null;
 
+        var normalized = user.NormalizedEmail;
+        return await _mcl959Context.Roster.FirstOrDefaultAsync(r =>
+            (!string.IsNullOrEmpty(r.PersonalEmail) && r.PersonalEmail.ToUpper() == normalized) ||
+            (!string.IsNullOrEmpty(r.WorkEmail) && r.WorkEmail.ToUpper() == normalized), ct);
+    }
 }

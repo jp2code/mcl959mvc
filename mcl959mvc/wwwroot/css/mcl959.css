@@ -25,6 +25,11 @@ a.fake-link {
     color: #CC0000; /* overwrite bootstrap with my RED */
 }
 
+.modal-content {
+    color: #999999; /* silver */
+    background-color: #004392; /* dress blues blue */
+}
+
 html, body {
     height: 100%;
     padding-top: 50px;

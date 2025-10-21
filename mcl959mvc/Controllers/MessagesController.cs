@@ -58,33 +58,13 @@ public class MessagesController : Mcl959MemberController
             return View(await _context.Messages.ToListAsync());
         }
         // Not admin: redirect to Create
-        return RedirectToAction(nameof(Create));
+        ViewBag.OpenPopupType = PopupType.Create;
+        return View(Enumerable.Empty<MessagesModel>());
     }
 
-    // GET: Messages/Create
-    public async Task<IActionResult> Create()
-    {
-        await CheckUserIdentity();
-        var model = new MessagesModel()
-        {
-            Name = "",
-            Email = UserEmail,
-            SendTo = "",
-            Subject = "MCL959 Contact Message",
-            Date = DateTime.Now,
-            Code = "",
-            CodeSent = false,
-            ResetToken = null
-        };
-        var recipients = GetRecipients();
-        ViewBag.Recipients = recipients;
-        var selectedRecipient = recipients.FirstOrDefault(x => x.Text == "Select a member");
-        if(selectedRecipient != null)
-        {
-            model.SendTo = selectedRecipient.Value;
-        }
-        return View(model);
-    }
+    // Helper to detect AJAX (fetch) posts
+    private static bool IsAjaxRequest(HttpRequest request) =>
+        string.Equals(request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
 
     private List<SelectListItem> GetRecipients()
     {
@@ -156,12 +136,13 @@ public class MessagesController : Mcl959MemberController
         return list;
     }
 
-    // POST: Messages/Create
+    // POST: Messages/Create (adjust to support modal)
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(MessagesModel item, string? action, IFormFile? Attachment)
     {
         await CheckUserIdentity();
+        // Non-registered: same logic, but return Partial for AJAX to keep modal updated
         if (!IsRegistered)
         {
             if (action == "SendCode")
@@ -175,6 +156,13 @@ public class MessagesController : Mcl959MemberController
                 item.CodeSent = true;
                 ModelState.Clear();
                 ModelState.AddModelError("Info", "Verification code sent to your email.");
+                if (IsAjaxRequest(Request))
+                {
+                    ViewBag.PopupType = PopupType.Create;
+                    ViewBag.Recipients = GetRecipients();
+                    return PartialView("_MessagePopup", item);
+                }
+                ViewBag.Recipients = GetRecipients();
                 return View(item);
             }
             else if (action == "SubmitMessage")
@@ -184,6 +172,13 @@ public class MessagesController : Mcl959MemberController
                 {
                     ModelState.AddModelError("Code", "Invalid or expired code.");
                     item.CodeSent = true;
+                    if (IsAjaxRequest(Request))
+                    {
+                        ViewBag.PopupType = PopupType.Create;
+                        ViewBag.Recipients = GetRecipients();
+                        return PartialView("_MessagePopup", item);
+                    }
+                    ViewBag.Recipients = GetRecipients();
                     return View(item);
                 }
                 // Optionally clear the code
@@ -192,11 +187,27 @@ public class MessagesController : Mcl959MemberController
             else
             {
                 // Initial load or unknown action
+                if (IsAjaxRequest(Request))
+                {
+                    ViewBag.PopupType = PopupType.Create;
+                    ViewBag.Recipients = GetRecipients();
+                    return PartialView("_MessagePopup", item);
+                }
                 return View(item);
             }
         }
+        if (!ModelState.IsValid)
+        {
+            if (IsAjaxRequest(Request))
+            {
+                ViewBag.PopupType = PopupType.Create;
+                ViewBag.Recipients = GetRecipients();
+                return PartialView("_MessagePopup", item);
+            }
+            ViewBag.Recipients = GetRecipients();
+            return View(item);
+        } else 
         // If model is valid, save the message
-        if (ModelState.IsValid)
         {
             if (Attachment != null && (0 < Attachment.Length))
             {
@@ -285,33 +296,9 @@ public class MessagesController : Mcl959MemberController
                     }
                 }
             }
-            TempData["EmailSentMessage"] = $"The message below has been sent.<br/>Any replies will be sent to the email address you provided: <a href='mailto:{fromEmail}'>{fromEmail}</a>.";
-            ModelState.AddModelError("Success", "Your message has been sent.");
-            return RedirectToAction(nameof(Details), new { id = item.Id });
+            ModelState.AddModelError("Success", $"The message below has been sent.<br/>Any replies will be sent to the email address you provided: <a href='mailto:{fromEmail}'>{fromEmail}</a>.");
+            return RedirectToAction("Index", "Home");
         }
-        // Repopulate ViewBag for recipients
-        ViewBag.Recipients = GetRecipients();
-        return View(item);
-    }
-
-    // GET: Messages/Details/5
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-        var message = await _context.Messages.FindAsync(id);
-        if (message == null) return NotFound();
-        return View(message);
-    }
-
-    // GET: Messages/Edit/5
-    public async Task<IActionResult> Edit(int? id)
-    {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
-        if (id == null) return NotFound();
-        var message = await _context.Messages.FindAsync(id);
-        if (message == null) return NotFound();
-        return View(message);
     }
 
     // POST: Messages/Edit/5
@@ -329,7 +316,8 @@ public class MessagesController : Mcl959MemberController
                 _context.Update(message);
                 await _context.SaveChangesAsync();
                 // Redirect to Details with the same id after saving
-                return RedirectToAction(nameof(Details), new { id = message.Id });
+                ModelState.AddModelError("Success", $"Message {id} updated successfully.");
+                return RedirectToAction("Index");
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -344,15 +332,31 @@ public class MessagesController : Mcl959MemberController
         return View(message);
     }
 
-    // GET: Messages/Delete/5
-    public async Task<IActionResult> Delete(int? id)
+    // ADD THIS ACTION
+    [HttpGet]
+    public async Task<IActionResult> Popup(PopupType popupType, int? id)
     {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
-        if (id == null) return NotFound();
-        var message = await _context.Messages.FindAsync(id);
-        if (message == null) return NotFound();
-        return View(message);
+        await CheckUserIdentity();           // sets IsAdmin on the base controller
+        ViewBag.IsAdmin = IsAdmin;           // pass to view
+
+        MessagesModel model;
+        switch (popupType)
+        {
+            case PopupType.Create:
+                model = await BuildDefaultMessageModelAsync();
+                break;
+            default:
+                if (id == null) return BadRequest("id is required");
+                model = await _context.Messages.FindAsync(id);
+                if (model == null) return NotFound();
+                break;
+        }
+
+        ViewBag.PopupType = popupType;
+        if (popupType is PopupType.Create or PopupType.Edit)
+            ViewBag.Recipients = GetRecipients();
+
+        return PartialView("_MessagePopup", model);
     }
 
     // POST: Messages/Delete/5
@@ -370,5 +374,25 @@ public class MessagesController : Mcl959MemberController
         }
         return RedirectToAction(nameof(Index));
     }
-
+    // helper used above (reuses your existing defaults)
+    private async Task<MessagesModel> BuildDefaultMessageModelAsync()
+    {
+        var model = new MessagesModel
+        {
+            Name = "",
+            Email = UserEmail,
+            SendTo = "",
+            Subject = "MCL959 Contact Message",
+            Date = DateTime.Now,
+            Code = "",
+            CodeSent = false,
+            ResetToken = null
+        };
+        var recipients = GetRecipients();
+        ViewBag.Recipients = recipients;
+        var selectedRecipient = recipients.FirstOrDefault(x => x.Text == "Select a member");
+        if (selectedRecipient != null)
+            model.SendTo = selectedRecipient.Value;
+        return await Task.FromResult(model);
+    }
 }
