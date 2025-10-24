@@ -5,5 +5,6 @@ public enum PopupType
     Create,
     Edit,
     Delete,
-    Details
+    Details,
+    Memorial
 }

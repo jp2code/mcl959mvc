@@ -1,0 +1,154 @@
+﻿@model mcl959mvc.Models.Roster
+@{
+    var popupType = (mcl959mvc.Models.PopupType)ViewBag.PopupType;
+    bool isAdmin = User.HasClaim("isAdmin", "true");
+    var photoPath = Model.HasPhoto ? $"/photos/{Model.Id}.jpg" : "/photos/mcl959bw.jpg";
+    var mode = "View"; // force "View" for non-admins
+    if (isAdmin)
+    {
+        mode = ViewBag.Mode as string ?? "View";
+    }
+    bool isReadOnly = mode == "View" || mode == "Delete";
+    string readOnlyAttr = isReadOnly ? "readonly" : "";
+    bool isDelete = mode == "Delete";
+}
+<div class="modal-body">
+    <div class="container mt-4">
+        <div class="card mb-4 shadow-sm" style="background: #004392; color: #FFD700; border-radius: 8px;">
+            <div class="row g-0">
+                <div class="col-md-4 d-flex flex-column align-items-center justify-content-start" style="background: #0050AE; border-radius: 8px;">
+                    <img src="@photoPath"
+                         alt="@Model.GetFullName()"
+                         class="img-fluid rounded m-3"
+                         style="max-width: 100%; max-height: 300px; border: 1px solid #ccc; background: #fff;" />
+                    @if (isAdmin && (mode == "Edit" || mode == "Delete"))
+                    {
+                        <div id="imgUploadDiv" style="width:100%; text-align:center; margin-top:1rem;">
+                            <form id="photoUploadForm" enctype="multipart/form-data" method="post" action="/Roster/UploadPhoto/@Model.Id">
+                                @Html.AntiForgeryToken()
+                                <input type="file" id="photoInput" name="Photo" accept=".jpg,.jpeg,image/jpeg" required />
+                                <br />
+                                <button type="submit" class="btn btn-sm btn-secondary">Change</button>
+                            </form>
+                            <div id="uploadResult" style="margin-top:0.5rem;"></div>
+                        </div>
+                    }
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h2 class="card-title">@Model.DisplayName</h2>
+                        <p class="mb-2">
+                            <strong>Created:</strong> @Model.CreatedDate.ToShortDateString()
+                        </p>
+                    </div>
+                </div>
+                <hr style="border-color: #FFD700;" />
+                <div class="col-md-12">
+                    <div class="card-body">
+                        <!-- Main Roster form starts here -->
+                        <form id="rosterPopup" asp-asp-controller="Roster" asp-action="@mode" method="post">
+                            @Html.AntiForgeryToken()
+                            @if (mode == "Edit" || mode == "Delete")
+                            {
+                                @Html.HiddenFor(m => m.Id)
+                            }
+                            <div class="mb-3">
+                                <table class="table">
+                                    <tr>
+                                        <td width="30%">First Name:<br /><input asp-for="FirstName" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td width="30%">Middle:<br /><input asp-for="MiddleName" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td>Last Name:<br /><input asp-for="LastName" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">Display As:<br /><input asp-for="DisplayName" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Member Number:<br /><input asp-for="MemberNumber" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td>Start Date:<br /><input asp-for="MemberStartDate" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td>Expires:<br /><input asp-for="MemberExpireDate" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Life Member Number:<br /><input asp-for="LifeMemberNumber" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td>Life Member Date:<br /><input asp-for="LifeMemberDate" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Address:<br /><input asp-for="PersonalAddress" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td>Phone:<br /><input asp-for="PersonalPhone" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td>Email:<br /><input asp-for="PersonalEmail" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Alternate Address:<br /><input asp-for="WorkAddress" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td>Alternate Phone:<br /><input asp-for="WorkPhone" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td>Alternate Email:<br /><input asp-for="WorkEmail" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Created:<br /><input asp-for="CreatedDate" asp-format="{0:yyyy-MM-dd}" readonly="true" /></td>
+                                        <td>Died:<br /><input asp-for="DiedOn" asp-format="{0:MM/dd/yyyy}" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td>Authenticated:<br /><input asp-for="Authenticated" readonly="true" /></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    @if (isAdmin)
+    {
+        @switch (popupType)
+        {
+            case mcl959mvc.Models.PopupType.Create:
+            case mcl959mvc.Models.PopupType.Edit:
+                <button type="submit" form="rosterPopup" class="btn btn-primary">Save</button>
+                break;
+            case mcl959mvc.Models.PopupType.Delete:
+                <button type="submit" form="rosterPopup" class="btn btn-danger">Delete</button>
+                break;
+            case mcl959mvc.Models.PopupType.Details:
+                <a href="#" class="btn btn-primary" data-popup="Edit" data-id="@Model.Id" data-popup-controller="Roster">Edit</a>
+                <a href="#" class="btn btn-danger" data-popup="Delete" data-id="@Model.Id" data-popup-controller="Roster">Delete</a>
+                break;
+        }
+    }
+</div>
+<script>
+    (function(){
+      // If rendered inside the modal, the global delegated handler in _Layout handles this.
+      if (document.getElementById('entityModalContent')) return;
+
+      // Standalone fallback (rare)
+      const form = document.getElementById('photoUploadForm');
+      if (!form) return;
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const resp = await fetch(this.action, { method: 'POST', body: new FormData(this), credentials: 'same-origin' });
+        const text = await resp.text();
+        const resultDiv = document.getElementById('uploadResult');
+        if (resultDiv) resultDiv.innerHTML = text;
+        const img = document.querySelector('img[src*="/photos/"]');
+        if (img) {
+          const url = new URL(img.getAttribute('src'), window.location.origin);
+          url.searchParams.set('v', Date.now().toString());
+          img.setAttribute('src', url.pathname + '?' + url.searchParams.toString());
+        }
+      });
+    })();
+</script>
+@functions {
+    string FormAction(mcl959mvc.Models.PopupType type, mcl959mvc.Models.Roster? m)
+    {
+        if (m == null) return "#";
+        return type switch
+        {
+            mcl959mvc.Models.PopupType.Create => Url.Action("Create", "Roster"),
+            mcl959mvc.Models.PopupType.Edit => Url.Action("Edit", "Roster", new { id = m.Id }),
+            mcl959mvc.Models.PopupType.Delete => Url.Action("Delete", "Roster", new { id = m.Id }),
+            _ => "#"
+        };
+    }
+}

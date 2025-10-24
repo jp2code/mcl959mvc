@@ -6,18 +6,11 @@
     bool isAdmin = User.HasClaim("isAdmin", "true");
 }
 
-<!-- Modal host -->
-<div class="modal fade" id="entityModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content" id="entityModalContent"></div>
-    </div>
-</div>
-
 <h2>Events</h2>
 @if (isAdmin)
 {
     <p>
-        <a href="#" data-popup="Create">Create New</a>
+        <a href="#" data-popup="Create" data-popup-controller="Events">Create New</a>
     </p>
 }
 <div class="container">
@@ -56,7 +49,7 @@
                 {
                     <tr>
                         <th class="col-2" scope="row">
-                            <a href="#" data-popup="Details" data-id="@item.Id">@item.EventName</a>
+                            <a href="#" data-popup="Details" data-id="@item.Id" data-popup-controller="Events">@item.EventName</a>
                         </th>
                         <td class="col-8">
                             @Html.DisplayFor(modelItem => item.EventDescription)
@@ -86,7 +79,7 @@
                 {
                     <tr>
                         <th class="col-2 past-events" scope="row">
-                            <a href="#" data-popup="Details" data-id="@item.Id">@item.EventName</a>
+                            <a href="#" data-popup="Details" data-id="@item.Id" data-popup-controller="Events">@item.EventName</a>
                         </th>
                         <td class="col-8 past-events">
                             @Html.DisplayFor(modelItem => item.EventDescription)
@@ -100,56 +93,17 @@
         </table>
     </div>
 </div>
-@section Scripts {
-    <script>
-        $(function () {
-            const modalEl = document.getElementById('entityModal');
-            const modal   = new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
-            const today = new Date();
-            const nextMeeting = getNextMeetingDate(today);
-            renderSimpleCalendar('next-meeting-calendar', nextMeeting);
-            $('#miEvent').addClass('selected');
-            let label = document.getElementById("next-meeting-label");
-            if (label && nextMeeting) {
-                // Format as "Month Day, Year"
-                const options = { month: 'long', day: 'numeric', year: 'numeric' };
-                label.textContent = nextMeeting.toLocaleDateString(undefined, options);
-            }
-
-            async function openPopup(popupType, id) {
-                const url  = '@Url.Action("Popup", "Events")' + `?popupType=${popupType}` + (id ? `&id=${id}` : '');
-                const html = await fetch(url, { credentials:'same-origin' }).then(r=>r.text());
-                document.getElementById('entityModalContent').innerHTML = html;
-
-                const form = document.getElementById('popupForm');
-                if (form) {
-                   form.addEventListener('submit', async (e) => {
-                      e.preventDefault();
-                      const resp = await fetch(form.action, {
-                          method: 'POST',
-                          body: new FormData(form),
-                          credentials: 'same-origin'
-                          // headers: { 'X-Requested-With': 'XMLHttpRequest' } // optional pattern
-                      });
-                      if (resp.redirected) {
-                          modal.hide();
-                          window.location.href = resp.url; // or location.reload()
-                          return;
-                      }
-                      const body = await resp.text();
-                      document.getElementById('entityModalContent').innerHTML = body;
-                   });
-                }
-                modal.show();
-            }
-
-            document.addEventListener('click', (e) => {
-                const a = e.target.closest('[data-popup]');
-                if (!a) return;
-                e.preventDefault();
-                openPopup(a.getAttribute('data-popup'), a.getAttribute('data-id'));
-            });
-      
-    });
-    </script>
-}
+<script>
+$(function () {
+    $('#miEvent').addClass('selected');
+    const today = new Date();
+    const nextMeeting = getNextMeetingDate(today);
+    renderSimpleCalendar('next-meeting-calendar', nextMeeting);
+    let label = document.getElementById("next-meeting-label");
+    if (label && nextMeeting) {
+        // Format as "Month Day, Year"
+        const options = { month: 'long', day: 'numeric', year: 'numeric' };
+        label.textContent = nextMeeting.toLocaleDateString(undefined, options);
+    }
+});
+</script>

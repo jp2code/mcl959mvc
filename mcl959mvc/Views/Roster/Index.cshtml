@@ -84,14 +84,8 @@
             {
                 <tr>
                     <td>
-                        <a asp-controller="Roster"
-                        asp-action="Memorial"
-                        asp-route-id="@member.Id"
-                        target="_blank"
-                        rel="noopener"
-                        class="external-link">
+                        <a href="#" data-popup="Memorial" data-id="@member.Id" data-popup-controller="Roster">
                             @member.DisplayName
-                            <span aria-label="Opens in a new tab" title="Opens in a new tab" style="font-size:0.9em; margin-left:0.25em;">&#x2197;</span>
                         </a>
                     </td>
                     <td>@member.DiedOn</td>
@@ -121,7 +115,7 @@
     <div id="divRoster" class="admin">
         <h2>Admin Roster</h2>
         <p>
-            <a asp-action="Create">Add New Member</a>
+            <a href="#" data-popup="Create" data-popup-controller="Roster">Add New Member</a>
         </p>
         <table class="table table-striped">
             <thead>
@@ -145,15 +139,8 @@
                             @item.DisplayName
                         </td>
                         <td>
-                            <a asp-controller="Roster" 
-                                asp-action="Details"
-                                asp-route-memberNumber="@item.MemberNumber"
-                                asp-route-id="@item.Id"
-                               target="_blank"
-                               rel="noopener"
-                               class="external-link">
+                            <a href="#" data-popup="Details" data-id="@item.Id" data-popup-controller="Roster">
                                 @(!string.IsNullOrEmpty(item.MemberNumber) ? item.MemberNumber : "N/A")
-                                <span aria-label="Opens in a new tab" title="Opens in a new tab" style="font-size:0.9em; margin-left:0.25em;">&#x2197;</span>
                             </a>
                         </td>
                         <td>
@@ -192,7 +179,7 @@
 }
 
 <script>
-    $(document).ready(function () {
-        $('#miMember').addClass('selected');
-    });
+$(function () {
+    $('#miMember').addClass('selected');
+});
 </script>

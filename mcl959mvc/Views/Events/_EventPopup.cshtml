@@ -10,10 +10,6 @@
     var hasImage = !string.IsNullOrWhiteSpace(fileName) && File.Exists(System.IO.Path.Combine(Env.WebRootPath, "images", fileName));
     var imagePath = Url.Content(hasImage ? $"~/images/{fileName}" : "~/photos/mcl959bw.jpg");
 }
-<div class="modal-header">
-    <h5 class="modal-title">@title</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-</div>
 
 <div class="modal-body">
     <form id="popupForm" method="post" enctype="multipart/form-data" action="@FormAction(popupType, Model.Event)">
@@ -86,8 +82,8 @@
                 break;
             case PopupType.Details:
                 @* Do NOT submit the form from Details; open Edit/Delete popups instead *@
-                <a href="#" class="btn btn-primary" data-popup="Edit" data-id="@Model.Event.Id">Edit</a>
-                <a href="#" class="btn btn-danger" data-popup="Delete" data-id="@Model.Event.Id">Delete</a>
+                <a href="#" class="btn btn-primary" data-popup="Edit" data-id="@Model.Event.Id" data-popup-controller="Events">Edit</a>
+                <a href="#" class="btn btn-danger" data-popup="Delete" data-id="@Model.Event.Id" data-popup-controller="Events">Delete</a>
                 break;
         }
     }

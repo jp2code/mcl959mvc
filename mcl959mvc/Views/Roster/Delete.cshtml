@@ -1,6 +1,0 @@
-﻿@model mcl959mvc.Models.Roster
-@{
-    ViewData["Title"] = Model.GetFullName();
-    ViewBag.Mode = "Delete";
-}
-@await Html.PartialAsync("_RosterForm", Model)

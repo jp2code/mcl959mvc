@@ -58,10 +58,16 @@ public class MessagesController : Mcl959MemberController
             return View(await _context.Messages.ToListAsync());
         }
         // Not admin: redirect to Create
-        ViewBag.OpenPopupType = PopupType.Create;
-        return View(Enumerable.Empty<MessagesModel>());
+        return RedirectToAction(nameof(Create));
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Create()
+    {
+        await CheckUserIdentity();
+        var model = await BuildDefaultMessageModelAsync(); // sets defaults and ViewBag.Recipients
+        return View(model); // returns Views/Messages/Create.cshtml
+    }
     // Helper to detect AJAX (fetch) posts
     private static bool IsAjaxRequest(HttpRequest request) =>
         string.Equals(request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);

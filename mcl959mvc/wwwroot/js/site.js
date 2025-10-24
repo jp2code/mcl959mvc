@@ -123,3 +123,146 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
     }
 }
 
+// Central wiring for Bootstrap modal popups and AJAX form handling
+
+(function () {
+    const getModalEl = () => document.getElementById('entityModal');
+    const getContentEl = () => document.getElementById('entityModalContent');
+
+    function getOrCreateModal() {
+        const el = getModalEl();
+        if (!el) return null;
+        return el ? bootstrap.Modal.getOrCreateInstance(el, { backdrop: true, keyboard: true }) : null;
+    }
+
+    function resolvePopupUrl(trigger) {
+        // Highest priority: data-popup-url on the trigger element
+        if (trigger?.dataset.popupUrl) {
+            return trigger.dataset.popupUrl;
+        }
+        // Next priority: data-roster-popup-url on body
+        if (trigger?.dataset.popupController) {
+            return `/${trigger.dataset.popupController}/Popup`;
+        }
+        // Optional: page-level defaults
+        const content = getContentEl();
+        const defaultCtrl =
+            content?.dataset.defaultPopupController ||
+            document.body.getAttribute('data-roster-popup-controller');
+        if (defaultCtrl) {
+            return `/${defaultCtrl}/Popup`;
+        }
+        // Final fallback
+        return '/Roster/Popup';
+    }
+
+    async function openPopup(popupType, id, urlBase) {
+        const modal = getOrCreateModal();
+        if (!modal) return;
+
+        const params = new URLSearchParams({ popupType });
+        if (id) params.append('id', id);
+
+        const resp = await fetch(`${urlBase}?${params.toString()}`, { credentials: 'same-origin' });
+        const html = await resp.text();
+        const content = getContentEl();
+        if (content) content.innerHTML = html;
+        modal.show();
+    }
+
+    async function postForm(form) {
+        const resp = await fetch(form.action, {
+            method: (form.method || 'POST').toUpperCase(),
+            body: new FormData(form),
+            credentials: 'same-origin'
+        });
+        const html = await resp.text();
+        const content = getContentEl();
+        if (content) content.innerHTML = html;
+    }
+
+    // Open any popup from a trigger
+    document.addEventListener('click', (e) => {
+        const a = e.target.closest('[data-popup]');
+        if (!a) return;
+
+        // Allow links inside modal AND page-level lists
+        e.preventDefault();
+        const popupType = a.dataset.popup;
+        const id = a.dataset.id || a.dataset.itemid; // supports both data-id and data-itemid
+        const urlBase = resolvePopupUrl(a);
+        openPopup(popupType, id, urlBase);
+    });
+
+    // Post any form inside the modal via fetch and re-render
+    document.addEventListener('submit', async (e) => {
+        const content = getContentEl();
+        const form = e.target;
+        if (!content || !content.contains(form)) return; // only handle forms in modal
+        e.preventDefault();
+        const resp = await fetch(form.action, {
+            method: (form.method || 'POST').toUpperCase(),
+            body: new FormData(form),
+            credentials: 'same-origin'
+        });
+        const html = await resp.text();
+        content.innerHTML = html;
+    });
+
+    // Memorial convenience (edit/save/cancel/delete) - works across partial reloads
+    document.addEventListener('click', async (e) => {
+        const content = getContentEl();
+        if (!content) return;
+        if (!content.contains(e.target)) return;
+
+        // Edit Description
+        if (e.target.id === 'editDescription') {
+            e.preventDefault();
+            const div = content.querySelector('#descriptionDisplay');
+            const edit = content.querySelector('#editDescription');
+            const save = content.querySelector('#saveDescription');
+            const cancel = content.querySelector('#cancelEdit');
+            if (div && save && cancel && edit) {
+                edit.style.display = 'none';
+                save.style.display = '';
+                cancel.style.display = '';
+                div.contentEditable = 'true';
+                div.focus();
+            }
+            return;
+        }
+
+        // Save/Cancel Description (submits hidden form via fetch)
+        if (e.target.id === 'saveDescription' || e.target.id === 'cancelEdit') {
+            e.preventDefault();
+            const form = content.querySelector('#editMemorialForm');
+            if (!form) return;
+            const div = content.querySelector('#descriptionDisplay');
+            const descInput = content.querySelector('#descriptionInput');
+            const saveInput = content.querySelector('#saveInput');
+            if (div && descInput && saveInput) {
+                descInput.value = div.innerHTML;
+                saveInput.value = (e.target.id === 'saveDescription') ? 'true' : 'false';
+                const resp = await fetch(form.action, { method: 'POST', body: new FormData(form), credentials: 'same-origin' });
+                const html = await resp.text();
+                content.innerHTML = html;
+            }
+            return;
+        }
+
+        // Delete comment (anchor with .delete-comment + hidden form)
+        const del = e.target.closest('a.delete-comment');
+        if (del) {
+            e.preventDefault();
+            if (!confirm('Are you sure you want to delete this comment?')) return;
+            const id = del.dataset.id || del.dataset.itemid;
+            const form = content.querySelector(`#delete-comment-${id}`);
+            if (form) await postForm(form);
+            return;
+        }
+    });
+
+    // 4) Optional: expose openPopup for manual calls (e.g., page-level buttons)
+    window.mcl959 = window.mcl959 || {};
+    window.mcl959.openPopup = openPopup;
+})();

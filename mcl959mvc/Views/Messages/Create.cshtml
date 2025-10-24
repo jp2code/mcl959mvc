@@ -1,0 +1,84 @@
+﻿@model mcl959mvc.Models.MessagesModel
+@{
+    ViewData["Title"] = "Contact";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isAdmin = User.HasClaim("isAdmin", "true");
+    var isMember = User.HasClaim("isMember", "true");
+    var isRegistered = User.HasClaim("isRegistered", "true");
+}
+<h2>Send us a message</h2>
+
+<div class="row">
+    <div class="col-md-12">
+        <form method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Subject" />
+            <input type="hidden" asp-for="Date" />
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <th scope="row" width="25%">Name</th>
+                        <td width="50%"><input asp-for="Name" class="form-control w-100" onkeyup="showRemaining(Name, spanName, 50)" /></td>
+                        <td width="25%"><span id="spanName" asp-validation-for="Name" class="text-danger"></span></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Email</th>
+                        <td><input asp-for="Email" class="form-control w-100" /></td>
+                        <td><span asp-validation-for="Email" class="text-danger"></span></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Send To</th>
+                        <td>
+                            <select asp-for="SendTo" class="form-control w-100" asp-items="ViewBag.Recipients"></select>
+                        </td>
+                        <td><span asp-validation-for="SendTo" class="text-danger"></span></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Message</th>
+                        <td><textarea asp-for="Comments" class="form-control w-100" rows="6" style="width: 100%"></textarea></td>
+                        <td><span asp-validation-for="Comments" class="text-danger"></span></td>
+                    </tr>
+                    @if (isRegistered)
+                    {
+                        <tr>
+                            <th scope="row">Attachment</th>
+                            <td>
+                                <input type="file" name="Attachment" accept=".jpg,.jpeg,.gif,.png,.pdf,.doc,.docx,.zip" />
+                            </td>
+                            <td></td>
+                        </tr>
+                    }
+                    <tr>
+                        <th scope="row">Send</th>
+                        @if (!isRegistered)
+                        {
+                            <td>You must <a asp-area="Identity" asp-page="/Account/Login">log in</a> or <a asp-area="Identity" asp-page="/Account/Register">register</a> to submit a message.</td>
+                        } else
+                        {
+                            <td><input type="submit" value="Submit" class="btn btn-primary" /></td>
+                        }
+                        <td><a asp-action="Index">Home</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+<script>
+    $(document).ready(function () {
+        $('#miContact').addClass('selected');
+        var $sendTo = $('[name="SendTo"]');
+        $sendTo.on('change', function(){
+            var selected = $(this).find('option:selected');
+            // Check if the text starts with "---"
+            if (selected.text().trim().startsWith("---")) {
+                // Reset to the first option
+                $(this).prop('selectedIndex', 0);
+            }
+        });
+    });
+</script>
