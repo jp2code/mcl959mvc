@@ -209,7 +209,6 @@
               if (data.success) { modal.hide(); location.reload(); return; }
             }
             contentEl.innerHTML = await resp.text();
-          });
 
           // Memorial-specific click delegation
           contentEl.addEventListener('click', async (e) => {
@@ -255,11 +254,12 @@
               const resp = await fetch(form.action, { method:'POST', body:new FormData(form), credentials:'same-origin' });
               contentEl.innerHTML = await resp.text();
             }
-          });
-      } finally {
-        submitBtn?.removeAttribute('disabled');
-      }
-    }
+        });
+       } catch (ex) {
+            console.error('Popup form submission error:', ex);
+       } finally {
+         submitBtn?.removeAttribute('disabled');
+       }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
