@@ -1,18 +1,12 @@
-﻿using mcl959mvc;
-using mcl959mvc.Classes;
+﻿using mcl959mvc.Classes;
 using mcl959mvc.Data;
 using mcl959mvc.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
-using System;
-using System.IO;
-using System.Linq;
-using System.Net.Mail;
 
 namespace mcl959mvc.Controllers;
 
@@ -21,8 +15,12 @@ public class EventsController : Mcl959MemberController
     private readonly Mcl959DbContext _context;
     private readonly SmtpSettings _smtpSettings;
 
-    public EventsController(Mcl959DbContext context, UserManager<ApplicationUser> userManager, IOptions<SmtpSettings> smptOptions, ILogger<Controller> logger)
-        : base(userManager, logger)
+    public EventsController(
+        Mcl959DbContext context,
+        UserManager<ApplicationUser> userManager,
+        IOptions<SmtpSettings> smptOptions,
+        ILogger<Controller> logger)
+        : base(userManager, logger, smptOptions)
     {
         _context = context;
         _smtpSettings = smptOptions.Value ?? throw new ArgumentNullException(nameof(smptOptions));
@@ -97,6 +95,13 @@ public class EventsController : Mcl959MemberController
                 item.EventCreated = DateTime.UtcNow;
                 _context.Add(item);
                 await _context.SaveChangesAsync();
+                await SendEmailAsync(UserEmail, UserEmail, string.Empty,
+                    $"Event Created: {item.EventName} ({item.Id})",
+                    $"The event '{item.EventName}' (ID: {item.Id}) was CREATED by {UserEmail}.");
+                if (IsAjaxRequest(Request))
+                {
+                    return Json(new { success = true }); // let the client close the modal & reload
+                }
                 return RedirectToAction(nameof(Index));
             } else
             {
@@ -106,9 +111,8 @@ public class EventsController : Mcl959MemberController
         {
             _logger.LogError(err, "Error creating event");
             ModelState.AddModelError(string.Empty, "Unexpected error creating the event. Please try again.");
-            return EventPartial(PopupType.Create, item);
         }
-        return View(item);
+        return EventPartial(PopupType.Create, item);
     }
 
     // POST: Events/Edit/5
@@ -130,22 +134,18 @@ public class EventsController : Mcl959MemberController
                 if (MAX4MB < ImageUpload.Length)
                 {
                     ModelState.AddModelError("Attachment", "File size exceeds the maximum limit.");
-                    return View(item);
+                    return EventPartial(PopupType.Edit, item);
                 }
                 var allowedTypes = new[] { ".jpg", ".jpeg", ".gif", ".png" };
                 var ext = Path.GetExtension(ImageUpload.FileName).ToLowerInvariant();
                 if (!allowedTypes.Contains(ext))
                 {
                     ModelState.AddModelError("ImageUpload", "Invalid file type.");
-                    return View(item);
+                    return EventPartial(PopupType.Edit, item);
                 }
                 var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
-                using var image = Image.Load(ImageUpload.OpenReadStream());
-                image.Mutate(x => x.Resize(new ResizeOptions
-                {
-                    Mode = ResizeMode.Max,
-                    Size = new Size(600, 600) // Adjust as needed for 30% width
-                }));
+                using var image = SixLabors.ImageSharp.Image.Load(ImageUpload.OpenReadStream());
+                image.Mutate(x => x.Resize(new ResizeOptions { Mode = ResizeMode.Max, Size = new Size(600, 600) }));
                 var fileName = $"{Guid.NewGuid()}{Path.GetExtension(ImageUpload.FileName)}";
                 var filePath = Path.Combine(imagesFolder, fileName);
                 await image.SaveAsync(filePath);
@@ -153,7 +153,13 @@ public class EventsController : Mcl959MemberController
             }
             _context.Update(item);
             await _context.SaveChangesAsync();
-            // Redirect to Details with the same id after saving
+            await SendEmailAsync(UserEmail, UserEmail, string.Empty,
+                $"Event Edited: {item.EventName} ({item.Id})",
+                $"The event '{item.EventName}' (ID: {item.Id}) was EDITED by {UserEmail}.");
+            if (IsAjaxRequest(Request))
+            {
+                return Json(new { success = true }); // let the client close the modal & reload
+            }
             return RedirectToAction(nameof(Index));
         } else
         {
@@ -173,6 +179,10 @@ public class EventsController : Mcl959MemberController
         {
             _context.Events.Remove(item);
             await _context.SaveChangesAsync();
+            if (IsAjaxRequest(Request))
+            {
+                return Json(new { success = true }); // let the client close the modal & reload
+            }
         }
         return RedirectToAction(nameof(Index));
     }
@@ -198,8 +208,7 @@ public class EventsController : Mcl959MemberController
 The following comment was added to the event {regarding} by {UserEmail}:
 <blockquote>{item.Message}</blockquote>
 ";
-        await EmailTool.SendEmailAsync1(
-            _smtpSettings,
+        await SendEmailAsync(
             item.UserId, UserEmail, string.Empty,
             $"Comment on Event for {regarding}",
             emailMessage);
@@ -212,7 +221,7 @@ The following comment was added to the event {regarding} by {UserEmail}:
         await CheckUserIdentity();
         if (!IsRegistered) return Forbid();
         var comment = await _context.Comments.FindAsync(id);
-        if (comment == null) return NotFound();
+        if (comment == null) return NotFound($"Comment with ID {id} not found.");
         _context.Comments.Remove(comment);
         await _context.SaveChangesAsync();
         // Redirect back to the event details page
@@ -250,7 +259,7 @@ The following comment was added to the event {regarding} by {UserEmail}:
             default:
                 if (id == null) return BadRequest("id is required");
                 var item = await _context.Events.FindAsync(id);
-                if (item == null) return NotFound();
+                if (item == null) return NotFound($"Event with ID {id} not found.");
                 model = item;
                 break;
         }

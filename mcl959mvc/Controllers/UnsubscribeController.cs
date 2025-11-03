@@ -2,7 +2,6 @@
 using mcl959mvc.Data;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace mcl959mvc.Controllers;
 
@@ -43,19 +42,20 @@ public class UnsubscribeController : Controller
         var expectedToken = EmailTool.GenerateUnsubscribeToken(email);
         if (token != expectedToken)
         {
-            _logger.LogWarning("Invalid unsubscribe token for email {Email}.", email);
+            _logger.LogWarning($"Invalid unsubscribe token for email {email}.");
             return false;
         }
         var user = await _identityContext.Users.FindAsync(email);
         if (user == null)
         {
-            _logger.LogWarning("User with email {Email} not found.", email);
+            _logger.LogWarning($"User with email {email} not found.");
             return false;
         }
         else
         {
             user.Unsubscribe = true; // Example action
             await _identityContext.SaveChangesAsync();
+            _logger.LogInformation($"User {email} has unsubscribed.");
         }
         var response = new HttpResponseMessage();
         using (var client = new HttpClient())

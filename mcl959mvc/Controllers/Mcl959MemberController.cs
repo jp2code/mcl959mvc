@@ -1,24 +1,35 @@
-﻿using mcl959mvc.Data;
+﻿using mcl959mvc.Classes;
+using mcl959mvc.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Options;
 
 namespace mcl959mvc.Controllers;
 
-public abstract class Mcl959MemberController : Controller
+public abstract class Mcl959MemberController : Controller, IExceptionFilter
 {
     protected const int MAX4MB = 4 * 1024 * 1024; // 4 MB
+    private readonly SmtpSettings _smtpSettings;
     protected readonly UserManager<ApplicationUser> _userManager;
     protected readonly ILogger<Controller> _logger;
     public bool IsRegistered;
     public bool IsMember;
     public bool IsAdmin;
 
-    public Mcl959MemberController(UserManager<ApplicationUser> userManager, ILogger<Controller> logger)
+    public Mcl959MemberController(
+        UserManager<ApplicationUser> userManager,
+        ILogger<Controller> logger,
+        IOptions<SmtpSettings> smtpOptions)
     {
         _userManager = userManager;
         _logger = logger;
+        _smtpSettings = smtpOptions.Value;
     }
+
+    // Add near top of controller (like in MessagesController)
+    public static bool IsAjaxRequest(HttpRequest request) =>
+        string.Equals(request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
 
     public string UserEmail { get; set; } = "";
     // Exception filter implementation
@@ -62,4 +73,12 @@ public abstract class Mcl959MemberController : Controller
         }
     }
 
+    protected async Task SendEmailAsync(string userId, string fromEmail, string attnTo, string subject, string body)
+    {
+        _logger.LogInformation($"[{userId}] sent email [{subject}]");
+        await EmailTool.SendEmailAsync1(
+            _smtpSettings,
+            userId, fromEmail, attnTo, subject, body);
+
+    }
 }

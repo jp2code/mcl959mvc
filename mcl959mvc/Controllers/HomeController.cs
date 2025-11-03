@@ -1,18 +1,20 @@
-﻿using mcl959mvc.Data;
+﻿using mcl959mvc.Classes;
+using mcl959mvc.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
+using Microsoft.Extensions.Options;
 
 namespace mcl959mvc.Controllers
 {
     public class HomeController : Mcl959MemberController
     {
-        private readonly IWebHostEnvironment _webHostEnvironment;
-
-        public HomeController(IWebHostEnvironment webHostEnvironment, UserManager<ApplicationUser> userManager, ILogger<Controller> logger)
-            : base(userManager, logger)
+        public HomeController(
+            IWebHostEnvironment webHostEnvironment,
+            UserManager<ApplicationUser> userManager,
+            ILogger<Controller> logger,
+            IOptions<SmtpSettings> smtpSettings)
+            : base(userManager, logger, smtpSettings)
         {
-            _webHostEnvironment = webHostEnvironment;
         }
 
         public IActionResult Index()

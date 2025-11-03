@@ -1,17 +1,13 @@
-﻿using mcl959mvc;
-using mcl959mvc.Classes;
+﻿using mcl959mvc.Classes;
 using mcl959mvc.Data;
 using mcl959mvc.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
-using System.Net.Mail;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
 
 namespace mcl959mvc.Controllers;
 
@@ -42,7 +38,7 @@ public class MessagesController : Mcl959MemberController
          UserManager<ApplicationUser> userManager,
          IOptions<SmtpSettings> smptOptions,
          ILogger<Controller> logger)
-         : base(userManager, logger)
+         : base(userManager, logger, smptOptions)
     {
         _cache = cache;
         _httpClientFactory = httpClientFactory;
@@ -68,9 +64,6 @@ public class MessagesController : Mcl959MemberController
         var model = await BuildDefaultMessageModelAsync(); // sets defaults and ViewBag.Recipients
         return View(model); // returns Views/Messages/Create.cshtml
     }
-    // Helper to detect AJAX (fetch) posts
-    private static bool IsAjaxRequest(HttpRequest request) =>
-        string.Equals(request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
 
     private List<SelectListItem> GetRecipients()
     {
@@ -303,6 +296,10 @@ public class MessagesController : Mcl959MemberController
                 }
             }
             ModelState.AddModelError("Success", $"The message below has been sent.<br/>Any replies will be sent to the email address you provided: <a href='mailto:{fromEmail}'>{fromEmail}</a>.");
+            if (IsAjaxRequest(Request))
+            {
+                return Json(new { success = true }); // let the client close the modal & reload
+            }
             return RedirectToAction("Index", "Home");
         }
     }
@@ -314,7 +311,7 @@ public class MessagesController : Mcl959MemberController
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
-        if (id != message.Id) return NotFound();
+        if (id != message.Id) return NotFound($"Message with ID {id} not found.");
         if (ModelState.IsValid)
         {
             try
@@ -328,7 +325,7 @@ public class MessagesController : Mcl959MemberController
             catch (DbUpdateConcurrencyException)
             {
                 if (!await _context.Messages.AnyAsync(e => e.Id == id))
-                    return NotFound();
+                    return NotFound($"Message with ID {id} not found.");
                 else
                     throw;
             }
@@ -354,7 +351,7 @@ public class MessagesController : Mcl959MemberController
             default:
                 if (id == null) return BadRequest("id is required");
                 model = await _context.Messages.FindAsync(id);
-                if (model == null) return NotFound();
+                if (model == null) return NotFound($"Message with ID {id} not found.");
                 break;
         }
 

@@ -11,7 +11,6 @@ namespace mcl959mvc.Controllers;
 public class RosterController : Mcl959MemberController
 {
     private readonly Mcl959DbContext _context;
-    private readonly SmtpSettings _smtpSettings;
     private readonly IWebHostEnvironment _webHostEnvironment;
 
     public RosterController(
@@ -20,10 +19,9 @@ public class RosterController : Mcl959MemberController
         IOptions<SmtpSettings> smptOptions,
         ILogger<Controller> logger,
         IWebHostEnvironment webHostEnvironment)
-        : base(userManager, logger)
+        : base(userManager, logger, smptOptions)
     {
         _context = context;
-        _smtpSettings = smptOptions.Value ?? throw new ArgumentNullException(nameof(smptOptions));
         _webHostEnvironment = webHostEnvironment;
     }
 
@@ -89,9 +87,9 @@ public class RosterController : Mcl959MemberController
     // GET: Roster/Details/225510
     public async Task<IActionResult> Details(string memberNumber, int? id)
     {
-        if (string.IsNullOrEmpty(memberNumber) && (id == null)) return NotFound();
+        if (string.IsNullOrEmpty(memberNumber) && (id == null)) return NotFound("Member Number or ID not provided.");
         var member = await _context.Roster.FirstOrDefaultAsync(x => x.MemberNumber == memberNumber || x.Id == id);
-        if (member == null) return NotFound();
+        if (member == null) return NotFound($"Member with ID {id} not found.");
         member.HasPhoto = HasPhoto(member);
         return View(member);
     }
@@ -113,6 +111,13 @@ public class RosterController : Mcl959MemberController
             _context.Add(member);
             member.HasPhoto = HasPhoto(member);
             await _context.SaveChangesAsync();
+            await SendEmailAsync(UserEmail, UserEmail, string.Empty,
+                $"Roster Member Created: {member.Name} ({member.MemberNumber})",
+                $"The member '{member.Name}' (ID: {member.Id}) was CREATED by {UserEmail}.");
+            if (IsAjaxRequest(Request))
+            {
+                return Json(new { success = true }); // let the client close the modal & reload
+            }
             return RedirectToAction(nameof(Index));
         } else
         {
@@ -138,7 +143,7 @@ public class RosterController : Mcl959MemberController
         }
         // Fetch the existing entity
         var existingMember = await _context.Roster.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
-        if (existingMember == null) return NotFound();
+        if (existingMember == null) return NotFound($"Member with ID {id} not found.");
 
         // Preserve CreatedDate
         member.CreatedDate = existingMember.CreatedDate;
@@ -155,7 +160,13 @@ public class RosterController : Mcl959MemberController
         {
             _context.Update(member);
             await _context.SaveChangesAsync();
-            // Redirect to Details with the same id after saving
+            await SendEmailAsync(UserEmail, UserEmail, string.Empty,
+                $"Roster Member Edited: {member.Name} ({member.MemberNumber})",
+                $"The member '{member.Name}' (ID: {member.Id}) was EDITED by {UserEmail}.");
+            if (IsAjaxRequest(Request))
+            {
+                return Json(new { success = true }); // let the client close the modal & reload
+            }
             return RedirectToAction(nameof(Index));
         } else
         {
@@ -182,15 +193,22 @@ public class RosterController : Mcl959MemberController
         }
         _context.Roster.Remove(member);
         await _context.SaveChangesAsync();
+        await SendEmailAsync(UserEmail, UserEmail, string.Empty,
+            $"Roster Member Deleted: {member.Name} ({member.MemberNumber})",
+            $"The member '{member.Name}' (ID: {member.Id}) was DELETED by {UserEmail}.");
+        if (IsAjaxRequest(Request))
+        {
+            return Json(new { success = true }); // let the client close the modal & reload
+        }
         return RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> Memorial(int? id)
     {
-        if (id == null) return NotFound();
+        if (id == null) return NotFound("Member ID is required.");
 
         var member = await _context.Roster.FindAsync(id);
-        if (member == null || member.DiedOn == null) return NotFound();
+        if (member == null || member.DiedOn == null) return NotFound($"Deceased member with ID {id} not found.");
         // Find or create the memorial record
         var memorial = await _context.Memorial
             .FirstOrDefaultAsync(m => m.RosterId == member.Id);
@@ -200,11 +218,6 @@ public class RosterController : Mcl959MemberController
             memorial = new MemorialModel { RosterId = member.Id, TimeStamp = DateTime.UtcNow };
             _context.Memorial.Add(memorial);
             await _context.SaveChangesAsync();
-        }
-        if (member.DiedOn == null)
-        {
-            _logger.LogWarning("Memorial: member {Id} has no DiedOn date set", id);
-            return NotFound();
         }
         // Get comments for this memorial
         var comments = await _context.Comments
@@ -270,9 +283,6 @@ please contact us so that the web sergeant can update this page.";
         };
     }
 
-    private bool IsAjaxRequest()
-        => string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
-
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddComment(CommentsModel item)
@@ -292,15 +302,14 @@ please contact us so that the web sergeant can update this page.";
             item.TimeStamp = DateTime.UtcNow;
             _context.Comments.Add(item);
             await _context.SaveChangesAsync();
-        }
-
-        // Email omitted for brevity
-
-        if (IsAjaxRequest())
-        {
-            var vm = await BuildMemorialVmAsync(item.ParentId);
-            if (vm == null) return NotFound();
-            return PartialView("_MemorialPopup", vm);
+            await SendEmailAsync(UserEmail, UserEmail, string.Empty,
+                $"Comment Added",
+                $"The member '{UserEmail}' added the following comment to {item.ParentId}: {item.Message}.");
+            if (IsAjaxRequest(Request))
+            {
+                var vm = await BuildMemorialVmAsync(item.ParentId);
+                return PartialView("_MemorialPopup", vm);
+            }
         }
         return RedirectToAction(nameof(Popup), new { popupType = PopupType.Memorial, id = item.ParentId });
     }
@@ -319,10 +328,10 @@ please contact us so that the web sergeant can update this page.";
             await _context.SaveChangesAsync();
         }
 
-        if (IsAjaxRequest())
+        if (IsAjaxRequest(Request))
         {
             var vm = await BuildMemorialVmAsync(parentId);
-            if (vm == null) return NotFound();
+            if (vm == null) return NotFound($"Member with ID {parentId} not found.");
             return PartialView("_MemorialPopup", vm);
         }
         return RedirectToAction(nameof(Popup), new { popupType = PopupType.Memorial, id = parentId });
@@ -336,18 +345,30 @@ please contact us so that the web sergeant can update this page.";
         if (!IsAdmin) return Forbid();
 
         var memorial = await _context.Memorial.FindAsync(id);
-        if (memorial == null) return NotFound();
+        if (memorial == null) return NotFound($"Member with ID {id} not found.");
 
         if (save)
         {
             memorial.Description = description;
             await _context.SaveChangesAsync();
+            var regarding = $"{memorial.RosterId}";
+            var roster = await _context.Roster.FindAsync(memorial.RosterId);
+            if (roster != null)
+            {
+                regarding = $"{roster.DisplayName} ({roster.MemberNumber})";
+            }
+            var emailMessage = $@"
+The memorial for {regarding} was edited as follows:
+<blockquote>{description}</blockquote>";
+            await SendEmailAsync(UserEmail, UserEmail, string.Empty,
+                $"Memorial Edited: {regarding}",
+                emailMessage);
         }
 
-        if (IsAjaxRequest())
+        if (IsAjaxRequest(Request))
         {
             var vm = await BuildMemorialVmAsync(memorial.RosterId);
-            if (vm == null) return NotFound();
+            if (vm == null) return NotFound($"Member with ID {memorial.RosterId} not found.");
             return PartialView("_MemorialPopup", vm);
         }
         return RedirectToAction(nameof(Popup), new { popupType = PopupType.Memorial, id = memorial.RosterId });
@@ -357,9 +378,21 @@ please contact us so that the web sergeant can update this page.";
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
         var item = await _context.Memorial.FindAsync(memorial.Id);
-        if (item == null) return NotFound();
+        if (item == null) return NotFound($"Member with ID {memorial.Id} not found.");
         item.Description = memorial.Description;
         await _context.SaveChangesAsync();
+        var regarding = $"{memorial.RosterId}";
+        var roster = await _context.Roster.FindAsync(memorial.RosterId);
+        if (roster != null)
+        {
+            regarding = $"{roster.DisplayName} ({roster.MemberNumber})";
+        }
+        var emailMessage = $@"
+The memorial for {regarding} was saved as follows:
+<blockquote>{item.Description}</blockquote>";
+        await SendEmailAsync(UserEmail, UserEmail, string.Empty,
+            $"Memorial Saved: {regarding}",
+            emailMessage);
         return RedirectToAction(nameof(Index));
     }
 
@@ -392,7 +425,7 @@ please contact us so that the web sergeant can update this page.";
             case PopupType.Memorial:
                 if (id == null) return BadRequest("id is required.");
                 member = await _context.Roster.FindAsync(id);
-                if (member == null || member.DiedOn == null) return NotFound();
+                if (member == null || member.DiedOn == null) return NotFound($"Deceased member with ID {id} not found.");
                 var memorial = await _context.Memorial
                     .FirstOrDefaultAsync(m => m.RosterId == member.Id);
                 if (memorial == null)
@@ -432,7 +465,7 @@ please contact us so that the web sergeant can update this page.";
             case PopupType.Details:
                 if (id == null) return BadRequest("id is required.");
                 member = await _context.Roster.FindAsync(id);
-                if (member == null) return NotFound();
+                if (member == null) return NotFound($"Member with ID {id} not found.");
                 member.HasPhoto = HasPhoto(member);
                 ViewBag.Mode = (popupType == PopupType.Edit) ? "Edit" :
                               (popupType == PopupType.Delete) ? "Delete" : "Details";
