@@ -334,8 +334,8 @@ public static class CountryArray {
 public class State {
 
     public State() {
-        Name = null;
-        Abbreviations = null;
+        Name = "";
+        Abbreviations = "";
     }
 
     public State(string ab, string name) {

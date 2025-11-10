@@ -4,6 +4,7 @@ using mcl959mvc.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
@@ -13,17 +14,20 @@ namespace mcl959mvc.Controllers;
 public class EventsController : Mcl959MemberController
 {
     private readonly Mcl959DbContext _context;
+    private readonly IMemoryCache _cache;
     private readonly SmtpSettings _smtpSettings;
 
     public EventsController(
         Mcl959DbContext context,
         UserManager<ApplicationUser> userManager,
         IOptions<SmtpSettings> smptOptions,
-        ILogger<Controller> logger)
+        ILogger<Controller> logger,
+        IMemoryCache cache)
         : base(userManager, logger, smptOptions)
     {
         _context = context;
         _smtpSettings = smptOptions.Value ?? throw new ArgumentNullException(nameof(smptOptions));
+        _cache = cache;
     }
 
     // Helper: return the popup partial with correct ViewBag + VM
@@ -34,8 +38,17 @@ public class EventsController : Mcl959MemberController
         var vm = new EventsAndCommentsModel { Event = ev, Comments = comments?.ToList() ?? new() };
         return PartialView("_EventPopup", vm);
     }
-
-    // Helper: build images list for Create/Edit popups
+    // helper to rebuild the event + comments VM
+    private async Task<EventsAndCommentsModel?> BuildEventVmAsync(int eventId)
+    {
+        var ev = await _context.Events.FindAsync(eventId);
+        if (ev == null) return null;
+        var comments = await _context.Comments
+            .Where(c => c.TableSource == "Events" && c.ParentId == ev.Id)
+            .OrderByDescending(c => c.TimeStamp)
+            .ToListAsync();
+        return new EventsAndCommentsModel { Event = ev, Comments = comments };
+    }    // Helper: build images list for Create/Edit popups
     private void BuildImagesViewBag()
     {
         var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
@@ -49,10 +62,30 @@ public class EventsController : Mcl959MemberController
         ViewBag.Images = imageFiles;
     }
     // GET: Events
-    public async Task<IActionResult> Index()
+    [HttpGet]
+    [Route("Events/{id:int?}", Name = "EventById")]
+    [Route("Events")]
+    [Route("Events/Index")]
+    [Route("Events/Index/{id:int?}")]
+    public async Task<IActionResult> Index(int? id)
     {
         await CheckUserIdentity();
-        return View(await _context.Events.ToListAsync());
+
+        var list = await _context.Events.ToListAsync();
+
+        if (id.HasValue)
+        {
+            if (list.Any(e => e.Id == id.Value))
+            {
+                SetAutoOpenPopup("Events", "Details", id.Value);
+            }
+            else
+            {
+                TempData["PopupMessage"] = $"Event {id.Value} was not found.";
+            }
+        }
+
+        return View(list);
     }
 
     // POST: Events/Create
@@ -62,6 +95,20 @@ public class EventsController : Mcl959MemberController
     {
         await CheckUserIdentity();
         if (!IsAdmin) return Forbid();
+        // Idempotency: prevent duplicate submission (10 min scope)
+        var submissionId = Request.Form["SubmissionId"].ToString();
+        if (!string.IsNullOrWhiteSpace(submissionId))
+        {
+            var key = $"evt_sub_{submissionId}";
+            if (_cache.TryGetValue(key, out _))
+            {
+                if (IsAjaxRequest(Request))
+                    return Json(new { success = true }); // silently ignore duplicate
+                return RedirectToAction(nameof(Index));
+            }
+            _cache.Set(key, true, TimeSpan.FromMinutes(10));
+        }
+
         try
         {
             if (ModelState.IsValid)
@@ -94,10 +141,19 @@ public class EventsController : Mcl959MemberController
                 }
                 item.EventCreated = DateTime.UtcNow;
                 _context.Add(item);
+                var notifyPublic = true;
+#if DEBUG
+                notifyPublic = false;
+#endif
                 await _context.SaveChangesAsync();
-                await SendEmailAsync(UserEmail, UserEmail, string.Empty,
-                    $"Event Created: {item.EventName} ({item.Id})",
-                    $"The event '{item.EventName}' (ID: {item.Id}) was CREATED by {UserEmail}.");
+                var eventUrl = $"{Url.RouteUrl("EventById", new { id = item.Id }, Request.Scheme)}";
+                await SendEmailAsync(UserEmail,
+                    $"MCL959 Event Created: {item.EventName}",
+                    $@"
+The event <a href=\""{ eventUrl}\"">'{item.EventName}'</a> was CREATED by {UserEmail}.
+
+Visit {eventUrl} for details.
+", notifyPublic);
                 if (IsAjaxRequest(Request))
                 {
                     return Json(new { success = true }); // let the client close the modal & reload
@@ -153,9 +209,14 @@ public class EventsController : Mcl959MemberController
             }
             _context.Update(item);
             await _context.SaveChangesAsync();
-            await SendEmailAsync(UserEmail, UserEmail, string.Empty,
-                $"Event Edited: {item.EventName} ({item.Id})",
-                $"The event '{item.EventName}' (ID: {item.Id}) was EDITED by {UserEmail}.");
+            var eventUrl = $"{Url.RouteUrl("EventById", new { id = item.Id }, Request.Scheme)}";
+            await SendEmailAsync(UserEmail,
+                $"MCL959 Event Edited: {item.EventName}",
+                $@"
+The event <a href=\""{eventUrl}\"">'{item.EventName}'</a> was EDITED by {UserEmail}.
+
+Visit {eventUrl} for details.
+", false);
             if (IsAjaxRequest(Request))
             {
                 return Json(new { success = true }); // let the client close the modal & reload
@@ -192,40 +253,107 @@ public class EventsController : Mcl959MemberController
     public async Task<IActionResult> AddComment(CommentsModel item)
     {
         await CheckUserIdentity();
-        if (!IsRegistered) return Forbid();
 
-        item.TimeStamp = DateTime.UtcNow;
-        item.TableSource = "Events";
-        _context.Comments.Add(item);
-        await _context.SaveChangesAsync();
-        var regarding = $"{UserEmail}";
-        var eventItem = await _context.Events.FindAsync(item.ParentId);
-        if (eventItem != null)
+        // Idempotency guard
+        var submissionId = Request.Form["SubmissionId"].ToString();
+        if (IsRegistered && !string.IsNullOrWhiteSpace(submissionId))
         {
-            regarding = $"{eventItem.EventName} ({eventItem.Id})";
+            var key = $"evt_cmt_{submissionId}";
+            if (!_cache.TryGetValue(key, out _))
+            {
+                _cache.Set(key, true, TimeSpan.FromMinutes(10));
+                // Duplicate recent comment guard (same user/message within 5s)
+                var trimmedMsg = (item.Message ?? "").Trim();
+                var nowUtc = DateTime.UtcNow;
+                var recentDuplicate = await _context.Comments.AnyAsync(c =>
+                    c.TableSource == "Events" &&
+                    c.ParentId == item.ParentId &&
+                    c.UserId == item.UserId &&
+                    c.Message == trimmedMsg &&
+                    EF.Functions.DateDiffSecond(c.TimeStamp, nowUtc) < 5);
+
+                if (!recentDuplicate)
+                {
+                    item.TimeStamp = nowUtc;
+                    item.TableSource = "Events";
+                    item.Message = trimmedMsg;
+                    _context.Comments.Add(item);
+                    await _context.SaveChangesAsync();
+
+                    // Optional notification email (do after save)
+                    var eventUrl = $"{Url.RouteUrl("EventById", new { id = item.ParentId }, Request.Scheme)}";
+                    var eventName = item.ParentId.ToString();
+                    var eventItem = await _context.Events.FindAsync(item.ParentId);
+                    if (eventItem != null)
+                    {
+                        eventName = $"{eventItem.EventName}";
+                    }
+                    await SendEmailAsync(UserEmail,
+                        $"MCL959 Event Comment: {eventName}",
+                        $@"
+The following comment was added to the event <a href=\""{eventUrl}\"">'{eventName}'</a> by {UserEmail}.
+
+Visit {eventUrl} for details.
+", false);
+                }
+            }
         }
-        var emailMessage = @$"
-The following comment was added to the event {regarding} by {UserEmail}:
-<blockquote>{item.Message}</blockquote>
-";
-        await SendEmailAsync(
-            item.UserId, UserEmail, string.Empty,
-            $"Comment on Event for {regarding}",
-            emailMessage);
-        return RedirectToAction(nameof(Index));
+        var vm = await BuildEventVmAsync(item.ParentId);
+        if (vm == null) return NotFound();
+        ViewBag.PopupType = PopupType.Details;
+        return PartialView("_EventPopup", vm);
     }
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteComment(int id, int parentId)
     {
         await CheckUserIdentity();
-        if (!IsRegistered) return Forbid();
-        var comment = await _context.Comments.FindAsync(id);
-        if (comment == null) return NotFound($"Comment with ID {id} not found.");
-        _context.Comments.Remove(comment);
-        await _context.SaveChangesAsync();
-        // Redirect back to the event details page
-        return RedirectToAction(nameof(Index));
+        ViewBag.PopupType = PopupType.Details;
+        // Idempotency
+        var submissionId = Request.Form["SubmissionId"].ToString();
+        if (!string.IsNullOrWhiteSpace(submissionId))
+        {
+            var key = $"evt_cmt_del_{submissionId}";
+            if (_cache.TryGetValue(key, out _))
+            {
+                var vmCached = await BuildEventVmAsync(parentId);
+                if (vmCached != null)
+                {
+                    return PartialView("_EventPopup", vmCached);
+                }
+            }
+            _cache.Set(key, true, TimeSpan.FromMinutes(10));
+        }
+        // Direct SQL-style deletion (safe is already gone)
+#if NET8_0_OR_GREATER
+        var rows = await _context.Comments
+            .Where(c => c.Id == id && c.TableSource == "Events" && c.ParentId == parentId)
+            .ExecuteDeleteAsync();
+#else
+        // Fallback for earlier versions
+        var comment = await _context.Comments
+            .FirstOrDefaultAsync(c => c.Id == id && c.TableSource == "Events" && c.ParentId == parentId);
+        if (comment != null)
+        {
+            _context.Comments.Remove(comment);
+            try {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Ignore: another request already deleted it
+            }
+        }
+#endif
+        var vm = await BuildEventVmAsync(parentId);
+        if (IsAjaxRequest(Request))
+        {
+            return PartialView("_EventPopup", vm);
+        }
+        else
+        {
+            return RedirectToAction("Index", new { id = parentId });
+        }
     }
 
     [HttpGet]

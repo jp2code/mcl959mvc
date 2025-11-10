@@ -20,7 +20,7 @@
                     <img src="@photoPath"
                          alt="@Model.GetFullName()"
                          class="img-fluid rounded m-3"
-                         style="max-width: 100%; max-height: 300px; border: 1px solid #ccc; background: #fff;" />
+                         style="max-width: 100%; max-height: 300px; border: 1px solid #004392; background: #004392;" />
                     @if (isAdmin && (mode == "Edit" || mode == "Delete"))
                     {
                         <div id="imgUploadDiv" style="width:100%; text-align:center; margin-top:1rem;">
@@ -116,29 +116,6 @@
         }
     }
 </div>
-<script>
-    (function(){
-      // If rendered inside the modal, the global delegated handler in _Layout handles this.
-      if (document.getElementById('entityModalContent')) return;
-
-      // Standalone fallback (rare)
-      const form = document.getElementById('photoUploadForm');
-      if (!form) return;
-      form.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const resp = await fetch(this.action, { method: 'POST', body: new FormData(this), credentials: 'same-origin' });
-        const text = await resp.text();
-        const resultDiv = document.getElementById('uploadResult');
-        if (resultDiv) resultDiv.innerHTML = text;
-        const img = document.querySelector('img[src*="/photos/"]');
-        if (img) {
-          const url = new URL(img.getAttribute('src'), window.location.origin);
-          url.searchParams.set('v', Date.now().toString());
-          img.setAttribute('src', url.pathname + '?' + url.searchParams.toString());
-        }
-      });
-    })();
-</script>
 @functions {
     string FormAction(mcl959mvc.Models.PopupType type, mcl959mvc.Models.Roster? m)
     {

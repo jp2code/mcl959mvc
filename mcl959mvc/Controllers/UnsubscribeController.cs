@@ -24,7 +24,12 @@ public class UnsubscribeController : Controller
         // Validate email
         if (string.IsNullOrEmpty(email))
             return BadRequest("Email is required.");
-
+        var member = await _identityContext.Users.FindAsync(email);
+        if (member != null)
+        {
+            member.GetEmailUpdates = false;
+            await _identityContext.SaveChangesAsync();
+        }
         // TODO: Remove email from your database or mark as unsubscribed
         bool success = await AddToSuppressionList(email, token);
 

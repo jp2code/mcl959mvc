@@ -1,5 +1,6 @@
 ﻿using mcl959mvc.Classes;
 using mcl959mvc.Data;
+using mcl959mvc.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -73,12 +74,40 @@ public abstract class Mcl959MemberController : Controller, IExceptionFilter
         }
     }
 
-    protected async Task SendEmailAsync(string userId, string fromEmail, string attnTo, string subject, string body)
+    protected async Task SendEmailAsync(string userId, string subject, string body, bool notifySubscribers)
     {
         _logger.LogInformation($"[{userId}] sent email [{subject}]");
-        await EmailTool.SendEmailAsync1(
-            _smtpSettings,
-            userId, fromEmail, attnTo, subject, body);
+        var list = new List<string>()
+        {
+            _smtpSettings.FromEmail // Always send to the site email
+        };
+        if (notifySubscribers)
+        {
+            foreach (var user in _userManager.Users.Where(x => x.GetEmailUpdates == true))
+            {
+                if (!string.IsNullOrEmpty(user.Email))
+                    list.Add(user.Email);
+            }
+        }
+        foreach (var email in list)
+        {
+            _logger.LogInformation($"Emailing: {email}; Subject: {subject}.");
+            await EmailTool.SendEmailAsync(
+                _smtpSettings,
+                email, subject, body);
+            if (!string.IsNullOrEmpty(EmailTool.LastError))
+            {
+                ModelState.AddModelError("Error", $"Failed to send email. See the log for details.");
+                _logger.LogError($"Email send failure: {EmailTool.LastError}");
+            }
+        }
 
+    }
+
+    protected void SetAutoOpenPopup(string controllerName, string popupType, object idValue)
+    {
+        ViewBag.OpenId = idValue?.ToString();
+        ViewBag.OpenPopupController = controllerName;
+        ViewBag.OpenPopupType = popupType;
     }
 }

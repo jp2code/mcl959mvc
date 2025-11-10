@@ -10,9 +10,9 @@ public class MemorialViewModel
     [Key]
     [Column("ID")]
     public int Id => Memorial?.Id ?? 0;
-    public MemorialModel Memorial { get; set; }
-    public List<CommentsModel> Comments { get; set; }
+    public MemorialModel Memorial { get; set; } = new();
+    public List<CommentsModel> Comments { get; set; } = new();
     public string DisplayName { get; set; } = string.Empty;
-    public DateTime DiedOn { get; set; }
-    public bool HasPhoto { get; set; }
+    public DateTime DiedOn { get; set; } = new();
+    public bool HasPhoto { get; set; } = false;
 }

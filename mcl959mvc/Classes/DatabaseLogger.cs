@@ -30,7 +30,7 @@ public class DatabaseLogger : ILogger
             LogLevel = logLevel.ToString(),
             Category = _categoryName,
             Message = formatter(state, exception),
-            Exception = exception?.ToString()
+            Exception = $"{exception}"
         };
 
         try

@@ -25,7 +25,11 @@ public class RosterController : Mcl959MemberController
         _webHostEnvironment = webHostEnvironment;
     }
 
-    public async Task<IActionResult> Index()
+    [HttpGet]
+    [Route("Roster/{id:int?}", Name = "MemberById")]
+    [Route("Roster")]
+    [Route("Roster/Index")]
+    public async Task<IActionResult> Index(int? id)
     {
         await CheckUserIdentity();
         var allMembers = await _context.Roster
@@ -76,6 +80,12 @@ public class RosterController : Mcl959MemberController
                 });
             }
         }
+
+        if (id.HasValue && allMembers.Any(m => m.Id == id.Value))
+        {
+            SetAutoOpenPopup("Roster", "Memorial", id.Value); // There is not anything for Member Details, only Memorial Details
+        }
+
         var viewModel = new RosterIndexViewModel
         {
             AllMembers = allMembers,
@@ -111,9 +121,9 @@ public class RosterController : Mcl959MemberController
             _context.Add(member);
             member.HasPhoto = HasPhoto(member);
             await _context.SaveChangesAsync();
-            await SendEmailAsync(UserEmail, UserEmail, string.Empty,
+            await SendEmailAsync(UserEmail,
                 $"Roster Member Created: {member.Name} ({member.MemberNumber})",
-                $"The member '{member.Name}' (ID: {member.Id}) was CREATED by {UserEmail}.");
+                $"The member '{member.Name}' (ID: {member.Id}) was CREATED by {UserEmail}.", false);
             if (IsAjaxRequest(Request))
             {
                 return Json(new { success = true }); // let the client close the modal & reload
@@ -160,9 +170,9 @@ public class RosterController : Mcl959MemberController
         {
             _context.Update(member);
             await _context.SaveChangesAsync();
-            await SendEmailAsync(UserEmail, UserEmail, string.Empty,
+            await SendEmailAsync(UserEmail, 
                 $"Roster Member Edited: {member.Name} ({member.MemberNumber})",
-                $"The member '{member.Name}' (ID: {member.Id}) was EDITED by {UserEmail}.");
+                $"The member '{member.Name}' (ID: {member.Id}) was EDITED by {UserEmail}.", false);
             if (IsAjaxRequest(Request))
             {
                 return Json(new { success = true }); // let the client close the modal & reload
@@ -193,55 +203,14 @@ public class RosterController : Mcl959MemberController
         }
         _context.Roster.Remove(member);
         await _context.SaveChangesAsync();
-        await SendEmailAsync(UserEmail, UserEmail, string.Empty,
+        await SendEmailAsync(UserEmail, 
             $"Roster Member Deleted: {member.Name} ({member.MemberNumber})",
-            $"The member '{member.Name}' (ID: {member.Id}) was DELETED by {UserEmail}.");
+            $"The member '{member.Name}' (ID: {member.Id}) was DELETED by {UserEmail}.", false);
         if (IsAjaxRequest(Request))
         {
             return Json(new { success = true }); // let the client close the modal & reload
         }
         return RedirectToAction(nameof(Index));
-    }
-
-    public async Task<IActionResult> Memorial(int? id)
-    {
-        if (id == null) return NotFound("Member ID is required.");
-
-        var member = await _context.Roster.FindAsync(id);
-        if (member == null || member.DiedOn == null) return NotFound($"Deceased member with ID {id} not found.");
-        // Find or create the memorial record
-        var memorial = await _context.Memorial
-            .FirstOrDefaultAsync(m => m.RosterId == member.Id);
-
-        if (memorial == null)
-        {
-            memorial = new MemorialModel { RosterId = member.Id, TimeStamp = DateTime.UtcNow };
-            _context.Memorial.Add(memorial);
-            await _context.SaveChangesAsync();
-        }
-        // Get comments for this memorial
-        var comments = await _context.Comments
-            .Where(c => c.TableSource == "Memorial" && c.ParentId == member.Id)
-            .ToListAsync();
-
-        if (string.IsNullOrEmpty(memorial.Description))
-        {
-            memorial.Description = $@"
-We do not have any memorial information on file for {member.DisplayName}.
-Please add your fond memories in the comments.
-
-If you are the immediate family or have an obituary from the funeral home,
-please contact us so that the web sergeant can update this page.";
-        }
-        var viewModel = new MemorialViewModel
-        {
-            Memorial = memorial,
-            Comments = comments,
-            DisplayName = $"{member.DisplayName}",
-            DiedOn = (DateTime)member.DiedOn,
-            HasPhoto = HasPhoto(member)
-        };
-        return View(viewModel);
     }
 
     private async Task<MemorialViewModel?> BuildMemorialVmAsync(int rosterId)
@@ -302,9 +271,23 @@ please contact us so that the web sergeant can update this page.";
             item.TimeStamp = DateTime.UtcNow;
             _context.Comments.Add(item);
             await _context.SaveChangesAsync();
-            await SendEmailAsync(UserEmail, UserEmail, string.Empty,
-                $"Comment Added",
-                $"The member '{UserEmail}' added the following comment to {item.ParentId}: {item.Message}.");
+            var memorialUrl = $"{Url.Action("Index", "Roster", new { id = item.ParentId }, Request.Scheme)}";
+            var memberName = item.Id.ToString();
+            var member = await _context.Roster.FindAsync(item.ParentId);
+            if (member != null)
+            {
+                memberName = $"<a href=\"{memorialUrl}\">{member.DisplayName} ({member.MemberNumber})</a>";
+            }
+            var emailMessage = $@"
+The member '{UserEmail}' added the following comment to the memorial for {memberName}:
+
+<blockquote>{item.Message}</blockquote>
+
+Visit {memorialUrl} for details.
+";
+            await SendEmailAsync(UserEmail,
+                $"MCL959 Memorial Comment Added",
+                emailMessage, false);
             if (IsAjaxRequest(Request))
             {
                 var vm = await BuildMemorialVmAsync(item.ParentId);
@@ -351,18 +334,22 @@ please contact us so that the web sergeant can update this page.";
         {
             memorial.Description = description;
             await _context.SaveChangesAsync();
-            var regarding = $"{memorial.RosterId}";
-            var roster = await _context.Roster.FindAsync(memorial.RosterId);
-            if (roster != null)
+            var memorialUrl = $"{Url.Action("Index", "Roster", new { id = memorial.RosterId }, Request.Scheme)}";
+            var memberName = $"{id}";
+            var member = await _context.Roster.FindAsync(memorial.RosterId);
+            if (member != null)
             {
-                regarding = $"{roster.DisplayName} ({roster.MemberNumber})";
+                memberName = $"<a href=\"{memorialUrl}\">{member.DisplayName} ({member.MemberNumber})</a>";
             }
-            var emailMessage = $@"
-The memorial for {regarding} was edited as follows:
-<blockquote>{description}</blockquote>";
-            await SendEmailAsync(UserEmail, UserEmail, string.Empty,
-                $"Memorial Edited: {regarding}",
-                emailMessage);
+            await SendEmailAsync(UserEmail,
+                $"MCL959 Memorial Edited",
+                $@"
+The member '{UserEmail}' edited the memorial for {memberName} as follows:
+
+<blockquote>{description}</blockquote>
+
+Visit {memorialUrl} for details.
+", false);
         }
 
         if (IsAjaxRequest(Request))
@@ -381,18 +368,22 @@ The memorial for {regarding} was edited as follows:
         if (item == null) return NotFound($"Member with ID {memorial.Id} not found.");
         item.Description = memorial.Description;
         await _context.SaveChangesAsync();
-        var regarding = $"{memorial.RosterId}";
+        var memorialUrl = $"{Url.Action("Index", "Roster", new { id = memorial.RosterId }, Request.Scheme)}";
+        var memberName = $"{memorial.Id}";
         var roster = await _context.Roster.FindAsync(memorial.RosterId);
         if (roster != null)
         {
-            regarding = $"{roster.DisplayName} ({roster.MemberNumber})";
+            memberName = $"<a href=\"{memorialUrl}\">{roster.DisplayName} ({roster.MemberNumber})</a>";
         }
         var emailMessage = $@"
-The memorial for {regarding} was saved as follows:
-<blockquote>{item.Description}</blockquote>";
-        await SendEmailAsync(UserEmail, UserEmail, string.Empty,
-            $"Memorial Saved: {regarding}",
-            emailMessage);
+The member '{UserEmail}' saved a memorial for {memberName} as follows:
+
+<blockquote>{item.Description}</blockquote>
+
+Visit {memorialUrl} for details.";
+        await SendEmailAsync(UserEmail,
+            $"MCL959 Memorial Saved",
+            emailMessage, false);
         return RedirectToAction(nameof(Index));
     }
 
@@ -423,7 +414,7 @@ The memorial for {regarding} was saved as follows:
         switch (popupType)
         {
             case PopupType.Memorial:
-                if (id == null) return BadRequest("id is required.");
+                if (id == null) return BadRequest("Member ID is required.");
                 member = await _context.Roster.FindAsync(id);
                 if (member == null || member.DiedOn == null) return NotFound($"Deceased member with ID {id} not found.");
                 var memorial = await _context.Memorial

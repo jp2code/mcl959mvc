@@ -1,4 +1,5 @@
 ﻿using System.Net.Mail;
+using System.Net.Mime;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -6,11 +7,13 @@ namespace mcl959mvc.Classes;
 
 public class EmailTool
 {
-    private static SmtpSettings _smtpSettings;
-    public static async Task SendEmailAsync1(
+    private static SmtpSettings _smtpSettings = new();
+    public static string LastError { get; private set; } = "";
+    public static async Task SendContactEmailAsync(
         SmtpSettings settings, 
         string fromName, string fromEmail, string attnTo, string subject, string body)
     {
+        LastError = "";
         _smtpSettings = settings ?? throw new ArgumentNullException(nameof(settings));
         // Implement your email sending logic here
         // For example, use SMTP, SendGrid, or any other provider
@@ -29,33 +32,53 @@ public class EmailTool
         var htmlBody = EmailHtmlBody1(fromName, fromEmail, attnTo, body, mailgunMsg);
         var textView = AlternateView.CreateAlternateViewFromString(textBody, null, "text/plain");
         var htmlView = AlternateView.CreateAlternateViewFromString(htmlBody, null, "text/html");
-        using (var email = new MailMessage()
+        try
         {
-            Body = textBody,
-            From = new MailAddress("info@mcl959.com", "MCL959 Website"),
-            IsBodyHtml = false,
-            Subject = subject,
-        })
-        {
-            email.To.Add(new MailAddress(settings.FromEmail, "MCL959 Web Sergeant"));
-            email.ReplyToList.Add(new MailAddress(fromEmail, fromName));
-            email.AlternateViews.Add(textView);
-            email.AlternateViews.Add(htmlView);
-            using (var smtp = new SmtpClient(settings.Server, 587)
+            using (var email = new MailMessage()
             {
-                Credentials = new System.Net.NetworkCredential(settings.Username, settings.Password),
-                DeliveryFormat = SmtpDeliveryFormat.International,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                EnableSsl = true,
-                UseDefaultCredentials = false,
+                Body = textBody,
+                From = new MailAddress("info@mcl959.com", "MCL959 Website"),
+                IsBodyHtml = false,
+                Subject = subject,
             })
             {
-                await smtp.SendMailAsync(email);
+                email.To.Add(new MailAddress(settings.FromEmail, "MCL959 Web Sergeant"));
+                email.ReplyToList.Add(new MailAddress(fromEmail, fromName));
+                email.AlternateViews.Add(textView);
+                email.AlternateViews.Add(htmlView);
+                using (var smtp = new SmtpClient(settings.Server, 587)
+                {
+                    Credentials = new System.Net.NetworkCredential(settings.Username, settings.Password),
+                    DeliveryFormat = SmtpDeliveryFormat.International,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    EnableSsl = true,
+                    UseDefaultCredentials = false,
+                })
+                {
+                    await smtp.SendMailAsync(email);
+                }
             }
+        }
+        catch (SmtpFailedRecipientsException err)
+        {
+            var sb = new StringBuilder($"SendContactEmailAsync::Failed to send one or more recipients:");
+            foreach (var failedRecipient in err.InnerExceptions)
+            {
+                sb.AppendLine($"Failed to: {failedRecipient.FailedRecipient}, Status: {failedRecipient.StatusCode}, Message: {failedRecipient.GetBaseException().Message}"); 
+            }
+            LastError = sb.ToString();
+        }
+        catch (SmtpException err)
+        {
+            LastError = $"SendContactEmailAsync::SMTP Error {err.StatusCode}: - {err.Message}";
+        }
+        catch (Exception err)
+        {
+            LastError = $"SendContactEmailAsync::General Error: - {err.Message}";
         }
     }
 
-    public static async Task SendEmailAsync2(SmtpSettings settings, string toAddress, string subject, string body)
+    public static async Task SendEmailAsync(SmtpSettings settings, string toAddress, string subject, string body)
     {
         _smtpSettings = settings ?? throw new ArgumentNullException(nameof(settings), "SMTP settings cannot be null.");
         System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
@@ -63,30 +86,50 @@ public class EmailTool
         var mailgunMsg = $"<a href='{settings.Server}/unsubscribe?email={{recipient.email}}&token={token}'>Unsubscribe</a>";
         var textBody = EmailTextBody2(body, mailgunMsg);
         var htmlBody = EmailHtmlBody2(body, mailgunMsg);
-        var textView = AlternateView.CreateAlternateViewFromString(textBody, null, "text/plain");
-        var htmlView = AlternateView.CreateAlternateViewFromString(htmlBody, null, "text/html");
-        var postmaster = new MailAddress("postmaster@mcl959.com", "MCL959 Website");
-        using (var email = new MailMessage()
+        var textView = AlternateView.CreateAlternateViewFromString(textBody, Encoding.UTF8, MediaTypeNames.Text.Plain);
+        var htmlView = AlternateView.CreateAlternateViewFromString(htmlBody, Encoding.UTF8, MediaTypeNames.Text.Html);
+        var postmaster = new MailAddress(_smtpSettings.FromEmail, "MCL959 Website");
+        try
         {
-            Body = textBody,
-            From = postmaster,
-            IsBodyHtml = false,
-            Subject = subject,
-        })
-        {
-            email.To.Add(new MailAddress(toAddress));
-            email.ReplyToList.Add(postmaster);
-            using (var smtp = new SmtpClient(_smtpSettings.Server, 587)
+            using (var email = new MailMessage()
             {
-                Credentials = new System.Net.NetworkCredential(_smtpSettings.Username, _smtpSettings.Password),
-                DeliveryFormat = SmtpDeliveryFormat.International,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                EnableSsl = true,
-                UseDefaultCredentials = false,
+                From = postmaster,
+                Subject = subject,
             })
             {
-                await smtp.SendMailAsync(email);
+                email.To.Add(new MailAddress(toAddress));
+                email.AlternateViews.Add(textView);
+                email.AlternateViews.Add(htmlView);
+                email.ReplyToList.Add(postmaster);
+                using (var smtp = new SmtpClient(_smtpSettings.Server, 587)
+                {
+                    Credentials = new System.Net.NetworkCredential(_smtpSettings.Username, _smtpSettings.Password),
+                    DeliveryFormat = SmtpDeliveryFormat.International,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    EnableSsl = true,
+                    UseDefaultCredentials = false,
+                })
+                {
+                    await smtp.SendMailAsync(email);
+                }
             }
+        }
+        catch (SmtpFailedRecipientsException err)
+        {
+            var sb = new StringBuilder($"SendEmailAsync::Failed to send one or more recipients:");
+            foreach (var failedRecipient in err.InnerExceptions)
+            {
+                sb.AppendLine($"Failed to: {failedRecipient.FailedRecipient}, Status: {failedRecipient.StatusCode}, Message: {failedRecipient.GetBaseException().Message}");
+            }
+            LastError = sb.ToString();
+        }
+        catch (SmtpException err)
+        {
+            LastError = $"SendEmailAsync::SMTP Error {err.StatusCode}: - {err.Message}";
+        }
+        catch (Exception err)
+        {
+            LastError = $"SendEmailAsync::General Error: - {err.Message}";
         }
     }
     /// <summary>

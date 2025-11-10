@@ -1,54 +1,78 @@
-﻿// Place this in a <script> tag or a .js file
-function renderSimpleCalendar(containerId, highlightDate) {
-    const container = document.getElementById(containerId);
+﻿// Remove any other initEventPopupUi definitions and keep this ONE
+function initEventPopupUi(container) {
+    if (!container) return;
 
-    // Use highlightDate's month/year if provided, otherwise use today
-    let calendarYear, calendarMonth, highlight;
-    let calendarTitle;
-    const now = new Date();
-    const today = now.getDate();
-    const daysOfWeek = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-    const monthNames = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'
-    ];
+    const cal = container.querySelector('#event-calendar');
+    if (!cal) return;
 
-    if (highlightDate instanceof Date) {
-        calendarYear = highlightDate.getFullYear();
-        calendarMonth = highlightDate.getMonth();
-        highlight = {
-            year: calendarYear,
-            month: calendarMonth,
-            day: highlightDate.getDate()
-        };
-        calendarTitle = `Next Meeting:<br/>${monthNames[calendarMonth]} ${highlight.day}, ${calendarYear}`;
+    const dateStr = cal.getAttribute('data-event-date') || '';
+    const nameStr = cal.getAttribute('data-event-name') || '';
+
+    let dt;
+
+    if (dateStr) {
+        // Prefer ISO "yyyy-MM-ddT00:00:00" (works across browsers)
+        dt = new Date(dateStr + 'T00:00:00');
+        // Fallback if parsing fails (e.g., odd locale strings)
+        if (isNaN(dt.getTime())) {
+            dt = new Date(dateStr);
+        }
     } else {
-        calendarYear = now.getFullYear();
-        calendarMonth = now.getMonth();
-        highlight = { year: calendarYear, month: calendarMonth, day: today };
-        calendarTitle = `Today:<br/>${monthNames[calendarMonth]} ${highlight.day}, ${calendarYear}`;
+        // No date provided: default to today
+        dt = new Date();
+    }
+    cal.setAttribute('title', nameStr + ' on ' + dateStr);
+    if (typeof window.renderSimpleCalendar === 'function') {
+        window.renderSimpleCalendar('event-calendar', dt, nameStr);
+    }
+}
+
+// Enhanced calendar: optional titleText parameter
+function renderSimpleCalendar(containerId, highlightDate, titleText) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    // Accept Date or ISO date string
+    let dateObj;
+    if (highlightDate instanceof Date) {
+        dateObj = highlightDate;
+    } else if (typeof highlightDate === 'string' && highlightDate.length >= 10) {
+        // Normalize to midnight local
+        dateObj = new Date(highlightDate + 'T00:00:00');
+        if (isNaN(dateObj.getTime())) dateObj = new Date();
+    } else {
+        dateObj = new Date();
     }
 
-    // Get first day of the month and number of days
-    const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
-    const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+    const year = dateObj.getFullYear();
+    const month = dateObj.getMonth();
+    const day = dateObj.getDate();
 
-    let html = `<table id="simple-calendar-table">
-    <tr><th colspan="7">${calendarTitle}</th></tr>
-    <tr>${daysOfWeek.map(d => `<th>${d}</th>`).join('')}</tr>
-    <tr>`;
+    const daysOfWeek = ['S','M','T','W','T','F','S'];
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sept','Oct','Nov','Dec'];
 
-    // Fill in the blanks before the first day
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const headerTitle = titleText
+        ? `${titleText}<br/>${monthNames[month]} ${day}, ${year}`
+        : `${monthNames[month]} ${day}, ${year}`;
+
+    let html = `<table id="simple-calendar-table" class="mcl959-calendar">
+      <tr><th colspan="7">${headerTitle}</th></tr>
+      <tr>${daysOfWeek.map(d => `<th>${d}</th>`).join('')}</tr><tr>`;
+
     for (let i = 0; i < firstDay; i++) html += '<td></td>';
 
-    // Fill in the days
-    for (let day = 1; day <= daysInMonth; day++) {
-        const isHighlight = (highlight.year === calendarYear && highlight.month === calendarMonth && day === highlight.day);
-        html += `<td${isHighlight ? ' class="today"' : ''}>${day}</td>`;
-        if ((firstDay + day) % 7 === 0 && day !== daysInMonth) html += '</tr><tr>';
+    for (let d = 1; d <= daysInMonth; d++) {
+        const isHighlight = (d === day);
+        const cellContent = isHighlight
+            ? `<span class="day-dot">${d}</span>`
+            : `${d}`;
+        html += `<td${isHighlight ? ' class="today"' : ''}>${cellContent}</td>`;
+        if ((firstDay + d) % 7 === 0 && d !== daysInMonth) html += '</tr><tr>';
     }
 
-    // Fill in the blanks after the last day
     const lastDay = (firstDay + daysInMonth) % 7;
     if (lastDay !== 0) {
         for (let i = lastDay; i < 7; i++) html += '<td></td>';
@@ -57,6 +81,11 @@ function renderSimpleCalendar(containerId, highlightDate) {
 
     container.innerHTML = html;
 }
+
+// Ensure globally accessible if needed elsewhere
+window.renderSimpleCalendar = renderSimpleCalendar;
+
+// (Keep all existing calls to initEventPopupUi after setting modal content)
 
 function getNextMeetingDate(today) {
     let year = today.getFullYear();
@@ -124,23 +153,27 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
 }
 
 // Central wiring for Bootstrap modal popups and AJAX form handling
-
 (function () {
+    if (window.__modalWired) {
+        return;
+    }
+    window.__modalWired = true;
+
     const getModalEl = () => document.getElementById('entityModal');
     const getContentEl = () => document.getElementById('entityModalContent');
 
     function getOrCreateModal() {
         const el = getModalEl();
         if (!el) return null;
-        return el ? bootstrap.Modal.getOrCreateInstance(el, { backdrop: true, keyboard: true }) : null;
+        return bootstrap.Modal.getOrCreateInstance(el, { backdrop: true, keyboard: true });
     }
 
     function resolvePopupUrl(trigger) {
-        // Highest priority: data-popup-url on the trigger element
+        // Highest priority: explicit url on trigger
         if (trigger?.dataset.popupUrl) {
             return trigger.dataset.popupUrl;
         }
-        // Next priority: data-roster-popup-url on body
+        // Next: controller specified on the trigger
         if (trigger?.dataset.popupController) {
             return `/${trigger.dataset.popupController}/Popup`;
         }
@@ -160,25 +193,47 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
         const modal = getOrCreateModal();
         if (!modal) return;
 
-        const params = new URLSearchParams({ popupType });
+        const params = new URLSearchParams({ popupType: popupType || '' });
         if (id) params.append('id', id);
 
-        const resp = await fetch(`${urlBase}?${params.toString()}`, { credentials: 'same-origin' });
-        const html = await resp.text();
-        const content = getContentEl();
-        if (content) content.innerHTML = html;
-        modal.show();
-    }
-
-    async function postForm(form) {
-        const resp = await fetch(form.action, {
-            method: (form.method || 'POST').toUpperCase(),
-            body: new FormData(form),
+        const resp = await fetch(`${urlBase}?${params.toString()}`, {
             credentials: 'same-origin'
         });
         const html = await resp.text();
         const content = getContentEl();
-        if (content) content.innerHTML = html;
+        if (content) {
+            content.innerHTML = html;
+            initEventPopupUi(content);
+        }
+        modal.show();
+    }
+
+    // Back-compat: window.openPopup({ controller, action='Popup', popupType, id })
+    function openPopupObject(opts) {
+        const controller = opts?.controller || document.body.getAttribute('data-roster-popup-controller') || 'Roster';
+        const action = opts?.action || 'Popup';
+        const urlBase = `/${controller}/${action}`;
+        return openPopup(opts?.popupType, opts?.id, urlBase);
+    }
+
+    async function postForm(form) {
+        const formData = new FormData(form);
+        const token =
+            formData.get('__RequestVerificationToken') ||
+            document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        const headers = {};
+        headers['X-Requested-With'] = 'XMLHttpRequest';
+        if (token) headers['RequestVerificationToken'] = token;
+
+        const resp = await fetch(form.action, {
+            method: (form.method || 'POST').toUpperCase(),
+            body: formData,
+            credentials: 'same-origin',
+            headers: headers
+        });
+
+        return resp;
     }
 
     // Open any popup from a trigger
@@ -194,19 +249,71 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
         openPopup(popupType, id, urlBase);
     });
 
-    // Post any form inside the modal via fetch and re-render
+    // Post any form inside the modal via fetch and re-render (with guards and headers)
+    // In the submit handler, after replacing the modal content, call the initializer(s) as needed
     document.addEventListener('submit', async (e) => {
         const content = getContentEl();
         const form = e.target;
+        if (!(form instanceof HTMLFormElement)) return;
         if (!content || !content.contains(form)) return; // only handle forms in modal
+
+        // Prevent native submit and double-submit
+        if (form.dataset.submitting === 'true') {
+            e.preventDefault();
+            return;
+        }
         e.preventDefault();
-        const resp = await fetch(form.action, {
-            method: (form.method || 'POST').toUpperCase(),
-            body: new FormData(form),
-            credentials: 'same-origin'
-        });
-        const html = await resp.text();
-        content.innerHTML = html;
+        form.dataset.submitting = 'true';
+
+        const submitBtn = form.querySelector('[type="submit"]');
+        if (submitBtn) {
+            submitBtn.setAttribute('disabled', 'disabled');
+        }
+
+        try {
+            // Special-case: roster photo upload
+            if (form.id === 'photoUploadForm') {
+                const respUpload = await postForm(form);
+                const text = await respUpload.text();
+                const resultDiv = content.querySelector('#uploadResult');
+                if (resultDiv) {
+                    resultDiv.innerHTML = text;
+                }
+                const img = content.querySelector('img[src*="/photos/"]');
+                if (img) {
+                    const url = new URL(img.getAttribute('src'), window.location.origin);
+                    url.searchParams.set('v', Date.now().toString());
+                    // Set string, not a jQuery object
+                    img.src = `${url.pathname}?${url.searchParams.toString()}`;
+                }
+                return;
+            }
+
+            // Generic AJAX submit (comments, create/edit/delete, delete comment, etc.)
+            const resp = await postForm(form);
+            const ct = resp.headers.get('Content-Type') || '';
+
+            if (ct.includes('application/json')) {
+                const data = await resp.json();
+                if (data.success) {
+                    const modal = getOrCreateModal();
+                    if (modal) modal.hide();
+                    location.reload();
+                    return;
+                }
+            }
+
+            const html = await resp.text();
+            content.innerHTML = html;
+            initEventPopupUi(content);
+        } catch (err) {
+            console.error('Modal submit error:', err);
+        } finally {
+            if (submitBtn) {
+                submitBtn.removeAttribute('disabled');
+            }
+            delete form.dataset.submitting;
+        }
     });
 
     // Memorial convenience (edit/save/cancel/delete) - works across partial reloads
@@ -243,7 +350,7 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
             if (div && descInput && saveInput) {
                 descInput.value = div.innerHTML;
                 saveInput.value = (e.target.id === 'saveDescription') ? 'true' : 'false';
-                const resp = await fetch(form.action, { method: 'POST', body: new FormData(form), credentials: 'same-origin' });
+                const resp = await postForm(form);
                 const html = await resp.text();
                 content.innerHTML = html;
             }
@@ -257,12 +364,76 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
             if (!confirm('Are you sure you want to delete this comment?')) return;
             const id = del.dataset.id || del.dataset.itemid;
             const form = content.querySelector(`#delete-comment-${id}`);
-            if (form) await postForm(form);
+            if (form) {
+                const resp = await postForm(form);
+                const html = await resp.text();
+                content.innerHTML = html;
+            }
             return;
         }
     });
 
-    // 4) Optional: expose openPopup for manual calls (e.g., page-level buttons)
+    // Expose openPopup for both old and new callers
     window.mcl959 = window.mcl959 || {};
-    window.mcl959.openPopup = openPopup;
+    window.mcl959.openPopup = openPopupObject;
+    window.openPopup = openPopupObject;
+
+    // “View last Message” alert wiring (moved from _Layout.cshtml)
+    function wireLastMessageAlert() {
+        const popup = document.getElementById('popupMessage');
+        const closeBtn = document.getElementById('popupCloseBtn');
+        const showLink = document.getElementById('showPopupLink');
+        const container = document.getElementById('showPopupDiv');
+        let timeoutRef;
+
+        if (!popup) {
+            if (container) container.classList.add('d-none');
+            return;
+        }
+
+        // Auto-show briefly on load
+        setTimeout(function () { popup.classList.add('show'); }, 10);
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                popup.classList.remove('show');
+                clearTimeout(timeoutRef);
+            });
+        }
+        if (showLink) {
+            showLink.addEventListener('click', function (e) {
+                e.preventDefault();
+                popup.classList.add('show');
+                clearTimeout(timeoutRef);
+                timeoutRef = setTimeout(function () {
+                    popup.classList.remove('show');
+                }, 20000);
+            });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', wireLastMessageAlert);
+    } else {
+        wireLastMessageAlert();
+    }
+
+    function autoOpenIfPresent() {
+        const body = document.body;
+        const id = body.getAttribute('data-open-id');
+        if (id) {
+            const controller = body.getAttribute('data-open-controller') || 'Events';
+            const popupType = body.getAttribute('data-open-type') || 'Details';
+            if (typeof window.openPopup === 'function') {
+                window.openPopup({ controller, action: 'Popup', popupType, id });
+            }
+        }
+    }
+      
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', autoOpenIfPresent);
+    } else {
+        autoOpenIfPresent();
+    }
 })();

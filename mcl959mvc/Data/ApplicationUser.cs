@@ -12,4 +12,6 @@ public class ApplicationUser : IdentityUser
     public bool IsAdmin { get; set; } = false;
 
     public bool? Unsubscribe { get; set; }
+
+    public bool GetEmailUpdates { get; internal set; }
 }

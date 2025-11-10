@@ -30,7 +30,7 @@
                 </a>
             </p>
         </div>
-        <div id="next-meeting-calendar" style="text-align:center;"></div>
+        <div id="next-meeting-calendar" class="mcl959-calendar" style="text-align:center;"></div>
     </div>
     <div class="current-events">
         <h2>Upcoming Events</h2>
@@ -98,7 +98,7 @@ $(function () {
     $('#miEvent').addClass('selected');
     const today = new Date();
     const nextMeeting = getNextMeetingDate(today);
-    renderSimpleCalendar('next-meeting-calendar', nextMeeting);
+    renderSimpleCalendar('next-meeting-calendar', nextMeeting, "Next Meeting:");
     let label = document.getElementById("next-meeting-label");
     if (label && nextMeeting) {
         // Format as "Month Day, Year"

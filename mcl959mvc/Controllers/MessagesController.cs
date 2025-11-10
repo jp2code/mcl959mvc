@@ -149,9 +149,24 @@ public class MessagesController : Mcl959MemberController
                 // Generate and send code
                 var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
                 _cache.Set($"ContactCode_{item.Email}", code, TimeSpan.FromMinutes(10));
-                await EmailTool.SendEmailAsync1(
+                await EmailTool.SendEmailAsync(
                     _smtpSettings,
-                    _smtpSettings.Username, _smtpSettings.FromEmail, $" to {User.Identity?.Name}", "Your verification code", $"Your code is: {code}");
+                    toAddress: _smtpSettings.Username,
+                    subject: "Your verification code",
+                    body: $"Your code is: {code}");
+                if (!string.IsNullOrEmpty(EmailTool.LastError))
+                {
+                    ModelState.AddModelError("Error", $"Failed to send email. See the log for details.");
+                    _logger.LogError($"Email send failure: {EmailTool.LastError}");
+                    if (IsAjaxRequest(Request))
+                    {
+                        ViewBag.PopupType = PopupType.Create;
+                        ViewBag.Recipients = GetRecipients();
+                        return PartialView("_MessagePopup", item);
+                    }
+                    ViewBag.Recipients = GetRecipients();
+                    return View(item);
+                }
                 item.CodeSent = true;
                 ModelState.Clear();
                 ModelState.AddModelError("Info", "Verification code sent to your email.");
@@ -249,7 +264,7 @@ public class MessagesController : Mcl959MemberController
             await _context.SaveChangesAsync();
             var fromName = $"{item.Name}";
             var fromEmail = $"{item.Email}";
-            var subject = "New Contact Message";
+            var subject = "MCL959 Contact Message";
             var attnTo = item.SendTo;
             var emailEveryone = IsAdmin && (attnTo == LISTITEMSPACERS[(int)ListItemType.AllMembers].Value);
             if (!emailEveryone)
@@ -272,7 +287,20 @@ public class MessagesController : Mcl959MemberController
                     attnTo = "";
                 }
                 var body = $"From: {fromName} <{fromEmail}>\n\n{item.Comments}";
-                await EmailTool.SendEmailAsync1(_smtpSettings, fromName, fromEmail, attnTo, subject, body);
+                await EmailTool.SendContactEmailAsync(_smtpSettings, fromName, fromEmail, attnTo, subject, body);
+                if (!string.IsNullOrEmpty(EmailTool.LastError))
+                {
+                    ModelState.AddModelError("Error", $"Failed to send email. See the log for details.");
+                    _logger.LogError($"Email send failure: {EmailTool.LastError}");
+                    if (IsAjaxRequest(Request))
+                    {
+                        ViewBag.PopupType = PopupType.Create;
+                        ViewBag.Recipients = GetRecipients();
+                        return PartialView("_MessagePopup", item);
+                    }
+                    ViewBag.Recipients = GetRecipients();
+                    return View(item);
+                }
             }
             else
             {
@@ -291,7 +319,11 @@ public class MessagesController : Mcl959MemberController
                     if (!string.IsNullOrEmpty(member.PersonalEmail) || !string.IsNullOrEmpty(member.WorkEmail))
                     {
                         var toEmail = !string.IsNullOrEmpty(member.PersonalEmail) ? member.PersonalEmail : member.WorkEmail;
-                        await EmailTool.SendEmailAsync2(_smtpSettings, toEmail, subject, item.Comments);
+                        await EmailTool.SendEmailAsync(_smtpSettings, toEmail, subject, item.Comments);
+                        if (!string.IsNullOrEmpty(EmailTool.LastError))
+                        {
+                            ModelState.AddModelError("Error", $"Failed to send email: {EmailTool.LastError}");
+                        }
                     }
                 }
             }
@@ -342,7 +374,7 @@ public class MessagesController : Mcl959MemberController
         await CheckUserIdentity();           // sets IsAdmin on the base controller
         ViewBag.IsAdmin = IsAdmin;           // pass to view
 
-        MessagesModel model;
+        MessagesModel? model;
         switch (popupType)
         {
             case PopupType.Create:

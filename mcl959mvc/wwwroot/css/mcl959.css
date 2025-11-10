@@ -459,22 +459,23 @@ div.footer { /* ref: https://css-tricks.com/snippets/css/sticky-footer/ */
     flex: 1 1 250px; /* grow, shrink, min width */
     min-width: 200px;
 }
-#next-meeting-calendar {
+.mcl959-calendar {
     flex: 0 0 auto; /* do not grow/shrink, use content width */
 }
-#next-meeting-calendar {
+.mcl959-calendar {
     font-family: Arial, sans-serif;
     width: 220px; /* 220px * 1.5 */
     padding: 8px; /* optional: 8px * 1.5 */
 }
-#next-meeting-calendar th, #next-meeting-calendar td {
+.mcl959-calendar th, .mcl959-calendar td {
     width: 28px; /* 28px * 1.5 */
     height: 28px; /* 28px * 1.5 */
     text-align: center;
 }
-#next-meeting-calendar .today {
+.mcl959-calendar .today {
     background: #ffeb3b;
     color: #d32f2f;
     border-radius: 50%;
     font-weight: bold;
 }
+#entityModalContent .row.gx-4 { --bs-gutter-x: 2rem; }

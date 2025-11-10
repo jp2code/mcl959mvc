@@ -5,6 +5,9 @@ public class RosterIndexViewModel
     private List<Roster> _allMembers;
     public RosterIndexViewModel()
     {
+        _allMembers = new List<Roster>();
+        LivingMembers = new List<Roster>();
+        DeceasedMembers = new List<Roster>();
         AllMembers = new List<Roster>();
         PagedRoster = new List<Roster>();
         Officers = new List<OfficerModel>();

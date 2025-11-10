@@ -79,7 +79,7 @@ public sealed class LineReader : IEnumerable<string>
     {
         using (TextReader reader = dataSource())
         {
-            string line;
+            string? line;
             while ((line = reader.ReadLine()) != null)
             {
                 yield return line;

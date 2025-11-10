@@ -10,6 +10,6 @@ public class EventsAndCommentsModel
     [Key]
     [Column("ID")]
     public int Id => Event?.Id ?? 0;
-    public EventsModel Event { get; set; }
+    public EventsModel Event { get; set; } = new();
     public List<CommentsModel> Comments { get; set; } = new();
 }

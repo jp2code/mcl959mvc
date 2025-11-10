@@ -6,12 +6,10 @@ using mcl959mvc.Data;
 using mcl959mvc.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Encodings.Web;
-using System.Threading.Tasks;
 
 namespace mcl959mvc.Areas.Identity.Pages.Account.Manage
 {
@@ -76,6 +74,8 @@ namespace mcl959mvc.Areas.Identity.Pages.Account.Manage
 
             [Display(Name = "Personal Phone")]
             public string PersonalPhone { get; set; }
+            [Display(Name = "Receive Event Emails (optional)")]
+            public bool GetEmailUpdates { get; set; } = false;
 
             [EmailAddress]
             [Display(Name = "Work Email")]
@@ -103,13 +103,14 @@ namespace mcl959mvc.Areas.Identity.Pages.Account.Manage
 
             Input = new InputModel
             {
-                PhoneNumber = phoneNumber
+                PhoneNumber = phoneNumber,
+                GetEmailUpdates = user.GetEmailUpdates,
+                PersonalEmail = userName,
+                PersonalPhone = phoneNumber
             };
             if (HasRosterMatch)
             {
-                Input.PersonalEmail = roster.PersonalEmail;
                 Input.PersonalAddress = roster.PersonalAddress;
-                Input.PersonalPhone = roster.PersonalPhone;
                 Input.WorkEmail = roster.WorkEmail;
                 Input.WorkAddress = roster.WorkAddress;
                 Input.WorkPhone = roster.WorkPhone;
@@ -142,6 +143,18 @@ namespace mcl959mvc.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
+            // Capture the posted (possibly altered) personal email
+            var postedPersonalEmail = Request.Form["Input.PersonalEmail"].ToString();
+
+            // Force PersonalPhone to match PhoneNumber
+            Input.PersonalPhone = user.PhoneNumber;
+
+            if (!ModelState.IsValid)
+            {
+                await LoadAsync(user);
+                return Page();
+            }
+
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
             if (Input.PhoneNumber != phoneNumber)
             {
@@ -149,6 +162,18 @@ namespace mcl959mvc.Areas.Identity.Pages.Account.Manage
                 if (!setPhoneResult.Succeeded)
                 {
                     StatusMessage = "Unexpected error when trying to set phone number.";
+                    return RedirectToPage();
+                }
+            }
+
+            // Save checkbox to AspNetUsers
+            if (user.GetEmailUpdates != Input.GetEmailUpdates)
+            {
+                user.GetEmailUpdates = Input.GetEmailUpdates;
+                var updateResult = await _userManager.UpdateAsync(user);
+                if (!updateResult.Succeeded)
+                {
+                    StatusMessage = "Error saving email updates preference.";
                     return RedirectToPage();
                 }
             }
@@ -161,7 +186,7 @@ namespace mcl959mvc.Areas.Identity.Pages.Account.Manage
             {
                 roster.PersonalEmail = Input.PersonalEmail;
                 roster.PersonalAddress = Input.PersonalAddress;
-                roster.PersonalPhone = Input.PersonalPhone;
+                roster.PersonalPhone = Input.PhoneNumber;
                 roster.WorkEmail = Input.WorkEmail;
                 roster.WorkAddress = Input.WorkAddress;
                 roster.WorkPhone = Input.WorkPhone;
