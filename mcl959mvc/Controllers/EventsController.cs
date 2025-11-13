@@ -291,7 +291,9 @@ Visit {eventUrl} for details.
                     await SendEmailAsync(UserEmail,
                         $"MCL959 Event Comment: {eventName}",
                         $@"
-The following comment was added to the event <a href=\""{eventUrl}\"">'{eventName}'</a> by {UserEmail}.
+The following comment was added to the event <a href=\""{eventUrl}\"">'{eventName}'</a> by {UserEmail}:
+
+<blockquote>{System.Net.WebUtility.HtmlEncode(item.Message)}</blockquote>
 
 Visit {eventUrl} for details.
 ", false);

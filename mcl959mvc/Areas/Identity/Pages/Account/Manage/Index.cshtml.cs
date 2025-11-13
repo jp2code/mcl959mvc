@@ -88,6 +88,24 @@ namespace mcl959mvc.Areas.Identity.Pages.Account.Manage
             public string WorkPhone { get; set; }
         }
 
+        // Helpers: normalize to digits and format for display (US 10-digit, optional leading 1)
+        private static string DigitsOnly(string s) =>
+            string.IsNullOrWhiteSpace(s) ? "" : new string(s.Where(char.IsDigit).ToArray());
+
+        private static string NormalizePhone(string s)
+        {
+            var d = DigitsOnly(s ?? "");
+            if (d.Length == 11 && d.StartsWith("1")) d = d[1..];
+            return d.Length == 10 ? d : "";
+        }
+
+        private static string FormatPhone(string s)
+        {
+            var d = NormalizePhone(s ?? "");
+            if (string.IsNullOrEmpty(d)) return s ?? "";
+            return $"({d[..3]}) {d.Substring(3, 3)}-{d[6..]}";
+        }
+
         private async Task LoadAsync(ApplicationUser user)
         {
             var userName = await _userManager.GetUserNameAsync(user);
@@ -103,18 +121,15 @@ namespace mcl959mvc.Areas.Identity.Pages.Account.Manage
 
             Input = new InputModel
             {
-                PhoneNumber = phoneNumber,
+                PhoneNumber = FormatPhone(phoneNumber),
                 GetEmailUpdates = user.GetEmailUpdates,
                 PersonalEmail = userName,
-                PersonalPhone = phoneNumber
+                PersonalAddress = roster?.PersonalAddress ?? "",
+                PersonalPhone = FormatPhone(roster?.PersonalPhone ?? phoneNumber),
+                WorkEmail = roster?.WorkEmail ?? "",
+                WorkAddress = roster?.WorkAddress ?? "",
+                WorkPhone = FormatPhone(roster?.WorkPhone ?? "")
             };
-            if (HasRosterMatch)
-            {
-                Input.PersonalAddress = roster.PersonalAddress;
-                Input.WorkEmail = roster.WorkEmail;
-                Input.WorkAddress = roster.WorkAddress;
-                Input.WorkPhone = roster.WorkPhone;
-            }
         }
 
         public async Task<IActionResult> OnGetAsync()
@@ -137,28 +152,40 @@ namespace mcl959mvc.Areas.Identity.Pages.Account.Manage
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
+            // Normalize phones to digits-only
+            var userPhoneDigits = NormalizePhone(Input.PhoneNumber);
+            var personalDigits = NormalizePhone(Input.PersonalPhone);
+            var workDigits = NormalizePhone(Input.WorkPhone);
+
+            // Basic validation: require 10-digit for user phone; roster phones optional but must be valid if provided
+            if (string.IsNullOrEmpty(userPhoneDigits))
+            {
+                ModelState.AddModelError("Input.PhoneNumber", "Please enter a valid 10-digit phone number.");
+            }
+            if (!string.IsNullOrWhiteSpace(Input.PersonalPhone) && string.IsNullOrEmpty(personalDigits))
+            {
+                ModelState.AddModelError("Input.PersonalPhone", "Please enter a valid 10-digit phone number or leave blank.");
+            }
+            if (!string.IsNullOrWhiteSpace(Input.WorkPhone) && string.IsNullOrEmpty(workDigits))
+            {
+                ModelState.AddModelError("Input.WorkPhone", "Please enter a valid 10-digit phone number or leave blank.");
+            }
+
             if (!ModelState.IsValid)
             {
+                // Reformat for display before returning
+                Input.PhoneNumber = FormatPhone(Input.PhoneNumber);
+                Input.PersonalPhone = FormatPhone(Input.PersonalPhone);
+                Input.WorkPhone = FormatPhone(Input.WorkPhone);
                 await LoadAsync(user);
                 return Page();
             }
 
-            // Capture the posted (possibly altered) personal email
-            var postedPersonalEmail = Request.Form["Input.PersonalEmail"].ToString();
-
-            // Force PersonalPhone to match PhoneNumber
-            Input.PersonalPhone = user.PhoneNumber;
-
-            if (!ModelState.IsValid)
+            // Update Identity phone if changed
+            var currentUserPhone = await _userManager.GetPhoneNumberAsync(user);
+            if (userPhoneDigits != (currentUserPhone ?? ""))
             {
-                await LoadAsync(user);
-                return Page();
-            }
-
-            var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-            if (Input.PhoneNumber != phoneNumber)
-            {
-                var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
+                var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, userPhoneDigits);
                 if (!setPhoneResult.Succeeded)
                 {
                     StatusMessage = "Unexpected error when trying to set phone number.";
@@ -166,7 +193,7 @@ namespace mcl959mvc.Areas.Identity.Pages.Account.Manage
                 }
             }
 
-            // Save checkbox to AspNetUsers
+            // Save GetEmailUpdates
             if (user.GetEmailUpdates != Input.GetEmailUpdates)
             {
                 user.GetEmailUpdates = Input.GetEmailUpdates;
@@ -178,18 +205,18 @@ namespace mcl959mvc.Areas.Identity.Pages.Account.Manage
                 }
             }
 
-            // Update Roster record
+            // Update Roster record with normalized digits-only phones
             var roster = await _context.Roster
                 .FirstOrDefaultAsync(r => r.PersonalEmail == user.UserName || r.WorkEmail == user.UserName);
 
             if (roster != null)
             {
-                roster.PersonalEmail = Input.PersonalEmail;
-                roster.PersonalAddress = Input.PersonalAddress;
-                roster.PersonalPhone = Input.PhoneNumber;
-                roster.WorkEmail = Input.WorkEmail;
-                roster.WorkAddress = Input.WorkAddress;
-                roster.WorkPhone = Input.WorkPhone;
+                roster.PersonalEmail = user.UserName;
+                roster.PersonalAddress = Input.PersonalAddress ?? "";
+                roster.PersonalPhone = string.IsNullOrEmpty(personalDigits) ? "" : personalDigits;
+                roster.WorkEmail = Input.WorkEmail ?? "";
+                roster.WorkAddress = Input.WorkAddress ?? "";
+                roster.WorkPhone = string.IsNullOrEmpty(workDigits) ? "" : workDigits;
                 await _context.SaveChangesAsync();
             }
 
