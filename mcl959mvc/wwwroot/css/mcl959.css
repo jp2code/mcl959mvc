@@ -479,3 +479,23 @@ div.footer { /* ref: https://css-tricks.com/snippets/css/sticky-footer/ */
     font-weight: bold;
 }
 #entityModalContent .row.gx-4 { --bs-gutter-x: 2rem; }
+.modal { z-index: 1080; }
+.modal-backdrop { z-index: 1070; }
+/* Compact inputs */
+.input-compact {
+  padding: .2rem .4rem;
+  height: calc(1.45rem + 2px);
+  font-size: 1.2rem;
+  line-height: 1.1;
+  border-radius: 2px;
+}
+
+.roster-card {
+  background:#004392;
+  color:#FFD700;
+  border-radius:8px;
+}
+.roster-photo-col { background:#0050AE; border-radius:8px; }
+.roster-photo { border:1px solid #004392; background:#004392; }
+.roster-divider { border-color:#FFD700; margin:0; }
+

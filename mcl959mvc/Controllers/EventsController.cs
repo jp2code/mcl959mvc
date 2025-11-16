@@ -1,4 +1,5 @@
 ﻿using mcl959mvc.Classes;
+using mcl959mvc.Controllers.Filters;
 using mcl959mvc.Data;
 using mcl959mvc.Models;
 using Microsoft.AspNetCore.Identity;
@@ -69,8 +70,6 @@ public class EventsController : Mcl959MemberController
     [Route("Events/Index/{id:int?}")]
     public async Task<IActionResult> Index(int? id)
     {
-        await CheckUserIdentity();
-
         var list = await _context.Events.ToListAsync();
 
         if (id.HasValue)
@@ -89,12 +88,9 @@ public class EventsController : Mcl959MemberController
     }
 
     // POST: Events/Create
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    [HttpPost, ValidateAntiForgeryToken, RequireAdmin]
     public async Task<IActionResult> Create([Bind(Prefix = "Event")] EventsModel item, IFormFile? ImageUpload)
     {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
         // Idempotency: prevent duplicate submission (10 min scope)
         var submissionId = Request.Form["SubmissionId"].ToString();
         if (!string.IsNullOrWhiteSpace(submissionId))
@@ -172,12 +168,9 @@ Visit {eventUrl} for details.
     }
 
     // POST: Events/Edit/5
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    [HttpPost, ValidateAntiForgeryToken, RequireAdmin]
     public async Task<IActionResult> Edit([Bind(Prefix = "Event")] int id, EventsModel item, IFormFile? ImageUpload)
     {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
         if (id != item.Id)
         {
             ModelState.AddModelError(string.Empty, "Mismatched event id.");
@@ -229,12 +222,9 @@ Visit {eventUrl} for details.
     }
 
     // POST: Events/Delete/5
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
+    [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken, RequireAdmin]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
         var item = await _context.Events.FindAsync(id);
         if (item != null)
         {
@@ -252,8 +242,6 @@ Visit {eventUrl} for details.
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddComment(CommentsModel item)
     {
-        await CheckUserIdentity();
-
         // Idempotency guard
         var submissionId = Request.Form["SubmissionId"].ToString();
         if (IsRegistered && !string.IsNullOrWhiteSpace(submissionId))
@@ -309,7 +297,6 @@ Visit {eventUrl} for details.
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteComment(int id, int parentId)
     {
-        await CheckUserIdentity();
         ViewBag.PopupType = PopupType.Details;
         // Idempotency
         var submissionId = Request.Form["SubmissionId"].ToString();
@@ -361,8 +348,8 @@ Visit {eventUrl} for details.
     [HttpGet]
     public async Task<IActionResult> Popup(PopupType popupType, int? id)
     {
-        await CheckUserIdentity();           // sets IsAdmin on the base controller
-        ViewBag.IsAdmin = IsAdmin;           // pass to view
+        if (!IsAdmin && popupType is PopupType.Create or PopupType.Edit or PopupType.Delete)
+            return ForbidAjax();
 
         if (popupType is PopupType.Create || popupType is PopupType.Edit)
         {
@@ -382,8 +369,7 @@ Visit {eventUrl} for details.
         switch (popupType)
         {
             case PopupType.Create:
-                await CheckUserIdentity();
-                if (!IsAdmin) return Forbid();
+                if (!IsAdmin) return ForbidAjax();
                 model = new EventsModel();
                 break;
             default:

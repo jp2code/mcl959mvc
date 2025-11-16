@@ -1,4 +1,5 @@
 ﻿using mcl959mvc.Classes;
+using mcl959mvc.Controllers.Filters;
 using mcl959mvc.Data;
 using mcl959mvc.Models;
 using Microsoft.AspNetCore.Identity;
@@ -31,7 +32,6 @@ public class RosterController : Mcl959MemberController
     [Route("Roster/Index")]
     public async Task<IActionResult> Index(int? id)
     {
-        await CheckUserIdentity();
         var allMembers = await _context.Roster
             .ToListAsync();
         var pagedRoster = allMembers
@@ -51,7 +51,8 @@ public class RosterController : Mcl959MemberController
                 var email = "private";
                 if (member.WebsiteDisplay == 1)
                 {
-                    if (!string.IsNullOrEmpty(member.PersonalPhone)) {
+                    if (!string.IsNullOrEmpty(member.PersonalPhone))
+                    {
                         phone = member.PersonalPhone;
                     }
                     if (!string.IsNullOrEmpty(member.PersonalEmail))
@@ -83,7 +84,8 @@ public class RosterController : Mcl959MemberController
 
         if (id.HasValue && allMembers.Any(m => m.Id == id.Value))
         {
-            SetAutoOpenPopup("Roster", "Memorial", id.Value); // There is not anything for Member Details, only Memorial Details
+            // There is not anything for Member Details, only Memorial Details
+            SetAutoOpenPopup("Roster", "Memorial", id.Value);
         }
 
         var viewModel = new RosterIndexViewModel
@@ -94,23 +96,29 @@ public class RosterController : Mcl959MemberController
         };
         return View(viewModel);
     }
+
     // GET: Roster/Details/225510
     public async Task<IActionResult> Details(string memberNumber, int? id)
     {
-        if (string.IsNullOrEmpty(memberNumber) && (id == null)) return NotFound("Member Number or ID not provided.");
+        if (string.IsNullOrEmpty(memberNumber) && (id == null))
+        {
+            return NotFound("Member Number or ID not provided.");
+        }
+
         var member = await _context.Roster.FirstOrDefaultAsync(x => x.MemberNumber == memberNumber || x.Id == id);
-        if (member == null) return NotFound($"Member with ID {id} not found.");
+        if (member == null)
+        {
+            return NotFound($"Member with ID {id} not found.");
+        }
+
         member.HasPhoto = HasPhoto(member);
         return View(member);
     }
 
     // POST: Roster/Create
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    [HttpPost, ValidateAntiForgeryToken, RequireAdmin]
     public async Task<IActionResult> Create([Bind(Prefix = "Roster")] Roster member)
     {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
         // Set Name before validation
         member.Name = member.GetFullName();
         member.CreatedDate = DateTime.Now;
@@ -129,7 +137,8 @@ public class RosterController : Mcl959MemberController
                 return Json(new { success = true }); // let the client close the modal & reload
             }
             return RedirectToAction(nameof(Index));
-        } else
+        }
+        else
         {
             ViewBag.PopupType = PopupType.Details;
             ViewBag.IsAdmin = IsAdmin;
@@ -138,61 +147,53 @@ public class RosterController : Mcl959MemberController
     }
 
     // POST: Roster/Edit/5
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind(Prefix = "Roster")] Roster member)
+    [HttpPost, ValidateAntiForgeryToken, RequireAdmin]
+    public async Task<IActionResult> Edit(int id, Roster member)
     {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
         if (id != member.Id)
         {
             ModelState.AddModelError(string.Empty, "Mismatched roster id.");
             ViewBag.PopupType = PopupType.Edit;
-            ViewBag.IsAdmin = IsAdmin;
             return PartialView("_RosterPopup", member);
         }
-        // Fetch the existing entity
+
         var existingMember = await _context.Roster.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
-        if (existingMember == null) return NotFound($"Member with ID {id} not found.");
+        if (existingMember == null)
+        {
+            return NotFound($"Member with ID {id} not found.");
+        }
 
-        // Preserve CreatedDate
-        member.CreatedDate = existingMember.CreatedDate;
-
-        // Set Name before validation
+        member.CreatedDate = existingMember.CreatedDate ?? DateTime.UtcNow;
         member.Name = member.GetFullName();
         if (member.MemberNumber == null)
         {
             member.MemberNumber = "";
         }
+
         ModelState.Clear();
         TryValidateModel(member);
         if (ModelState.IsValid)
         {
             _context.Update(member);
             await _context.SaveChangesAsync();
-            await SendEmailAsync(UserEmail, 
+            await SendEmailAsync(UserEmail,
                 $"Roster Member Edited: {member.Name} ({member.MemberNumber})",
                 $"The member '{member.Name}' (ID: {member.Id}) was EDITED by {UserEmail}.", false);
             if (IsAjaxRequest(Request))
             {
-                return Json(new { success = true }); // let the client close the modal & reload
+                return Json(new { success = true });
             }
             return RedirectToAction(nameof(Index));
-        } else
-        {
-            ViewBag.PopupType = PopupType.Edit;
-            ViewBag.IsAdmin = IsAdmin;
-            return PartialView("_RosterPopup", member);
         }
+
+        ViewBag.PopupType = PopupType.Edit;
+        return PartialView("_RosterPopup", member);
     }
 
     // POST: Roster/Delete/5
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
+    [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken, RequireAdmin]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
         var member = await _context.Roster.FindAsync(id);
         if (member == null)
         {
@@ -201,9 +202,10 @@ public class RosterController : Mcl959MemberController
             ViewBag.IsAdmin = IsAdmin;
             return PartialView("_RosterPopup", member);
         }
+
         _context.Roster.Remove(member);
         await _context.SaveChangesAsync();
-        await SendEmailAsync(UserEmail, 
+        await SendEmailAsync(UserEmail,
             $"Roster Member Deleted: {member.Name} ({member.MemberNumber})",
             $"The member '{member.Name}' (ID: {member.Id}) was DELETED by {UserEmail}.", false);
         if (IsAjaxRequest(Request))
@@ -216,7 +218,10 @@ public class RosterController : Mcl959MemberController
     private async Task<MemorialViewModel?> BuildMemorialVmAsync(int rosterId)
     {
         var member = await _context.Roster.FindAsync(rosterId);
-        if (member == null || member.DiedOn == null) return null;
+        if (member == null || member.DiedOn == null)
+        {
+            return null;
+        }
 
         var memorial = await _context.Memorial.FirstOrDefaultAsync(m => m.RosterId == member.Id);
         if (memorial == null)
@@ -252,13 +257,9 @@ please contact us so that the web sergeant can update this page.";
         };
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    [HttpPost, ValidateAntiForgeryToken, RequireRegistered]
     public async Task<IActionResult> AddComment(CommentsModel item)
     {
-        await CheckUserIdentity();
-        if (!IsRegistered) return Forbid();
-
         // Optional: guard against accidental double-posts within a short window
         var recentDuplicate = await _context.Comments.AnyAsync(c =>
             c.TableSource == "Memorial" &&
@@ -266,6 +267,7 @@ please contact us so that the web sergeant can update this page.";
             c.UserId == item.UserId &&
             c.Message == item.Message &&
             EF.Functions.DateDiffSecond(c.TimeStamp, DateTime.UtcNow) < 5);
+
         if (!recentDuplicate)
         {
             item.TimeStamp = DateTime.UtcNow;
@@ -278,6 +280,7 @@ please contact us so that the web sergeant can update this page.";
             {
                 memberName = $"<a href=\"{memorialUrl}\">{member.DisplayName} ({member.MemberNumber})</a>";
             }
+
             var emailMessage = $@"
 The member '{UserEmail}' added the following comment to the memorial for {memberName}:
 
@@ -294,6 +297,7 @@ Visit {memorialUrl} for details.
                 return PartialView("_MemorialPopup", vm);
             }
         }
+
         return RedirectToAction(nameof(Popup), new { popupType = PopupType.Memorial, id = item.ParentId });
     }
 
@@ -301,8 +305,10 @@ Visit {memorialUrl} for details.
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteComment(int id, int parentId)
     {
-        await CheckUserIdentity();
-        if (!IsRegistered) return Forbid();
+        if (!IsAdmin)
+        {
+            return ForbidAjax();
+        }
 
         var comment = await _context.Comments.FindAsync(id);
         if (comment != null)
@@ -314,9 +320,12 @@ Visit {memorialUrl} for details.
         if (IsAjaxRequest(Request))
         {
             var vm = await BuildMemorialVmAsync(parentId);
-            if (vm == null) return NotFound($"Member with ID {parentId} not found.");
+            if (vm == null)
+            {
+                return NotFound($"Member with ID {parentId} not found.");
+            }
             return PartialView("_MemorialPopup", vm);
-        }
+    }
         return RedirectToAction(nameof(Popup), new { popupType = PopupType.Memorial, id = parentId });
     }
 
@@ -324,11 +333,16 @@ Visit {memorialUrl} for details.
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditMemorialDescription(int id, string description, bool save)
     {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
+        if (!IsAdmin)
+        {
+            return ForbidAjax();
+        }
 
         var memorial = await _context.Memorial.FindAsync(id);
-        if (memorial == null) return NotFound($"Member with ID {id} not found.");
+        if (memorial == null)
+        {
+            return NotFound($"Member with ID {id} not found.");
+        }
 
         if (save)
         {
@@ -355,17 +369,29 @@ Visit {memorialUrl} for details.
         if (IsAjaxRequest(Request))
         {
             var vm = await BuildMemorialVmAsync(memorial.RosterId);
-            if (vm == null) return NotFound($"Member with ID {memorial.RosterId} not found.");
+            if (vm == null)
+            {
+                return NotFound($"Member with ID {memorial.RosterId} not found.");
+            }
             return PartialView("_MemorialPopup", vm);
         }
+
         return RedirectToAction(nameof(Popup), new { popupType = PopupType.Memorial, id = memorial.RosterId });
     }
 
-    public async Task<IActionResult> SaveMemorial([Bind(Prefix = "MemorialVM.Memorial")] MemorialModel memorial) {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
+    public async Task<IActionResult> SaveMemorial([Bind(Prefix = "MemorialVM.Memorial")] MemorialModel memorial)
+    {
+        if (!IsAdmin)
+        {
+            return ForbidAjax();
+        }
+
         var item = await _context.Memorial.FindAsync(memorial.Id);
-        if (item == null) return NotFound($"Member with ID {memorial.Id} not found.");
+        if (item == null)
+        {
+            return NotFound($"Member with ID {memorial.Id} not found.");
+        }
+
         item.Description = memorial.Description;
         await _context.SaveChangesAsync();
         var memorialUrl = $"{Url.Action("Index", "Roster", new { id = memorial.RosterId }, Request.Scheme)}";
@@ -375,6 +401,7 @@ Visit {memorialUrl} for details.
         {
             memberName = $"<a href=\"{memorialUrl}\">{roster.DisplayName} ({roster.MemberNumber})</a>";
         }
+
         var emailMessage = $@"
 The member '{UserEmail}' saved a memorial for {memberName} as follows:
 
@@ -400,23 +427,29 @@ Visit {memorialUrl} for details.";
 
     public async Task<IActionResult> Popup(PopupType popupType, int? id)
     {
-        if (!IsAdmin)
+        if (!IsAdmin && popupType is not PopupType.Details and not PopupType.Memorial)
         {
-            if ((popupType != PopupType.Details) && (popupType != PopupType.Memorial))
-            {
-                return Forbid();
-            }
+            return ForbidAjax();
         }
+
         var member = new Roster();
         ViewBag.PopupType = popupType;
-        ViewBag.IsAdmin = IsAdmin;
 
         switch (popupType)
         {
             case PopupType.Memorial:
-                if (id == null) return BadRequest("Member ID is required.");
+            {
+                if (id == null)
+                {
+                    return BadRequest("Member ID is required.");
+                }
+
                 member = await _context.Roster.FindAsync(id);
-                if (member == null || member.DiedOn == null) return NotFound($"Deceased member with ID {id} not found.");
+                if (member == null || member.DiedOn == null)
+                {
+                    return NotFound($"Deceased member with ID {id} not found.");
+                }
+
                 var memorial = await _context.Memorial
                     .FirstOrDefaultAsync(m => m.RosterId == member.Id);
                 if (memorial == null)
@@ -425,10 +458,12 @@ Visit {memorialUrl} for details.";
                     _context.Memorial.Add(memorial);
                     await _context.SaveChangesAsync();
                 }
+
                 var comments = await _context.Comments
                     .Where(c => c.TableSource == "Memorial" && c.ParentId == member.Id)
                     .OrderByDescending(c => c.TimeStamp)
                     .ToListAsync();
+
                 if (string.IsNullOrEmpty(memorial.Description))
                 {
                     memorial.Description = $@"
@@ -438,6 +473,7 @@ Please add your fond memories in the comments.
 If you are the immediate family or have an obituary from the funeral home,
 please contact us so that the web sergeant can update this page.";
                 }
+
                 member.HasPhoto = HasPhoto(member);
                 var model = new MemorialViewModel
                 {
@@ -448,19 +484,34 @@ please contact us so that the web sergeant can update this page.";
                     HasPhoto = member.HasPhoto
                 };
                 return PartialView("_MemorialPopup", model);
+            }
+
             case PopupType.Create:
+            {
                 ViewBag.Mode = "Create";
                 break;
+            }
+
             case PopupType.Edit:
             case PopupType.Delete:
             case PopupType.Details:
-                if (id == null) return BadRequest("id is required.");
+            {
+                if (id == null)
+                {
+                    return BadRequest("id is required.");
+                }
+
                 member = await _context.Roster.FindAsync(id);
-                if (member == null) return NotFound($"Member with ID {id} not found.");
+                if (member == null)
+                {
+                    return NotFound($"Member with ID {id} not found.");
+                }
+
                 member.HasPhoto = HasPhoto(member);
                 ViewBag.Mode = (popupType == PopupType.Edit) ? "Edit" :
-                              (popupType == PopupType.Delete) ? "Delete" : "Details";
+                               (popupType == PopupType.Delete) ? "Delete" : "Details";
                 break;
+            }
         }
 
         return PartialView("_RosterPopup", member);

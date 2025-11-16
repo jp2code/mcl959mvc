@@ -48,7 +48,6 @@ public class MessagesController : Mcl959MemberController
 
     public async Task<IActionResult> Index()
     {
-        await CheckUserIdentity();
         if (IsAdmin)
         {
             return View(await _context.Messages.ToListAsync());
@@ -60,7 +59,6 @@ public class MessagesController : Mcl959MemberController
     [HttpGet]
     public async Task<IActionResult> Create()
     {
-        await CheckUserIdentity();
         var model = await BuildDefaultMessageModelAsync(); // sets defaults and ViewBag.Recipients
         return View(model); // returns Views/Messages/Create.cshtml
     }
@@ -140,7 +138,6 @@ public class MessagesController : Mcl959MemberController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(MessagesModel item, string? action, IFormFile? Attachment)
     {
-        await CheckUserIdentity();
         // Non-registered: same logic, but return Partial for AJAX to keep modal updated
         if (!IsRegistered)
         {
@@ -341,8 +338,7 @@ public class MessagesController : Mcl959MemberController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, MessagesModel message)
     {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
+        if (!IsAdmin) return ForbidAjax();
         if (id != message.Id) return NotFound($"Message with ID {id} not found.");
         if (ModelState.IsValid)
         {
@@ -371,7 +367,6 @@ public class MessagesController : Mcl959MemberController
     [HttpGet]
     public async Task<IActionResult> Popup(PopupType popupType, int? id)
     {
-        await CheckUserIdentity();           // sets IsAdmin on the base controller
         ViewBag.IsAdmin = IsAdmin;           // pass to view
 
         MessagesModel? model;
@@ -399,8 +394,7 @@ public class MessagesController : Mcl959MemberController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await CheckUserIdentity();
-        if (!IsAdmin) return Forbid();
+        if (!IsAdmin) return ForbidAjax();
         var message = await _context.Messages.FindAsync(id);
         if (message != null)
         {

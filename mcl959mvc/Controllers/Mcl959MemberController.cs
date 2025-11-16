@@ -28,27 +28,8 @@ public abstract class Mcl959MemberController : Controller, IExceptionFilter
         _smtpSettings = smtpOptions.Value;
     }
 
-    // Add near top of controller (like in MessagesController)
-    public static bool IsAjaxRequest(HttpRequest request) =>
-        string.Equals(request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
-
-    public string UserEmail { get; set; } = "";
-    // Exception filter implementation
-    public void OnException(ExceptionContext context)
-    {
-        _logger.LogError(context.Exception, "Unhandled exception in {Controller} at {Path}",
-            GetType().Name,
-            context.HttpContext.Request.Path);
-
-        // Optionally, show a user-friendly error page
-        context.Result = new ViewResult
-        {
-            ViewName = "~/Views/Shared/Error.cshtml"
-        };
-        context.ExceptionHandled = true;
-    }
-
-    protected async Task CheckUserIdentity()
+    // Runs before every action in derived controllers
+    public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         IsRegistered = false;
         IsAdmin = false;
@@ -72,6 +53,33 @@ public abstract class Mcl959MemberController : Controller, IExceptionFilter
                 IsAdmin = claims.Any(c => c.Type == "isAdmin" && c.Value == "true");
             }
         }
+
+        // Expose to views consistently
+        ViewBag.IsAdmin = IsAdmin;
+        ViewBag.IsMember = IsMember;
+        ViewBag.IsRegistered = IsRegistered;
+        ViewBag.UserEmail = UserEmail;
+
+        await next();
+    }
+    // Add near top of controller (like in MessagesController)
+    public static bool IsAjaxRequest(HttpRequest request) =>
+        string.Equals(request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
+
+    public string UserEmail { get; set; } = "";
+    // Exception filter implementation
+    public void OnException(ExceptionContext context)
+    {
+        _logger.LogError(context.Exception, "Unhandled exception in {Controller} at {Path}",
+            GetType().Name,
+            context.HttpContext.Request.Path);
+
+        // Optionally, show a user-friendly error page
+        context.Result = new ViewResult
+        {
+            ViewName = "~/Views/Shared/Error.cshtml"
+        };
+        context.ExceptionHandled = true;
     }
 
     protected async Task SendEmailAsync(string userId, string subject, string body, bool notifySubscribers)
@@ -110,4 +118,15 @@ public abstract class Mcl959MemberController : Controller, IExceptionFilter
         ViewBag.OpenPopupController = controllerName;
         ViewBag.OpenPopupType = popupType;
     }
+
+    protected IActionResult ForbidAjax()
+    {
+        if (IsAjaxRequest(Request))
+        {
+            Response.StatusCode = 403; // ensure fetch sees 403
+            return PartialView("_AccessDeniedPartial");
+        }
+        return Forbid();
+    }
+
 }

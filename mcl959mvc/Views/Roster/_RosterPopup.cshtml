@@ -3,89 +3,121 @@
     var popupType = (mcl959mvc.Models.PopupType)ViewBag.PopupType;
     bool isAdmin = User.HasClaim("isAdmin", "true");
     var photoPath = Model.HasPhoto ? $"/photos/{Model.Id}.jpg" : "/photos/mcl959bw.jpg";
-    var mode = "View"; // force "View" for non-admins
-    if (isAdmin)
-    {
-        mode = ViewBag.Mode as string ?? "View";
-    }
-    bool isReadOnly = mode == "View" || mode == "Delete";
-    string readOnlyAttr = isReadOnly ? "readonly" : "";
-    bool isDelete = mode == "Delete";
+    var mode = isAdmin ? (ViewBag.Mode as string ?? "Details") : "Details";
+    bool isReadOnly = mode is "Details" or "Delete";
+    string ShortDate(DateTime? d) => d.HasValue ? d.Value.ToShortDateString() : "";
+    // Helpers for date edit values (ISO needed for type="date")
+    string IsoDate(DateTime? d) => d.HasValue ? d.Value.ToString("yyyy-MM-dd") : "";
 }
 <div class="modal-body">
     <div class="container mt-4">
-        <div class="card mb-4 shadow-sm" style="background: #004392; color: #FFD700; border-radius: 8px;">
+        <div class="card mb-4 shadow-sm roster-card">
             <div class="row g-0">
-                <div class="col-md-4 d-flex flex-column align-items-center justify-content-start" style="background: #0050AE; border-radius: 8px;">
+                <div class="col-md-4 d-flex flex-column align-items-center justify-content-start roster-photo-col">
                     <img src="@photoPath"
                          alt="@Model.GetFullName()"
-                         class="img-fluid rounded m-3"
-                         style="max-width: 100%; max-height: 300px; border: 1px solid #004392; background: #004392;" />
+                         class="img-fluid rounded m-3 roster-photo" />
                     @if (isAdmin && (mode == "Edit" || mode == "Delete"))
                     {
-                        <div id="imgUploadDiv" style="width:100%; text-align:center; margin-top:1rem;">
+                        <div id="imgUploadDiv" class="w-100 text-center mt-2">
                             <form id="photoUploadForm" enctype="multipart/form-data" method="post" action="/Roster/UploadPhoto/@Model.Id">
                                 @Html.AntiForgeryToken()
-                                <input type="file" id="photoInput" name="Photo" accept=".jpg,.jpeg,image/jpeg" required />
-                                <br />
-                                <button type="submit" class="btn btn-sm btn-secondary">Change</button>
+                                <input type="file" id="photoInput" name="Photo" accept=".jpg,.jpeg,image/jpeg" required class="input-compact" />
+                                <button type="submit" class="btn btn-sm btn-secondary mt-2">Change</button>
                             </form>
-                            <div id="uploadResult" style="margin-top:0.5rem;"></div>
+                            <div id="uploadResult" class="mt-1"></div>
                         </div>
                     }
                 </div>
                 <div class="col-md-8">
-                    <div class="card-body">
-                        <h2 class="card-title">@Model.DisplayName</h2>
-                        <p class="mb-2">
-                            <strong>Created:</strong> @Model.CreatedDate.ToShortDateString()
-                        </p>
+                    <div class="card-body pb-2 pt-3">
+                        <h2 class="card-title mb-2">@Model.DisplayName</h2>
+                        <p class="mb-1"><strong>Created:</strong> @ShortDate(Model.CreatedDate)</p>
                     </div>
                 </div>
-                <hr style="border-color: #FFD700;" />
+                <hr class="roster-divider" />
                 <div class="col-md-12">
-                    <div class="card-body">
-                        <!-- Main Roster form starts here -->
-                        <form id="rosterPopup" asp-asp-controller="Roster" asp-action="@mode" method="post">
+                    <div class="card-body pt-2">
+                        <form id="rosterPopup" asp-controller="Roster" asp-action="@mode" method="post">
                             @Html.AntiForgeryToken()
-                            @if (mode == "Edit" || mode == "Delete")
+                            @if (mode is "Edit" or "Delete")
                             {
                                 @Html.HiddenFor(m => m.Id)
                             }
-                            <div class="mb-3">
-                                <table class="table">
+                            <div class="mb-2">
+                                <table class="table table-sm align-middle">
                                     <tr>
-                                        <td width="30%">First Name:<br /><input asp-for="FirstName" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" /></td>
-                                        <td width="30%">Middle:<br /><input asp-for="MiddleName" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" /></td>
-                                        <td>Last Name:<br /><input asp-for="LastName" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td width="30%">First Name:<br /><input asp-for="FirstName" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
+                                        <td width="30%">Middle:<br /><input asp-for="MiddleName" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
+                                        <td>Last Name:<br /><input asp-for="LastName" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="3">Display As:<br /><input asp-for="DisplayName" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td colspan="3">Display As:<br /><input asp-for="DisplayName" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
                                     </tr>
                                     <tr>
-                                        <td>Member Number:<br /><input asp-for="MemberNumber" readonly="@(isReadOnly ? "readonly" : null)" /></td>
-                                        <td>Start Date:<br /><input asp-for="MemberStartDate" readonly="@(isReadOnly ? "readonly" : null)" /></td>
-                                        <td>Expires:<br /><input asp-for="MemberExpireDate" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td>Member Number:<br /><input asp-for="MemberNumber" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
+                                        <td>Start Date:<br />
+                                            @if (isReadOnly)
+                                            {
+                                                <input type="text" class="form-control input-compact" value="@ShortDate(Model.MemberStartDate)" readonly />
+                                            }
+                                            else
+                                            {
+                                                <input asp-for="MemberStartDate" type="date" class="form-control input-compact" value="@IsoDate(Model.MemberStartDate)" />
+                                            }
+                                        </td>
+                                        <td>Expires:<br />
+                                            @if (isReadOnly)
+                                            {
+                                                <input type="text" class="form-control input-compact" value="@ShortDate(Model.MemberExpireDate)" readonly />
+                                            }
+                                            else
+                                            {
+                                                <input asp-for="MemberExpireDate" type="date" class="form-control input-compact" value="@IsoDate(Model.MemberExpireDate)" />
+                                            }
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <td>Life Member Number:<br /><input asp-for="LifeMemberNumber" readonly="@(isReadOnly ? "readonly" : null)" /></td>
-                                        <td>Life Member Date:<br /><input asp-for="LifeMemberDate" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td>Life Member Number:<br /><input asp-for="LifeMemberNumber" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
+                                        <td>Life Member Date:<br />
+                                            @if (isReadOnly)
+                                            {
+                                                <input type="text" class="form-control input-compact" value="@ShortDate(Model.LifeMemberDate)" readonly />
+                                            }
+                                            else
+                                            {
+                                                <input asp-for="LifeMemberDate" type="date" class="form-control input-compact" value="@IsoDate(Model.LifeMemberDate)" />
+                                            }
+                                        </td>
                                         <td></td>
                                     </tr>
                                     <tr>
-                                        <td>Address:<br /><input asp-for="PersonalAddress" readonly="@(isReadOnly ? "readonly" : null)" /></td>
-                                        <td>Phone:<br /><input asp-for="PersonalPhone" readonly="@(isReadOnly ? "readonly" : null)" /></td>
-                                        <td>Email:<br /><input asp-for="PersonalEmail" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td>Address:<br /><input asp-for="PersonalAddress" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
+                                        <td>Phone:<br /><input asp-for="PersonalPhone" class="form-control input-compact" inputmode="tel" autocomplete="tel-national" data-phone="true" data-phone-normalize="digits" readonly="@(isReadOnly)" /></td>
+                                        <td>Email:<br /><input asp-for="PersonalEmail" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
                                     </tr>
                                     <tr>
-                                        <td>Alternate Address:<br /><input asp-for="WorkAddress" readonly="@(isReadOnly ? "readonly" : null)" /></td>
-                                        <td>Alternate Phone:<br /><input asp-for="WorkPhone" readonly="@(isReadOnly ? "readonly" : null)" /></td>
-                                        <td>Alternate Email:<br /><input asp-for="WorkEmail" readonly="@(isReadOnly ? "readonly" : null)" /></td>
+                                        <td>Alternate Address:<br /><input asp-for="WorkAddress" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
+                                        <td>Alternate Phone:<br /><input asp-for="WorkPhone" class="form-control input-compact" inputmode="tel" autocomplete="tel-national" data-phone="true" data-phone-normalize="digits" readonly="@(isReadOnly)" /></td>
+                                        <td>Alternate Email:<br /><input asp-for="WorkEmail" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
                                     </tr>
                                     <tr>
-                                        <td>Created:<br /><input asp-for="CreatedDate" asp-format="{0:yyyy-MM-dd}" readonly="true" /></td>
-                                        <td>Died:<br /><input asp-for="DiedOn" asp-format="{0:MM/dd/yyyy}" readonly="@(isReadOnly ? "readonly" : null)" /></td>
-                                        <td>Authenticated:<br /><input asp-for="Authenticated" readonly="true" /></td>
+                                        <td>Created:<br /><input type="text" class="form-control input-compact" value="@ShortDate(Model.CreatedDate)" readonly /></td>
+                                        <td>Died:<br />
+                                            @if (isReadOnly)
+                                            {
+                                                <input type="text" class="form-control input-compact" value="@ShortDate(Model.DiedOn)" readonly />
+                                            }
+                                            else
+                                            {
+                                                <input asp-for="DiedOn" type="date" class="form-control input-compact" value="@IsoDate(Model.DiedOn)" />
+                                            }
+                                        </td>
+                                        <td>Authenticated:<br />
+                                            <span class="badge @(Model.Authenticated ? "bg-success" : "bg-secondary")">
+                                                @(Model.Authenticated ? "Yes" : "No")
+                                            </span>
+                                        </td>
                                     </tr>
                                 </table>
                             </div>
@@ -117,7 +149,7 @@
     }
 </div>
 @functions {
-    string FormAction(mcl959mvc.Models.PopupType type, mcl959mvc.Models.Roster? m)
+    string? FormAction(mcl959mvc.Models.PopupType type, mcl959mvc.Models.Roster? m)
     {
         if (m == null) return "#";
         return type switch

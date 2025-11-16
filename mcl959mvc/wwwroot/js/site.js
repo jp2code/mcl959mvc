@@ -1,30 +1,45 @@
-﻿// Remove any other initEventPopupUi definitions and keep this ONE
+﻿// Helpers shared by modal pages
+function normalizePhoneDigits(s) {
+    if (!s) return "";
+    let d = s.replace(/\D+/g, "");
+    if (d.length === 11 && d[0] === "1") d = d.slice(1);
+    return d;
+}
+function formatUS10(d) {
+    if (d.length !== 10) return null;
+    return "(" + d.slice(0, 3) + ") " + d.slice(3, 6) + "-" + d.slice(6);
+}
+
+// Remove any other initEventPopupUi definitions and keep this ONE
 function initEventPopupUi(container) {
     if (!container) return;
 
+    // Calendar
     const cal = container.querySelector('#event-calendar');
-    if (!cal) return;
-
-    const dateStr = cal.getAttribute('data-event-date') || '';
-    const nameStr = cal.getAttribute('data-event-name') || '';
-
-    let dt;
-
-    if (dateStr) {
-        // Prefer ISO "yyyy-MM-ddT00:00:00" (works across browsers)
-        dt = new Date(dateStr + 'T00:00:00');
-        // Fallback if parsing fails (e.g., odd locale strings)
-        if (isNaN(dt.getTime())) {
-            dt = new Date(dateStr);
+    if (cal) {
+        const dateStr = cal.getAttribute('data-event-date') || '';
+        const nameStr = cal.getAttribute('data-event-name') || '';
+        let dt = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
+        if (isNaN(dt.getTime())) dt = new Date();
+        cal.setAttribute('title', nameStr + ' on ' + dateStr);
+        if (typeof window.renderSimpleCalendar === 'function') {
+            window.renderSimpleCalendar('event-calendar', dt, nameStr);
         }
-    } else {
-        // No date provided: default to today
-        dt = new Date();
     }
-    cal.setAttribute('title', nameStr + ' on ' + dateStr);
-    if (typeof window.renderSimpleCalendar === 'function') {
-        window.renderSimpleCalendar('event-calendar', dt, nameStr);
-    }
+
+    // Phone inputs in modal (Roster popup, etc.)
+    container.querySelectorAll('input[data-phone="true"]').forEach(function (el) {
+        // Pre-format any prefilled value
+        const d = normalizePhoneDigits(el.value);
+        const f = formatUS10(d);
+        if (f) el.value = f;
+
+        el.addEventListener('blur', function () {
+            const d2 = normalizePhoneDigits(el.value);
+            const f2 = formatUS10(d2);
+            if (f2) el.value = f2;
+        }, { passive: true });
+    });
 }
 
 // Enhanced calendar: optional titleText parameter
@@ -192,15 +207,31 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
     async function openPopup(popupType, id, urlBase) {
         const modal = getOrCreateModal();
         if (!modal) return;
+        const content = getContentEl(); // DEFINE BEFORE 403 HANDLING
 
         const params = new URLSearchParams({ popupType: popupType || '' });
         if (id) params.append('id', id);
 
         const resp = await fetch(`${urlBase}?${params.toString()}`, {
-            credentials: 'same-origin'
+            credentials: 'same-origin',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest' // critical for ForbidAjax
+            }
         });
+
+        if (resp.status === 403) {
+            const html403 = await resp.text();
+            // If server gave partial (_AccessDeniedPartial) use directly.
+            if (html403.trim() && !html403.includes('<html')) {
+                content.innerHTML = html403;
+            } else {
+                content.innerHTML = '<div class="text-center p-4"><h5 class="text-danger mb-2">Access denied</h5><p class="text-muted mb-0">You do not have access to this resource.</p></div>';
+            }
+            modal.show();
+            return;
+        }
+
         const html = await resp.text();
-        const content = getContentEl();
         if (content) {
             content.innerHTML = html;
             initEventPopupUi(content);
@@ -250,7 +281,6 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
     });
 
     // Post any form inside the modal via fetch and re-render (with guards and headers)
-    // In the submit handler, after replacing the modal content, call the initializer(s) as needed
     document.addEventListener('submit', async (e) => {
         const content = getContentEl();
         const form = e.target;
@@ -274,6 +304,16 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
             // Special-case: roster photo upload
             if (form.id === 'photoUploadForm') {
                 const respUpload = await postForm(form);
+
+                // 403 handling for photo upload
+                if (respUpload.status === 403) {
+                    const html403 = await respUpload.text();
+                    content.innerHTML = html403.trim() && !html403.includes('<html')
+                        ? html403
+                        : '<div class="text-center p-4"><h5 class="text-danger mb-2">Access denied</h5><p class="text-muted mb-0">You do not have access to this resource.</p></div>';
+                    return;
+                }
+
                 const text = await respUpload.text();
                 const resultDiv = content.querySelector('#uploadResult');
                 if (resultDiv) {
@@ -283,16 +323,38 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
                 if (img) {
                     const url = new URL(img.getAttribute('src'), window.location.origin);
                     url.searchParams.set('v', Date.now().toString());
-                    // Set string, not a jQuery object
                     img.src = `${url.pathname}?${url.searchParams.toString()}`;
                 }
                 return;
             }
 
+            // Generic AJAX submit
             // Generic AJAX submit (comments, create/edit/delete, delete comment, etc.)
-            const resp = await postForm(form);
-            const ct = resp.headers.get('Content-Type') || '';
+            const resp = await (async () => {
+                // Normalize phone inputs (digits only) before creating FormData/posting
+                form.querySelectorAll('input[data-phone-normalize="digits"]').forEach(function (el) {
+                    el.value = normalizePhoneDigits(el.value);
+                });
+                return await postForm(form);
+            })();
 
+            // 403 (Access Denied) handling BEFORE reading normal body
+            if (resp.status === 403) {
+                const html403 = await resp.text();
+                if (html403.trim() && !html403.includes('<html')) {
+                    content.innerHTML = html403;
+                } else {
+                    const m = html403.match(/<h1[^>]*class="text-danger"[^>]*>(.*?)<\/h1>/i);
+                    const p = html403.match(/<p[^>]*class="text-danger"[^>]*>(.*?)<\/p>/i);
+                    const heading = m ? m[1] : 'Access denied';
+                    const msg = p ? p[1] : 'You do not have access to this resource.';
+                    content.innerHTML =
+                        `<div class="text-center p-4"><h5 class="text-danger mb-2">${heading}</h5><p class="text-muted mb-0">${msg}</p></div>`;
+                }
+                return; // stop normal flow
+            }
+
+            const ct = resp.headers.get('Content-Type') || '';
             if (ct.includes('application/json')) {
                 const data = await resp.json();
                 if (data.success) {
@@ -301,6 +363,7 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
                     location.reload();
                     return;
                 }
+                // If JSON but not success, you could render an error block here.
             }
 
             const html = await resp.text();
@@ -308,6 +371,7 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
             initEventPopupUi(content);
         } catch (err) {
             console.error('Modal submit error:', err);
+            content.innerHTML = '<div class="text-center p-4 text-danger">Unexpected error submitting the form.</div>';
         } finally {
             if (submitBtn) {
                 submitBtn.removeAttribute('disabled');

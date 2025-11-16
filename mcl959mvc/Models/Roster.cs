@@ -76,7 +76,7 @@ public partial class Roster
     public int WebsiteDisplay { get; set; }
 
     [Column(TypeName = "datetime")]
-    public DateTime CreatedDate { get; set; }
+    public DateTime? CreatedDate { get; set; }
 
     [StringLength(255)]
     [Unicode(false)]
