@@ -97,6 +97,15 @@ function renderSimpleCalendar(containerId, highlightDate, titleText) {
     container.innerHTML = html;
 }
 
+function speakText(text) {
+    // cancel any ongoing speech
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1; // normal speed
+    utterance.pitch = 1; // normal pitch
+    window.speechSynthesis.speak(utterance);
+}
+
 // Ensure globally accessible if needed elsewhere
 window.renderSimpleCalendar = renderSimpleCalendar;
 
@@ -278,6 +287,23 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
         const id = a.dataset.id || a.dataset.itemid; // supports both data-id and data-itemid
         const urlBase = resolvePopupUrl(a);
         openPopup(popupType, id, urlBase);
+    });
+
+    document.addEventListener('mouseover', (e) => {
+        const readToggle = document.getElementById('readToggle');
+        if (readToggle) {
+            if (readToggle.checked) {
+                // Enable Read Aloud
+                const target = e.target;
+                const text = target.textContent.trim();
+                if (text) {
+                    speakText(text);
+                }
+            } else {
+                // Disable Read Aloud
+                window.speechSynthesis.cancel();
+            }
+        }
     });
 
     // Post any form inside the modal via fetch and re-render (with guards and headers)
@@ -477,12 +503,6 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
         }
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', wireLastMessageAlert);
-    } else {
-        wireLastMessageAlert();
-    }
-
     function autoOpenIfPresent() {
         const body = document.body;
         const id = body.getAttribute('data-open-id');
@@ -495,9 +515,40 @@ function showCombinedRemaining(itemX, itemY, statusX, maxchar) {
         }
     }
       
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', autoOpenIfPresent);
-    } else {
+    // Remember "Read Aloud on Hover" across pages
+    function initReadToggle() {
+        const KEY = 'mcl959.readToggle';
+        const cb = document.getElementById('readToggle');
+        if (!cb) {
+            return;
+        }
+
+        // Load saved state
+        const saved = localStorage.getItem(KEY);
+        const enabled = (saved === '1' || saved === 'true');
+        cb.checked = enabled;
+
+        // Reflect state on <body> (optional CSS/JS hook)
+        document.body.classList.toggle('read-enabled', enabled);
+
+        cb.addEventListener('change', function () {
+            const isOn = cb.checked;
+            localStorage.setItem(KEY, isOn ? '1' : '0');
+            document.body.classList.toggle('read-enabled', isOn);
+        });
+    }
+
+   // One place to initialize page-level features once DOM is ready
+    function initPageFeatures() {
+        wireLastMessageAlert();
         autoOpenIfPresent();
+        initReadToggle();
+    }
+
+    // Replace the three separate DOM ready blocks with this one
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPageFeatures);
+    } else {
+        initPageFeatures();
     }
 })();

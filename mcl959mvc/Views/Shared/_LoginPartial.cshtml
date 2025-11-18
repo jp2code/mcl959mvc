@@ -4,22 +4,34 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-<ul class="navbar-nav">
+<ul class="login-menu">
 @if (SignInManager.IsSignedIn(User))
 {
-    <li>
-        <a asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @User.Identity?.Name</a>
+    <li class="login-item">
+        <a class="login-link" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">
+            Hello @User.Identity?.Name
+        </a>
     </li>
-    <li>
-        <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-            <button type="submit" class="nav-link btn btn-link">Logout</button>
+    <li class="login-item">
+        <form class="login-form"
+              asp-area="Identity"
+              asp-page="/Account/Logout"
+              asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="login-link login-btn">
+                Logout
+            </button>
         </form>
     </li>
 }
 else
 {
-    <li>
-        <a asp-area="Identity" asp-page="/Account/Login">Login</a>
+    <li class="login-item">
+        <a class="login-link" asp-area="Identity" asp-page="/Account/Login">Login</a>
     </li>
 }
+<li class="login-item form-check login-announce">
+    <input type="checkbox" id="readToggle" class="form-check-input login-checkbox">
+    <label for="readToggle" class="login-label">Announce on Hover</label>
+</li>
 </ul>
