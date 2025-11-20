@@ -60,6 +60,7 @@ builder.Services.AddSwaggerGen();
 // <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
 builder.Services.AddScoped<MembershipService>();
 builder.Services.AddScoped<IFaqService, FaqService>();
+builder.Services.AddScoped<IChatAuditService, ChatAuditService>();
 
 var app = builder.Build();
 
@@ -186,17 +187,21 @@ app.MapPost("/api/chat/ask", async (
     IFaqService faq,
     MembershipService membershipService,
     UserManager<ApplicationUser> userManager,
+    IChatAuditService audit,
     HttpContext http) =>
 {
     if (!http.User.Identity?.IsAuthenticated ?? true)
+    {
         return Results.Unauthorized();
-
+    }
     var user = await userManager.GetUserAsync(http.User);
     var answer = "";
     var isRegHelp = false;
 
     // Registration intent detection
     var q = req.Question?.ToLowerInvariant() ?? "";
+    bool announceIntent = q.Contains("announce") || q.Contains("hover") || q.Contains("speak");
+    bool thanks = q.Contains("thank you") || q.Contains("thanks") || q.Contains("thx") || q.Contains("ty");
     if (q.Contains("register") || q.Contains("create account") || q.Contains("sign up"))
     {
         isRegHelp = true;
@@ -212,14 +217,31 @@ Steps to create an account:
 </ul>
 """;
     }
+    else if (announceIntent)
+    {
+        isRegHelp = true;
+        answer = @"
+To get Announce on Hover to work, enable the checkbox.<br/><br/>
+Occasionally, the browser will load with the checkbox already checked, but the feature does not work. If this is your case, uncheck the box, and then recheck it.<br/><br/>
+To have parts of the page read aloud, either hover your mouse over the text or tap the text with your finger if using a touchscreen device.
+";
+    }
+    else if (thanks)
+    {
+        isRegHelp = true;
+        answer = "You are welcome! I hope I have answered everything to your satisfaction. If I have left anything out, please ask shorter questions. This format is limited.";
+    }
     else
     {
         var match = faq.FindBest(req.Question);
         answer = match?.Answer ?? "I do not have an answer yet. Please rephrase or contact us via the Contact page.";
     }
 
-    var suggestions = isRegHelp
-        ? new[] { "How do I reset my password?", "What are membership requirements?" }
+    // Log & email the Q/A
+    await audit.LogAndEmailAsync(user?.Email, req.Question ?? "", answer, isRegHelp);
+
+    var suggestions = !string.IsNullOrEmpty(answer) ? Array.Empty<string>() :
+        isRegHelp ? new[] { "How do I reset my password?", "What are membership requirements?" }
         : new[] { "How do I create an account?", "Where is the application form?" };
 
     return Results.Ok(new ChatResponse {
@@ -232,23 +254,33 @@ Steps to create an account:
 .RequireAuthorization();
 
 // Public (unauthenticated) limited endpoint
-app.MapPost("/api/chat/public", (ChatRequest req) =>
+app.MapPost("/api/chat/public", async (
+    ChatRequest req,
+    IChatAuditService audit) =>
 {
     var q = (req.Question ?? "").ToLowerInvariant();
     bool loginIntent = q.Contains("login") || q.Contains("log in");
     bool registerIntent = q.Contains("register") || q.Contains("sign up") || q.Contains("create account");
-    if (!(loginIntent || registerIntent))
+    bool announceIntent = q.Contains("announce") || q.Contains("hover") || q.Contains("speak");
+    bool thanks = q.Contains("thank you") || q.Contains("thanks") || q.Contains("thx") || q.Contains("ty");
+
+    string answer;
+    bool isRegHelp = false;
+
+    if (!(loginIntent || registerIntent || announceIntent || thanks))
     {
+        answer = "Please log in for full answers. You can ask only about how to register or log in here.";
+        await audit.LogAndEmailAsync(null, req.Question ?? "(empty)", answer, false);
         return Results.Ok(new ChatResponse {
-            Answer = "Please log in for full answers. You can ask only about how to register or log in here.",
+            Answer = answer,
             Suggestions = new[] { "How do I register?","How do I log in?" },
             IsHtml = true
         });
     }
-    string answer;
+
     if (registerIntent)
     {
-        // Raw string literal: opening """ on its own line, closing """ aligned
+        isRegHelp = true;
         answer = """
 Registration steps:
 <ul style="margin:0;padding-left:18px;">
@@ -262,7 +294,21 @@ Registration steps:
 To be recognized as member of MCL959, ensure your confirmed email matches the roster record.
 """;
     }
-    else if (loginIntent)
+    else if (announceIntent)
+    {
+        isRegHelp = true;
+        answer = @"
+To get Announce on Hover to work, enable the checkbox.<br/><br/>
+Occasionally, the browser will load with the checkbox already checked, but the feature does not work. If this is your case, uncheck the box, and then recheck it.<br/><br/>
+To have parts of the page read aloud, either hover your mouse over the text or tap the text with your finger if using a touchscreen device.
+";
+    }
+    else if (thanks)
+    {
+        isRegHelp = true;
+        answer = "You are welcome! I hope I have answered everything to your satisfaction. If I have left anything out, please ask shorter questions. This format is limited.";
+    }
+    else
     {
         answer = """
 Login steps:
@@ -274,18 +320,16 @@ Login steps:
 If your email is recognized as a member of MCL959, you will gain member status automatically after login.
 """;
     }
-    else
-    {
-        return Results.Ok(new ChatResponse
-        {
-            Answer = "Please log in for full answers. You can ask only about how to register or log in here.",
-            Suggestions = new[] { "How do I register?", "How do I log in?" },
-            IsHtml = true
-        });
-    }
+
+    await audit.LogAndEmailAsync(null, req.Question ?? "(empty)", answer, isRegHelp);
+
+    var suggestions = !string.IsNullOrEmpty(answer) ? Array.Empty<string>() :
+        isRegHelp ? new[] { "How do I reset my password?", "What are membership requirements?" }
+        : new[] { "How do I create an account?", "Where is the application form?" };
+
     return Results.Ok(new ChatResponse {
         Answer = answer,
-        Suggestions = new[] { "How do I register?","How is membership with MCL959 granted?" },
+        Suggestions = suggestions,
         IsHtml = true
     });
 });

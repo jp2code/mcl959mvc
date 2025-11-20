@@ -20,6 +20,8 @@ public partial class Mcl959DbContext : DbContext
 
     public virtual DbSet<CommentsModel> Comments { get; set; }
 
+    public virtual DbSet<ChatLog> ChatLogs { get; set; }
+
     public virtual DbSet<EventsModel> Events { get; set; }
 
     public virtual DbSet<MailgunLog> MailgunLogs { get; set; }
