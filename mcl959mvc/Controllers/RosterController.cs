@@ -34,6 +34,11 @@ public class RosterController : Mcl959MemberController
     {
         var allMembers = await _context.Roster
             .ToListAsync();
+        foreach (var member in allMembers)
+        {
+            var photoFile = Path.Combine(_webHostEnvironment.WebRootPath, "photos", $"{member.Id}.jpg");
+            member.HasPhoto = System.IO.File.Exists(photoFile);
+        }
         var pagedRoster = allMembers
             .OrderBy(m => m.LastName)
             .ThenBy(m => m.FirstName)
@@ -246,7 +251,7 @@ If you are the immediate family or have an obituary from the funeral home,
 please contact us so that the web sergeant can update this page.";
         }
 
-        member.HasPhoto = HasPhoto(member);
+        // member.HasPhoto = HasPhoto(member);
         return new MemorialViewModel
         {
             Memorial = memorial,
@@ -474,7 +479,7 @@ If you are the immediate family or have an obituary from the funeral home,
 please contact us so that the web sergeant can update this page.";
                 }
 
-                member.HasPhoto = HasPhoto(member);
+                // member.HasPhoto = HasPhoto(member);
                 var model = new MemorialViewModel
                 {
                     Memorial = memorial,

@@ -609,3 +609,10 @@ div.footer { /* ref: https://css-tricks.com/snippets/css/sticky-footer/ */
   flex: 0 0 auto;
 }
 
+.no-photo {
+  display: inline-block;
+  margin-left: 6px;
+  color: #CC0000; /* red */
+  font-weight: bold;
+}
+

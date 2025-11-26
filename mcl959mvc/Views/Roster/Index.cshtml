@@ -86,6 +86,10 @@
                     <td>
                         <a href="#" data-popup="Memorial" data-id="@member.Id" data-popup-controller="Roster">
                             @member.DisplayName
+                            @if(!member.HasPhoto)
+                            {
+                                <span class="no-photo" title="No photo on file">🚫</span>
+                            }
                         </a>
                     </td>
                     <td>@member.DiedOn</td>
@@ -141,6 +145,10 @@
                         <td>
                             <a href="#" data-popup="Details" data-id="@item.Id" data-popup-controller="Roster">
                                 @(!string.IsNullOrEmpty(item.MemberNumber) ? item.MemberNumber : "N/A")
+                                @if (!item.HasPhoto)
+                                {
+                                    <span class="no-photo" title="No photo on file">🚫</span>
+                                }
                             </a>
                         </td>
                         <td>
