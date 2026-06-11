@@ -145,6 +145,12 @@ namespace mcl959mvc.Areas.Identity.Pages.Account
                                 await _userManager.RemoveClaimsAsync(user, oldClaims);
 
                             await _userManager.AddClaimsAsync(user, claims);
+                            var props = new AuthenticationProperties()
+                            {
+                                IsPersistent = Input.RememberMe,
+                                ExpiresUtc = DateTimeOffset.UtcNow.AddDays(90)
+                            };
+                            await _signInManager.SignInAsync(user, props);
                         }
                         _logger.LogInformation($"User '{Input.Email}' logged in.");
                         return LocalRedirect(returnUrl);

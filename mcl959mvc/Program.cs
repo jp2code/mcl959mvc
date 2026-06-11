@@ -45,6 +45,10 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.R
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.ConfigureApplicationCookie(options =>
 {
+    options.Cookie.Name = ".mcl959.auth";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
     options.ExpireTimeSpan = TimeSpan.FromDays(90);
     options.SlidingExpiration = true; // Optional: extends the cookie if the user is active
     options.LoginPath = "/Identity/Account/Login";
