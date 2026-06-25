@@ -169,7 +169,7 @@ Visit {eventUrl} for details.
 
     // POST: Events/Edit/5
     [HttpPost, ValidateAntiForgeryToken, RequireAdmin]
-    public async Task<IActionResult> Edit([Bind(Prefix = "Event")] int id, EventsModel item, IFormFile? ImageUpload)
+    public async Task<IActionResult> Edit(int id, [Bind(Prefix = "Event")] EventsModel item, IFormFile? ImageUpload)
     {
         if (id != item.Id)
         {

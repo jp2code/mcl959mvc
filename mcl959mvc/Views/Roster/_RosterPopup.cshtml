@@ -8,6 +8,10 @@
     string ShortDate(DateTime? d) => d.HasValue ? d.Value.ToShortDateString() : "";
     // Helpers for date edit values (ISO needed for type="date")
     string IsoDate(DateTime? d) => d.HasValue ? d.Value.ToString("yyyy-MM-dd") : "";
+    if (mode is "Edit" or "Delete")
+    {
+        @Html.HiddenFor(m => m.Id)
+    }
 }
 <div class="modal-body">
     <div class="container mt-4">
@@ -47,15 +51,27 @@
                             <div class="mb-2">
                                 <table class="table table-sm align-middle">
                                     <tr>
-                                        <td width="30%">First Name:<br /><input asp-for="FirstName" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
-                                        <td width="30%">Middle:<br /><input asp-for="MiddleName" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
-                                        <td>Last Name:<br /><input asp-for="LastName" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
+                                        <td width="30%">First Name:<br />
+                                            <input asp-for="FirstName" class="form-control input-compact" readonly="@(isReadOnly)" />
+                                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                                        </td>
+                                        <td width="30%">Middle:<br />
+                                            <input asp-for="MiddleName" class="form-control input-compact" readonly="@(isReadOnly)" />
+                                            <span asp-validation-for="MiddleName" class="text-danger"></span>
+                                        </td>
+                                        <td>Last Name:<br />
+                                            <input asp-for="LastName" class="form-control input-compact" readonly="@(isReadOnly)" />
+                                            <span asp-validation-for="LastName" class="text-danger"></span>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td colspan="3">Display As:<br /><input asp-for="DisplayName" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
                                     </tr>
                                     <tr>
-                                        <td>Member Number:<br /><input asp-for="MemberNumber" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
+                                        <td>Member Number:<br />
+                                            <input asp-for="MemberNumber" class="form-control input-compact" readonly="@(isReadOnly)" />
+                                            <span asp-validation-for="MemberNumber" class="text-danger"></span>
+                                        </td>
                                         <td>Start Date:<br />
                                             @if (isReadOnly)
                                             {
@@ -94,7 +110,10 @@
                                     <tr>
                                         <td>Address:<br /><input asp-for="PersonalAddress" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
                                         <td>Phone:<br /><input asp-for="PersonalPhone" class="form-control input-compact" inputmode="tel" autocomplete="tel-national" data-phone="true" data-phone-normalize="digits" readonly="@(isReadOnly)" /></td>
-                                        <td>Email:<br /><input asp-for="PersonalEmail" class="form-control input-compact" readonly="@(isReadOnly)" /></td>
+                                        <td>Email:<br />
+                                            <input asp-for="PersonalEmail" class="form-control input-compact" readonly="@(isReadOnly)" />
+                                            <span asp-validation-for="PersonalEmail" class="text-danger"></span>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td>Alternate Address:<br /><input asp-for="WorkAddress" class="form-control input-compact" readonly="@(isReadOnly)" /></td>

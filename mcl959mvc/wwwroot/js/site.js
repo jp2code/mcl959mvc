@@ -134,8 +134,8 @@ function getNextMeetingDate(today) {
             continue;
         }
         let meeting = fourthTuesday(year, month);
-        // If meeting is in the future, use it
-        if (meeting > today) {
+        // If meeting is in the future or today, use it
+        if (meeting >= today) {
             return meeting;
         }
         // Otherwise, check next month

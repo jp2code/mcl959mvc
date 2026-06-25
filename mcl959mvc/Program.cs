@@ -3,6 +3,7 @@ using mcl959mvc.Data;
 using mcl959mvc.Models;
 using mcl959mvc.Services; // Add this using directive
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore; // Ensure this is included
 using Microsoft.Extensions.DependencyInjection; // Ensure this is included
 using Microsoft.OpenApi.Models;
@@ -47,7 +48,9 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.Name = ".mcl959.auth";
     options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ?
+        Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest :
+        Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
     options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
     options.ExpireTimeSpan = TimeSpan.FromDays(90);
     options.SlidingExpiration = true; // Optional: extends the cookie if the user is active

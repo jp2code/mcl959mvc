@@ -462,6 +462,16 @@ div.footer { /* ref: https://css-tricks.com/snippets/css/sticky-footer/ */
 #readToggle {
     margin: 0px 10px 0px 0px;
 }
+/* jQuery UI datepicker adjustments */
+.calendar-title {
+    font-weight: bold;
+    margin-bottom: 6px;
+    text-align: center;
+    color: #FFD700; /* gold to match site */
+}
+.inline-datepicker .ui-datepicker {
+    margin: 0 auto;
+}
 .mcl959-calendar {
     flex: 0 0 auto; /* do not grow/shrink, use content width */
 }
@@ -479,6 +489,12 @@ div.footer { /* ref: https://css-tricks.com/snippets/css/sticky-footer/ */
     background: #ffeb3b;
     color: #d32f2f;
     border-radius: 50%;
+    font-weight: bold;
+}
+.mcl959-datepicker-highlight a {
+    background: #ffeb3b !important;
+    color: #d32f2f !important;
+    border-radius: 50% !important;
     font-weight: bold;
 }
 #entityModalContent .row.gx-4 { --bs-gutter-x: 2rem; }

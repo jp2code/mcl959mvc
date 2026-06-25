@@ -122,33 +122,46 @@ public class RosterController : Mcl959MemberController
 
     // POST: Roster/Create
     [HttpPost, ValidateAntiForgeryToken, RequireAdmin]
-    public async Task<IActionResult> Create([Bind(Prefix = "Roster")] Roster member)
+    public async Task<IActionResult> Create(Roster member)
     {
-        // Set Name before validation
+        // Compute derived values
         member.Name = member.GetFullName();
-        member.CreatedDate = DateTime.Now;
-        ModelState.Clear();
-        TryValidateModel(member);
-        if (ModelState.IsValid)
+        if (string.IsNullOrEmpty(member.DisplayName))
         {
-            _context.Add(member);
-            member.HasPhoto = HasPhoto(member);
-            await _context.SaveChangesAsync();
-            await SendEmailAsync(UserEmail,
-                $"Roster Member Created: {member.Name} ({member.MemberNumber})",
-                $"The member '{member.Name}' (ID: {member.Id}) was CREATED by {UserEmail}.", false);
-            if (IsAjaxRequest(Request))
-            {
-                return Json(new { success = true }); // let the client close the modal & reload
-            }
-            return RedirectToAction(nameof(Index));
+            member.DisplayName = $"{member.FirstName} {member.LastName}";
+            ModelState.Remove(nameof(Roster.DisplayName));
         }
-        else
+        member.CreatedDate = DateTime.Now;
+
+        // Remove only the fields we changed so their validation will be re-run
+        ModelState.Remove(nameof(Roster.Name));
+        ModelState.Remove(nameof(Roster.CreatedDate));
+
+        // Re-validate the model (only necessary because we changed values server-side)
+        if (!TryValidateModel(member))
         {
-            ViewBag.PopupType = PopupType.Details;
+            var errors = ModelState
+                .Where(kvp => kvp.Value.Errors.Count > 0)
+                .Select(kvp => new { Key = kvp.Key, Errors = kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray() })
+                .ToList();
+            _logger.LogInformation("Validation failed: {@errors}", errors);
+            ViewBag.PopupType = PopupType.Create;
+            ViewBag.Mode = "Create";
             ViewBag.IsAdmin = IsAdmin;
             return PartialView("_RosterPopup", member);
         }
+
+        _context.Add(member);
+        member.HasPhoto = HasPhoto(member);
+        await _context.SaveChangesAsync();
+        await SendEmailAsync(UserEmail,
+            $"Roster Member Created: {member.Name} ({member.MemberNumber})",
+            $"The member '{member.Name}' (ID: {member.Id}) was CREATED by {UserEmail}.", false);
+        if (IsAjaxRequest(Request))
+        {
+            return Json(new { success = true });
+        }
+        return RedirectToAction(nameof(Index));
     }
 
     // POST: Roster/Edit/5
@@ -190,8 +203,14 @@ public class RosterController : Mcl959MemberController
             }
             return RedirectToAction(nameof(Index));
         }
-
+        var errors = ModelState
+            .Where(kvp => kvp.Value.Errors.Count > 0)
+            .Select(kvp => new { Key = kvp.Key, Errors = kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray() })
+            .ToList();
+        _logger.LogInformation("Validation failed: {@errors}", errors);
         ViewBag.PopupType = PopupType.Edit;
+        ViewBag.Mode = "Edit";
+        ViewBag.IsAdmin = IsAdmin;
         return PartialView("_RosterPopup", member);
     }
 
