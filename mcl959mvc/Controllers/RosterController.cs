@@ -26,6 +26,21 @@ public class RosterController : Mcl959MemberController
         _webHostEnvironment = webHostEnvironment;
     }
 
+    private string? FindPhotoPath(int id)
+    {
+        var photosFolder = Path.Combine(_webHostEnvironment.WebRootPath, "photos");
+        var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+        foreach (var item in allowed)
+        {
+            var file = Path.Combine(photosFolder, $"{id}{item}");
+            if (System.IO.File.Exists(file))
+            {
+                return $"/photos/{id}{item}";
+            }
+        }
+        return null;
+    }
+
     [HttpGet]
     [Route("Roster/{id:int?}", Name = "MemberById")]
     [Route("Roster")]
@@ -36,8 +51,8 @@ public class RosterController : Mcl959MemberController
             .ToListAsync();
         foreach (var member in allMembers)
         {
-            var photoFile = Path.Combine(_webHostEnvironment.WebRootPath, "photos", $"{member.Id}.jpg");
-            member.HasPhoto = System.IO.File.Exists(photoFile);
+            var photoPath = FindPhotoPath(member.Id);
+            member.HasPhoto = !String.IsNullOrEmpty(photoPath);
         }
         var pagedRoster = allMembers
             .OrderBy(m => m.LastName)
@@ -148,6 +163,7 @@ public class RosterController : Mcl959MemberController
             ViewBag.PopupType = PopupType.Create;
             ViewBag.Mode = "Create";
             ViewBag.IsAdmin = IsAdmin;
+            ViewBag.PhotoPath = "/photos/mcl959bw.jpg"; // default photo for new members
             return PartialView("_RosterPopup", member);
         }
 
@@ -172,6 +188,7 @@ public class RosterController : Mcl959MemberController
         {
             ModelState.AddModelError(string.Empty, "Mismatched roster id.");
             ViewBag.PopupType = PopupType.Edit;
+            ViewBag.PhotoPath = "/photos/mcl959bw.jpg";
             return PartialView("_RosterPopup", member);
         }
 
@@ -211,6 +228,8 @@ public class RosterController : Mcl959MemberController
         ViewBag.PopupType = PopupType.Edit;
         ViewBag.Mode = "Edit";
         ViewBag.IsAdmin = IsAdmin;
+        // Set the photo path for this specific member
+        ViewBag.PhotoPath = FindPhotoPath(member.Id) ?? "/photos/mcl959bw.jpg";
         return PartialView("_RosterPopup", member);
     }
 
@@ -498,7 +517,7 @@ If you are the immediate family or have an obituary from the funeral home,
 please contact us so that the web sergeant can update this page.";
                 }
 
-                // member.HasPhoto = HasPhoto(member);
+                member.HasPhoto = HasPhoto(member);
                 var model = new MemorialViewModel
                 {
                     Memorial = memorial,
@@ -507,12 +526,15 @@ please contact us so that the web sergeant can update this page.";
                     DiedOn = (DateTime)member.DiedOn,
                     HasPhoto = member.HasPhoto
                 };
+                // Set photo path for this specific member shown in memorial popup
+                ViewBag.PhotoPath = FindPhotoPath(member.Id) ?? "/photos/mcl959bw.jpg";
                 return PartialView("_MemorialPopup", model);
             }
 
             case PopupType.Create:
             {
                 ViewBag.Mode = "Create";
+                ViewBag.PhotoPath = "/photos/mcl959bw.jpg";
                 break;
             }
 
@@ -532,6 +554,8 @@ please contact us so that the web sergeant can update this page.";
                 }
 
                 member.HasPhoto = HasPhoto(member);
+                // Set photo path for this specific member shown in roster popup
+                ViewBag.PhotoPath = FindPhotoPath(member.Id) ?? "/photos/mcl959bw.jpg";
                 ViewBag.Mode = (popupType == PopupType.Edit) ? "Edit" :
                                (popupType == PopupType.Delete) ? "Delete" : "Details";
                 break;

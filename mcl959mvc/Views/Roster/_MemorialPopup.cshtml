@@ -2,7 +2,7 @@
 @{
     var isAdmin = User.HasClaim("isAdmin", "true");
     var isRegistered = User.HasClaim("isRegistered", "true");
-    var photoPath = Model.HasPhoto ? $"/photos/{Model.Memorial.RosterId}.jpg" : "/photos/mcl959bw.jpg";
+    var photoPath = (ViewBag.PhotoPath as string) ?? (Model.HasPhoto ? $"/photos/{Model.Id}.jpg" : "/photos/mcl959bw.jpg");
 }
 <div class="modal-body">
     <div class="container mt-4">
@@ -17,23 +17,28 @@
                 <div class="col-md-8">
                     <div class="card-body">
                         <h2 class="card-title">@Model.DisplayName</h2>
-                        <p class="mb-2">
-                            <strong>Died:</strong> @Model.DiedOn.ToShortDateString()
-                        </p>
-                        <hr style="border-color: #FFD700;" />
-                        <div class="mb-3">
-                            <strong>Description:</strong>
-                            <div id="descriptionDisplay" class="mt-2" style="white-space: pre-line;">
-                                @Html.Raw(Model.Memorial.Description)
-                            </div>
-                            @if (isAdmin)
-                            {
-                                <div class="mt-2">
-                                    <a href="javascript:void(0);" id="editDescription">Edit</a>
-                                    <a href="javascript:void(0);" id="saveDescription" style="display:none;">Save</a>
-                                    <a href="javascript:void(0);" id="cancelEdit" style="display:none;">Cancel</a>
+                        <div class="mb-2">
+                            @Html.AntiForgeryToken()
+                            <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
+                            <p class="mb-2">
+                                <strong>Died:</strong> @Model.DiedOn.ToShortDateString()
+                            </p>
+                            <hr style="border-color: #FFD700;" />
+                            <div class="mb-3">
+                                <strong>Description:</strong>
+                                <div id="descriptionDisplay" class="mt-2" style="white-space: pre-line;">
+                                    @Html.Raw(Model.Memorial.Description)
                                 </div>
-                            }
+                                @if (isAdmin)
+                                {
+                                    <div class="mt-2">
+                                        <a href="javascript:void(0);" id="editDescription">Edit</a>
+                                        <a href="javascript:void(0);" id="saveDescription" style="display:none;">Save</a>
+                                        <a href="javascript:void(0);" id="cancelEdit" style="display:none;">Cancel</a>
+                                    </div>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -85,15 +90,20 @@
             <h4>Add a Comment</h4>
             <form id="addCommentForm" asp-action="AddComment" asp-controller="Roster" method="post">
                 @Html.AntiForgeryToken()
+                <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
                 <input type="hidden" name="TableSource" value="Memorial" />
                 <input type="hidden" name="ParentId" value="@Model.Memorial.RosterId" />
+
                 <div class="form-group mb-2">
                     <label for="UserId">Comment As</label>
                     <input type="text" name="UserId" class="form-control" value="@User.Identity.Name" />
+                    <span data-valmsg-for="UserId" class="text-danger" data-valmsg-replace="true"></span>
                 </div>
                 <div class="form-group mb-2">
                     <label for="Message">Comment</label>
                     <textarea name="Message" class="form-control" required></textarea>
+                    <span data-valmsg-for="Message" class="text-danger" data-valmsg-replace="true"></span>
                 </div>
                 <button type="submit" class="btn btn-primary">Post Comment</button>
             </form>

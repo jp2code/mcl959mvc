@@ -2,7 +2,7 @@
 @{
     var popupType = (mcl959mvc.Models.PopupType)ViewBag.PopupType;
     bool isAdmin = User.HasClaim("isAdmin", "true");
-    var photoPath = Model.HasPhoto ? $"/photos/{Model.Id}.jpg" : "/photos/mcl959bw.jpg";
+    var photoPath = (ViewBag.PhotoPath as string) ?? (Model.HasPhoto ? $"/photos/{Model.Id}.jpg" : "/photos/mcl959bw.jpg");
     var mode = isAdmin ? (ViewBag.Mode as string ?? "Details") : "Details";
     bool isReadOnly = mode is "Details" or "Delete";
     string ShortDate(DateTime? d) => d.HasValue ? d.Value.ToShortDateString() : "";
@@ -44,6 +44,7 @@
                     <div class="card-body pt-2">
                         <form id="rosterPopup" asp-controller="Roster" asp-action="@mode" method="post">
                             @Html.AntiForgeryToken()
+                            <div asp-asp-validation-summary="All" class="text-danger mb-2"></div>
                             @if (mode is "Edit" or "Delete")
                             {
                                 @Html.HiddenFor(m => m.Id)
