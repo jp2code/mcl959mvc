@@ -1,0 +1,74 @@
+﻿@{
+    ViewData["Title"] = "Gun Raffle";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    // Event Details
+    var title = "2026 Gun Raffle";
+    var details = "Marine Corps League gun raffle drawing date";
+
+    // Google Maps Link embedded directly into the location parameter
+    var location = "Superior Outfitters (1310 W Loop 281, Longview, TX 75604) - https://google.com";
+
+    // Times formatted in ISO 8601 UTC (YYYYMMDDTHHMMSSZ)
+    var startDate = "20261220T140000Z"; // 2:00 PM UTC
+    var endDate = "20261220T150000Z";   // Default 1-hour duration applied (3:00 PM UTC)
+
+    // Constructing the final safe URL
+    var gcalUrl = $"https://google.com" +
+                  $"&text={Uri.EscapeDataString(title)}" +
+                  $"&dates={startDate}/{endDate}" +
+                  $"&details={Uri.EscapeDataString(details)}" +
+                  $"&location={Uri.EscapeDataString(location)}";
+    var storeName = "Superior Outfitters";
+    var storeAddress = "1310 W Loop 281, Longview, TX 75604";
+    var searchQuery = $"{storeName}, {storeAddress}";
+
+    var mapsUrl = $"https://google.com{Uri.EscapeDataString(searchQuery)}";
+    var contactName = "David Looney";
+    var position = "2026 Gun Raffle Chairman";
+    var rawPhoneNumber = "+19032610871"; // Best format for system routing
+    var displayPhoneNumber = "(903) 261-0871"; // Best format for human reading
+}
+<h2>Gun Raffle</h2>
+<p>
+    The 2026 Gun Raffle is being held to raise money for building maintenance.
+    <ul>
+        <li>This year, we have 15 guns up for drawing.</li>
+        <li>Each ticket gets you 15 chances to win.</li>
+        <li>Only 400 tickets are available to increase your odds of winning.</li>
+        <li>One ticket can win multiple times. One ticket could win all 15 items.</li>
+    </ul>
+</p>
+<center><img src="~/images/gunRaffle2026.png" style="width:80%" /></center>
+<p>
+    <ul>
+        <li><b>NOTE: </b>You do not have to be present to win, but you must be eligible to legally purchase a firearm.</li>
+        <li><b>Date: </b>The drawing will be held <a href="@gcalUrl" target="_blank" rel="noopener noreferrer">20 December at 2:00 PM CST</a>.</li>
+        <li>
+            <b>Location: </b>The drawing will be held at
+            <a href="@mapsUrl" target="_blank" rel="noopener noreferrer">
+                Superior Outfitters<br />
+                1310 W Loop 281 <br />
+                Longview, TX 75604 <br />
+            </a>
+            Any remaining tickets can be bought at that time during the drawing until the last ticket is drawn.
+        </li>
+        <li>
+            <b>Tickets: </b>To purchase tickets, contact any Marine Corps League Longview Detachment 959 member or use the information below:
+            <div class="contact-card">
+                <h5>@contactName</h5>
+                <p class="text-muted">@position</p>
+                <ul>
+                    <li>
+                        <strong>Phone:</strong>
+                        <a href="tel:@rawPhoneNumber">@displayPhoneNumber</a>
+                    </li>
+                    <li>
+                        <strong>SMS:</strong>
+                        <a href="sms:@rawPhoneNumber">Send a text message</a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+    </ul>
+</p>
+
