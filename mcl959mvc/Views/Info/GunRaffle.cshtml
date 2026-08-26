@@ -5,24 +5,29 @@
     var title = "2026 Gun Raffle";
     var details = "Marine Corps League gun raffle drawing date";
 
-    // Google Maps Link embedded directly into the location parameter
-    var location = "Superior Outfitters (1310 W Loop 281, Longview, TX 75604) - https://google.com";
-
-    // Times formatted in ISO 8601 UTC (YYYYMMDDTHHMMSSZ)
-    var startDate = "20261220T140000Z"; // 2:00 PM UTC
-    var endDate = "20261220T150000Z";   // Default 1-hour duration applied (3:00 PM UTC)
-
-    // Constructing the final safe URL
-    var gcalUrl = $"https://google.com" +
-                  $"&text={Uri.EscapeDataString(title)}" +
-                  $"&dates={startDate}/{endDate}" +
-                  $"&details={Uri.EscapeDataString(details)}" +
-                  $"&location={Uri.EscapeDataString(location)}";
+    // Location broken out as plain text (do not embed a URL inside the location field)
     var storeName = "Superior Outfitters";
     var storeAddress = "1310 W Loop 281, Longview, TX 75604";
-    var searchQuery = $"{storeName}, {storeAddress}";
+    var location = $"{storeName}, {storeAddress}";
 
-    var mapsUrl = $"https://google.com{Uri.EscapeDataString(searchQuery)}";
+    // Times: event is 20 Dec 2026 at 2:00 PM CST
+    // Convert to UTC for the calendar (CST is UTC-6). 2:00 PM CST == 20:00Z on same day.
+    var startDate = "20261220T200000Z"; // 2:00 PM CST -> 8:00 PM UTC
+    var endDate = "20261220T210000Z";   // 3:00 PM CST -> 9:00 PM UTC
+
+    // Construct a Google Calendar "create event" URL (use action=TEMPLATE)
+    var gcalBase = "https://www.google.com/calendar/render?action=TEMPLATE";
+    var gcalUrl = gcalBase +
+                  $"&text={Uri.EscapeDataString(title)}" +
+                  $"&dates={Uri.EscapeDataString(startDate)}/{Uri.EscapeDataString(endDate)}" +
+                  $"&details={Uri.EscapeDataString(details)}" +
+                  $"&location={Uri.EscapeDataString(location)}" +
+                  $"&ctz={Uri.EscapeDataString("America/Chicago")}";
+
+    // Construct a Google Maps search URL using the search API
+    var searchQuery = $"{storeName} {storeAddress}";
+    var mapsUrl = $"https://www.google.com/maps/search/?api=1&query={Uri.EscapeDataString(searchQuery)}";
+
     var contactName = "David Looney";
     var position = "2026 Gun Raffle Chairman";
     var rawPhoneNumber = "+19032610871"; // Best format for system routing
@@ -46,9 +51,8 @@
         <li>
             <b>Location: </b>The drawing will be held at
             <a href="@mapsUrl" target="_blank" rel="noopener noreferrer">
-                Superior Outfitters<br />
-                1310 W Loop 281 <br />
-                Longview, TX 75604 <br />
+                @storeName<br />
+                @storeAddress <br />
             </a>
             Any remaining tickets can be bought at that time during the drawing until the last ticket is drawn.
         </li>
