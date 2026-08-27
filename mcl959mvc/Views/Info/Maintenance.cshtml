@@ -1,17 +1,25 @@
 ﻿@{
     ViewData["Title"] = "Maintenance";
-    bool isAdmin = User.HasClaim("isAdmin", "true");
+    bool isAdmin = User?.HasClaim(c => c.Type == "isAdmin" && c.Value == "true") ?? false;
+    bool isMember = User?.HasClaim(c => c.Type == "isMember" && c.Value == "true") ?? false;
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var strCommandant = (ViewBag.Commandant as mcl959mvc.Models.Roster) is mcl959mvc.Models.Roster commandant
+        ? $"Commandant {commandant.DisplayName}"
+        : "Commandant";
+    var strBuildingSuper = (ViewBag.BuildingSuper as mcl959mvc.Models.Roster) is mcl959mvc.Models.Roster buildingSuper
+        ? $"Building Superintendent {buildingSuper.DisplayName}"
+        : "Building Superintendent";
 }
 <h2>Maintenance</h2>
 <p>
-    @if (!isAdmin)
+    @if (!isMember)
     {
         <p>Maintenance information is restricted to members only. Please log in to view details.</p>
     }
     else
     {
-        <p>Welcome, @User.Identity.Name! Here you can find information about scheduled maintenance tasks, work days, supplies needed, and how to sign up to assist.
+        <blockquote>
+            Welcome, <b>@User.Identity.Name</b>! Here you can find information about scheduled maintenance tasks, work days, supplies needed, and how to sign up to assist.
             <ul>
                 <li><b>Floors</b></li>
                 <li><b>Roof Screws</b><br />Col Randy Smith's 1st cousin David Smith owns S and S  Roofing in Pitsburg</li>
@@ -20,8 +28,7 @@
                 <li><b>Entry Doors</b><br />Jerry Crutcher said we need a door person to adjust the doors so that the doors are simple to lock.</li>
                 <li><b>Cracks in the Walls</b></li>
             </ul>
-        </p>
+            Information about scheduled maintenance tasks, work days, supplies needed and how to sign up to assist can be obtained by contacting the @strCommandant or the @strBuildingSuper.
+        </blockquote>
     }
-    <h5>TBA</h5>
-    Information about scheduled maintenance tasks, work days, supplies needed and how to sign up to assist.
 </p>
