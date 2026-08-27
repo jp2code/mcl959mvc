@@ -1,11 +1,19 @@
 ﻿@{
     ViewData["Title"] = "Toys for Tots";
+    bool isAdmin = User.HasClaim("isAdmin", "true");
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 <h2>Toys for Tots</h2>
 <center><img src="~/images/marine-corps-toys-for-tots.jpg" /></center>
 <p>
-    <h5>TBA</h5>
-    Information about the annual Toys for Tots drive: donation locations, dates, volunteer opportunities and how members can help.
+    <div class="p">
+        Toys for Tots is part of the Elf Coalition and coordinates with other local nonprofit agencies to make sure the largest possible number of poor children are helped at Christmas. Other members of the Elf Coalition are: Buckner Children and Family Services; Hiway 80 Rescue Mission; Salvation Army; Blue Santa and Haverty's Angel Tree.
+        <ul>
+            <li><b>Mission:</b><br />The mission of the U. S. Marine Corps Reserve Toys for Tots Program is to collect new, unwrapped toys during October, November and December each year, and distribute those toys as Christmas gifts to less fortunate children in the community in which the campaign is conducted.</li>
+            <li><b>Goal:</b><br />The primary goal of Toys for Tots is to deliver, through a new toy at Christmas, a message of hope to less fortunate youngsters that will assist them in becoming responsible, productive, patriotic citizens.</li>
+            <li><b>Objectives:</b><br />The objectives of Toys for Tots are to help less fortunate children throughout the United States experience the joy of Christmas; to play an active role in the development of one of our nation’s most valuable resources – our children; to unite all members of local communities in a common cause for three months each year during the annual toy collection and distribution campaign; and to contribute to better communities in the future.</li>
+            <li><b>Activities:</b><br />The principal Toys for Tots activity which takes place each year is the collection and distribution of toys in the communities in which a Marine Corps Reserve Unit is located.  In communities without a Reserve Unit, the campaign can be conducted by a Marine Corps League Detachment or group of men and women, generally veteran Marines, authorized by Marine Toys for Tots Foundation to conduct a local Toys for Tots campaign.  Local Toys for Tots Campaign Coordinators conduct an array of activities throughout the year, which include golf tournaments, foot races, bicycle races and other voluntary events designed to increase interest in Toys for Tots, and concurrently generate toys and monetary donations.</li>
+        </ul>
+    </div>
 </p>
 <center><img src="~/images/t4t.jpg" /></center>

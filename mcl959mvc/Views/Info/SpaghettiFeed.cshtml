@@ -1,10 +1,11 @@
 ﻿@{
     ViewData["Title"] = "Spaghetti Feed";
+    bool isAdmin = User.HasClaim("isAdmin", "true");
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 <h2>Spaghetti Feed</h2>
 <p>
     <h5>TBA</h5>
-    Details about the Spaghetti Feed fundraiser: menu, ticketing, location, and volunteer shifts.
+    The Spaghetti Feed is an "All You Can Eat" spaghetti meal made fresh that day at our location by our members and served by our members.
 
 </p>

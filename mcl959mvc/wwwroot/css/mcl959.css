@@ -632,3 +632,33 @@ div.footer { /* ref: https://css-tricks.com/snippets/css/sticky-footer/ */
   font-weight: bold;
 }
 
+
+/* Modal close button: always visible and easy to tap on phones */
+#entityModal .modal-content {
+  position: relative; /* allow absolute positioning of close button */
+}
+#entityModal .modal-close-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 1201; /* above modal header/content but below any global overlays */
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  opacity: 0.95;
+  background-color: rgba(255,255,255,0.06); /* subtle contrast with dark modal */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Slightly enlarge touch target on small screens */
+@media (max-width: 576px) {
+  #entityModal .modal-close-btn {
+    top: 0.35rem;
+    right: 0.35rem;
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+
