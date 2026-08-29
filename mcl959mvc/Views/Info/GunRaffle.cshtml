@@ -32,6 +32,31 @@
     var position = "2026 Gun Raffle Chairman";
     var rawPhoneNumber = "+19032610871"; // Best format for system routing
     var displayPhoneNumber = "(903) 261-0871"; // Best format for human reading
+    // --- Payment links & QR codes (ticket = $50) ---
+    // PayPal: use a simple Buy Now URL (business email); item name encoded
+    var paypalUrl = "https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=joeswelding%40gmail.com&amount=50&currency_code=USD&item_name=2026+Gun+Raffle+Ticket";
+    var paypalQr = $"https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={Uri.EscapeDataString(paypalUrl)}";
+
+    // Cash App: quick-pay URL (uses cashtag). Many users can open this in browser or app.
+    var cashAppUrl = "https://cash.app/$jp2code/50";
+    var cashAppQr = $"https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={Uri.EscapeDataString(cashAppUrl)}";
+
+    // Venmo: web/URI for Venmo payment page with amount and note
+    var venmoUrl = "https://venmo.com/jp2code1?txn=pay&amount=50&note=2026+Gun+Raffle+Ticket";
+    var venmoQr = $"https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={Uri.EscapeDataString(venmoUrl)}";
+
+    // Google Pay & Apple Pay: recommend app/web flows; provide instruction links / QR to instructions
+    // Google Pay: instruct to send $50 to tjpool@gmail.com inside the Google Pay app.
+    var googlePayInfoUrl = "https://pay.google.com/about/"; // no simple universal "send to email" web link
+    var googlePayQr = $"https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={Uri.EscapeDataString(googlePayInfoUrl)}";
+
+    // Apple Pay: must be integrated on-site (Stripe / provider) to offer web-based Apple Pay. Provide contact link.
+    var applePayInfoUrl = "mailto:tjpool@gmail.com?subject=Apple%20Pay%20Ticket&body=Please%20send%20instructions%20to%20pay%20for%20a%20$50%20gun%20raffle%20ticket.";
+    var applePayQr = $"https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={Uri.EscapeDataString(applePayInfoUrl)}";
+
+    // Other recommended option: Zelle (very common). Provide guidance link to Zelle and contact email
+    var zelleInfoUrl = "https://www.zellepay.com/";
+    var zelleQr = $"https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={Uri.EscapeDataString(zelleInfoUrl)}";
 }
 <h2>Gun Raffle</h2>
 <p>
@@ -72,6 +97,82 @@
                     </li>
                 </ul>
             </div>
+        </li>
+        <li>
+            <h4>Online payment options (one ticket = $50)</h4>
+            <p class="text-muted">Tap/click a method to open the payment page, or scan the QR code with your phone camera. Payment will go to the web sergeant and he will supply you with your ticket number.</p>
+
+            <div style="display:flex;flex-wrap:wrap;gap:1rem;">
+                <div style="width:220px;border:1px solid #ddd;padding:0.5rem;text-align:center;">
+                    <strong>PayPal</strong>
+                    <div style="margin:0.5rem 0;">
+                        <a href="@paypalUrl" target="_blank" rel="noopener noreferrer">
+                            <img src="@paypalQr" alt="PayPal QR: pay $50" style="width:180px;height:180px" />
+                        </a>
+                    </div>
+                    <div><a href="@paypalUrl" target="_blank" rel="noopener noreferrer">Pay $50 with PayPal</a></div>
+                </div>
+
+                <div style="width:220px;border:1px solid #ddd;padding:0.5rem;text-align:center;">
+                    <strong>Cash App</strong>
+                    <div style="margin:0.5rem 0;">
+                        <a href="@cashAppUrl" target="_blank" rel="noopener noreferrer">
+                            <img src="@cashAppQr" alt="Cash App QR: pay $50" style="width:180px;height:180px" />
+                        </a>
+                    </div>
+                    <div><a href="@cashAppUrl" target="_blank" rel="noopener noreferrer">Pay $50 via Cash App ($jp2code)</a></div>
+                </div>
+
+                <div style="width:220px;border:1px solid #ddd;padding:0.5rem;text-align:center;">
+                    <strong>Venmo</strong>
+                    <div style="margin:0.5rem 0;">
+                        <a href="@venmoUrl" target="_blank" rel="noopener noreferrer">
+                            <img src="@venmoQr" alt="Venmo QR: pay $50" style="width:180px;height:180px" />
+                        </a>
+                    </div>
+                    <div><a href="@venmoUrl" target="_blank" rel="noopener noreferrer">Pay $50 to @@jp2code1 on Venmo</a></div>
+                </div>
+
+                <div style="width:220px;border:1px solid #ddd;padding:0.5rem;text-align:center;">
+                    <strong>Google Pay</strong>
+                    <div style="margin:0.5rem 0;">
+                        <a href="@googlePayInfoUrl" target="_blank" rel="noopener noreferrer">
+                            <img src="@googlePayQr" alt="Google Pay info QR" style="width:180px;height:180px" />
+                        </a>
+                    </div>
+                    <div>
+                        <small>Open Google Pay app and send $50 to <b>tjpool@gmail.com</b></small><br />
+                        <a href="@googlePayInfoUrl" target="_blank" rel="noopener noreferrer">Google Pay help</a>
+                    </div>
+                </div>
+
+                <div style="width:220px;border:1px solid #ddd;padding:0.5rem;text-align:center;">
+                    <strong>Apple Pay</strong>
+                    <div style="margin:0.5rem 0;">
+                        <a href="@applePayInfoUrl" target="_blank" rel="noopener noreferrer">
+                            <img src="@applePayQr" alt="Contact for Apple Pay" style="width:180px;height:180px" />
+                        </a>
+                    </div>
+                    <div>
+                        <small>Apple Pay on the web requires site integration (Stripe/processor).</small><br />
+                        <a href="@applePayInfoUrl" target="_blank" rel="noopener noreferrer">Request Apple Pay instructions</a>
+                    </div>
+                </div>
+
+                <div style="width:220px;border:1px solid #ddd;padding:0.5rem;text-align:center;">
+                    <strong>Zelle (recommended)</strong>
+                    <div style="margin:0.5rem 0;">
+                        <a href="@zelleInfoUrl" target="_blank" rel="noopener noreferrer">
+                            <img src="@zelleQr" alt="Zelle info QR" style="width:180px;height:180px" />
+                        </a>
+                    </div>
+                    <div><small>Use your bank's Zelle feature and send $50 to the Web Sergeant's registered email (ask via contact).</small></div>
+                </div>
+            </div>
+
+            <p style="margin-top:0.75rem;">
+                Questions about payments? Email the Web Sergeant Joe Pool directly using <a href="mailto:joeswelding@gmail.com">joeswelding@gmail.com</a> or <a href="mailto:tjpool@gmail.com">tjpool@gmail.com</a>.
+            </p>
         </li>
     </ul>
 </blockquote>
