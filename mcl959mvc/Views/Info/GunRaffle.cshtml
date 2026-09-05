@@ -45,15 +45,6 @@
     var venmoUrl = "https://venmo.com/jp2code1?txn=pay&amount=50&note=2026+Gun+Raffle+Ticket";
     var venmoQr = $"https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={Uri.EscapeDataString(venmoUrl)}";
 
-    // Google Pay & Apple Pay: recommend app/web flows; provide instruction links / QR to instructions
-    // Google Pay: instruct to send $50 to tjpool@gmail.com inside the Google Pay app.
-    var googlePayInfoUrl = "https://pay.google.com/about/"; // no simple universal "send to email" web link
-    var googlePayQr = $"https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={Uri.EscapeDataString(googlePayInfoUrl)}";
-
-    // Apple Pay: must be integrated on-site (Stripe / provider) to offer web-based Apple Pay. Provide contact link.
-    var applePayInfoUrl = "mailto:tjpool@gmail.com?subject=Apple%20Pay%20Ticket&body=Please%20send%20instructions%20to%20pay%20for%20a%20$50%20gun%20raffle%20ticket.";
-    var applePayQr = $"https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={Uri.EscapeDataString(applePayInfoUrl)}";
-
     // Other recommended option: Zelle (very common). Provide guidance link to Zelle and contact email
     var zelleInfoUrl = "https://www.zellepay.com/";
     var zelleQr = $"https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={Uri.EscapeDataString(zelleInfoUrl)}";
@@ -131,32 +122,6 @@
                         </a>
                     </div>
                     <div><a href="@venmoUrl" target="_blank" rel="noopener noreferrer">Pay $50 to @@jp2code1 on Venmo</a></div>
-                </div>
-
-                <div style="width:220px;border:1px solid #ddd;padding:0.5rem;text-align:center;">
-                    <strong>Google Pay</strong>
-                    <div style="margin:0.5rem 0;">
-                        <a href="@googlePayInfoUrl" target="_blank" rel="noopener noreferrer">
-                            <img src="@googlePayQr" alt="Google Pay info QR" style="width:180px;height:180px" />
-                        </a>
-                    </div>
-                    <div>
-                        <small>Open Google Pay app and send $50 to <b>tjpool@gmail.com</b></small><br />
-                        <a href="@googlePayInfoUrl" target="_blank" rel="noopener noreferrer">Google Pay help</a>
-                    </div>
-                </div>
-
-                <div style="width:220px;border:1px solid #ddd;padding:0.5rem;text-align:center;">
-                    <strong>Apple Pay</strong>
-                    <div style="margin:0.5rem 0;">
-                        <a href="@applePayInfoUrl" target="_blank" rel="noopener noreferrer">
-                            <img src="@applePayQr" alt="Contact for Apple Pay" style="width:180px;height:180px" />
-                        </a>
-                    </div>
-                    <div>
-                        <small>Apple Pay on the web requires site integration (Stripe/processor).</small><br />
-                        <a href="@applePayInfoUrl" target="_blank" rel="noopener noreferrer">Request Apple Pay instructions</a>
-                    </div>
                 </div>
 
                 <div style="width:220px;border:1px solid #ddd;padding:0.5rem;text-align:center;">
