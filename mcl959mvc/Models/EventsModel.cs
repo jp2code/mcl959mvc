@@ -17,7 +17,6 @@ public partial class EventsModel
     [Required(ErrorMessage = "Event Name is required.")]
     public string? EventName { get; set; }
 
-    [StringLength(255)]
     [Unicode(false)]
     [Column(TypeName = "varchar(max)")]
     public string? EventDescription { get; set; }
